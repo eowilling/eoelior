@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>動態節點流程圖繪製器(錨點連線)</title>
-    <meta name="description" content="互動式流程圖繪製器：錨點連線、節點編輯、PDF 匯出。" />
     <!-- 引入 Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 jsPDF CDN for PDF generation -->
@@ -82,7 +81,6 @@
             }
         }
     </script>
-    
 </head>
 <body class="bg-gray-50 flex flex-col items-center p-4 min-h-screen">
     <div class="w-full max-w-5xl bg-white shadow-xl rounded-xl p-6 space-y-4">
@@ -191,8 +189,6 @@
             </ul>
         </div>
     </div>
-
-    
 
     <script type="text/javascript">
         // JavaScript 流程圖邏輯
