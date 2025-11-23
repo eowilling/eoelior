@@ -1,71 +1,154 @@
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>eoelior 工具集</title>
-    <meta name="description" content="eoelior 個人工具倉庫：工具列表與流程圖繪製器連結。" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動態節點流程圖繪製器(錨點連線)</title>
+    <meta name="description" content="互動式流程圖繪製器：錨點連線、節點編輯、PDF 匯出。" />
+    <!-- 引入 Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 jsPDF CDN for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { font-family: 'Inter', sans-serif; }
+        /* 設定字體為 Inter，用於更好的顯示效果 */
+        :root {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Canvas 容器確保視覺上的集中 */
+        #canvas-container {
+            border: 2px solid #e5e7eb;
+            background-color: #ffffff;
+            aspect-ratio: 16 / 9;
+            max-width: 100%;
+            height: auto;
+        }
+        /* 確保編輯框在最上層 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+        /* Zoom 控制按鈕的樣式 */
+        .zoom-controls {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .zoom-button {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .zoom-button:hover {
+            background-color: #e0e0e0;
+        }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'start-end': '#4f46e5', // Primary blue
+                        'process': '#10b981', // Secondary green
+                        'decision': '#f59e0b', // Accent amber
+                        'database': '#ef4444', // Red
+                        'dataio': '#3b82f6', // Light Blue
+                    }
+                }
+            }
+        }
+    </script>
+    
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col items-center py-10">
-    <main class="w-full max-w-4xl bg-white shadow-lg rounded-2xl p-8 space-y-8">
-        <header class="space-y-2">
-            <h1 class="text-3xl font-extrabold tracking-tight text-gray-800">eoelior 工具集</h1>
-            <p class="text-gray-600 text-sm">集中放置個人使用中的小工具與實驗。以下列出目前可用或建置中的項目。</p>
-        </header>
-        <section class="space-y-6">
-            <h2 class="text-xl font-bold text-gray-700">工具列表</h2>
-            <ul class="grid md:grid-cols-2 gap-5">
-                <li class="border rounded-xl p-4 flex flex-col gap-2 bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <span class="font-semibold text-gray-800">流程圖繪製器</span>
-                        <span class="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">互動</span>
-                    </div>
-                    <p class="text-xs text-gray-600 leading-relaxed">支援節點拖曳、錨點連線、路徑樣式選擇、PDF 匯出。</p>
-                    <a href="flowcode.html" class="inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">開啟工具</a>
-                </li>
-                <li class="border rounded-xl p-4 flex flex-col gap-2 bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <span class="font-semibold text-gray-800">專案紀錄</span>
-                        <span class="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-700">文檔</span>
-                    </div>
-                    <p class="text-xs text-gray-600 leading-relaxed">追蹤工具演進、變更與未來規劃。</p>
-                    <a href="專案紀錄.md" class="inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-lg bg-gray-700 text-white hover:bg-black">查看紀錄</a>
-                </li>
-                <li class="border rounded-xl p-4 flex flex-col gap-2 bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <span class="font-semibold text-gray-800">批次處理腳本</span>
-                        <span class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">待規劃</span>
-                    </div>
-                    <p class="text-xs text-gray-600 leading-relaxed">未來將加入常用檔案/資料轉換與整理腳本。</p>
-                    <button disabled class="inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-lg bg-gray-300 text-gray-600 cursor-not-allowed">尚未提供</button>
-                </li>
-                <li class="border rounded-xl p-4 flex flex-col gap-2 bg-gray-50">
-                    <div class="flex items-center justify-between">
-                        <span class="font-semibold text-gray-800">格式轉換工具</span>
-                        <span class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">構想</span>
-                    </div>
-                    <p class="text-xs text-gray-600 leading-relaxed">規劃支援 JSON ↔ CSV ↔ Markdown 等常見格式。</p>
-                    <button disabled class="inline-flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-lg bg-gray-300 text-gray-600 cursor-not-allowed">尚未提供</button>
-                </li>
-            </ul>
-        </section>
-        <section class="space-y-3">
-            <h2 class="text-xl font-bold text-gray-700">說明</h2>
-            <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
-                <li>工具皆為個人用途，可能不定期調整。</li>
-                <li>流程圖繪製器已獨立到 <code>flowcode.html</code>，可直接分享或部署。</li>
-                <li>若要使用 GitHub Pages，直接發布此目錄即可。</li>
-            </ul>
-        </section>
-        <footer class="pt-6 text-center text-xs text-gray-400 border-t">© 2025 eoelior · <a href="https://github.com/eowilling/eoelior" class="hover:text-indigo-600">GitHub</a></footer>
-    </main>
-</body>
-</html>
+<body class="bg-gray-50 flex flex-col items-center p-4 min-h-screen">
+    <div class="w-full max-w-5xl bg-white shadow-xl rounded-xl p-6 space-y-4">
+        <h1 class="text-3xl font-bold text-gray-800 border-b pb-2 mb-4">流程圖繪製器 (錨點連線)</h1>
+        
+        <!-- 節點操作區 -->
+        <div class="flex flex-wrap gap-3 items-center justify-start border-b pb-4 mb-4">
+            <span class="text-lg font-medium text-gray-700 mr-2">節點類型：</span>
+            
+            <button id="addStartEnd" class="flex-1 min-w-[100px] bg-start-end hover:bg-indigo-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                起點/終點
+            </button>
+            <button id="addProcess" class="flex-1 min-w-[100px] bg-process hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                處理/步驟
+            </button>
+            <button id="addDecision" class="flex-1 min-w-[100px] bg-decision hover:bg-amber-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                判斷/決策
+            </button>
+            <button id="addDatabase" class="flex-1 min-w-[100px] bg-database hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                資料庫
+            </button>
+            <button id="addDataIO" class="flex-1 min-w-[100px] bg-dataio hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                輸入/輸出
+            </button>
+        </div>
+
+        <!-- 連線與匯出操作區 -->
+        <div class="flex flex-wrap gap-3 items-center justify-start border-b pb-4 mb-4">
+            <span class="text-lg font-medium text-gray-700 mr-2">工具：</span>
+            <button id="connectNodes" class="flex-1 min-w-[100px] bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                連線模式
+            </button>
+            <button id="removeNode" class="flex-1 min-w-[100px] bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                移除節點
+            </button>
+            <button id="exportPDF" class="flex-1 min-w-[100px] bg-sky-500 hover:bg-sky-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                匯出PDF
+            </button>
+
+            <!-- 縮放控制 -->
+            <div class="zoom-controls ml-4">
+                <span class="text-gray-700 font-medium">縮放:</span>
+                <button id="zoomOut" class="zoom-button">-</button>
+                <span id="currentScaleText" class="text-gray-700 font-semibold w-10 text-center">100%</span>
+                <button id="zoomIn" class="zoom-button">+</button>
+            </div>
+        </div>
+
+        <!-- 狀態與提示訊息 -->
+        <div id="messageBox" class="p-3 bg-blue-100 border border-blue-300 text-blue-800 rounded-lg text-sm transition duration-300">
+            點擊上方的按鈕來新增節點，或點擊「連線模式」來連接兩個節點。
+        </div>
+
+        <!-- 繪圖區 -->
+        <div id="canvas-container" class="relative rounded-lg overflow-hidden shadow-inner">
+            <canvas id="flowchartCanvas" class="w-full h-full"></canvas>
+        </div>
+        
+        <!-- 節點編輯彈出框 (Modal) -->
+        <div id="editModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">編輯節點文字</h3>
+                <textarea id="nodeTextInput" rows="3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-start-end focus:border-start-end mb-4 resize-y" placeholder="請輸入節點的新文字（使用 Shift+Enter 換行）"></textarea>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelEdit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-150">
+                        取消
                     </button>
                     <button id="saveEdit" class="bg-start-end hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150">
                         儲存 (Enter)
