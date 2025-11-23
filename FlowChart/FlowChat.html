@@ -116,6 +116,15 @@
             <button id="removeNode" class="flex-1 min-w-[100px] bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
                 移除節點
             </button>
+            <button id="clearAll" class="flex-1 min-w-[100px] bg-orange-500 hover:bg-orange-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                清空
+            </button>
+            <button id="undo" class="flex-1 min-w-[100px] bg-purple-500 hover:bg-purple-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                上一步
+            </button>
+            <button id="redo" class="flex-1 min-w-[100px] bg-purple-500 hover:bg-purple-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                下一步
+            </button>
             <button id="exportPDF" class="flex-1 min-w-[100px] bg-sky-500 hover:bg-sky-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
                 匯出PDF
             </button>
@@ -209,7 +218,12 @@
         let connectingEndNode = null; 
         let connectingEndAnchor = null; 
         let currentScale = 1.0; 
-        let mousePosForTempLine = { x: 0, y: 0 }; 
+        let mousePosForTempLine = { x: 0, y: 0 };
+        
+        // 歷史記錄相關變數
+        let history = [];
+        let historyIndex = -1;
+        const MAX_HISTORY = 50; 
 
         const editModal = document.getElementById('editModal');
         const nodeTextInput = document.getElementById('nodeTextInput');
@@ -778,6 +792,7 @@
             if (editingNode) {
                 const newText = nodeTextInput.value;
                 if (newText.trim() !== "") {
+                    saveState();
                     editingNode.text = newText;
                     draw();
                     showMessage(`已將節點文字更新為：「${newText.split('\n')[0].substring(0, 10)}...」。`, 'bg-green-100 border-green-300 text-green-800');
@@ -798,6 +813,7 @@
         // 處理連線樣式選擇
         function handlePathSelection(style) {
             if (connectingStartNode && connectingEndNode && connectingStartAnchor && connectingEndAnchor) {
+                saveState();
                 // 使用選擇的樣式和錨點建立連線
                 edges.push(new Edge(connectingStartNode, connectingEndNode, connectingStartAnchor, connectingEndAnchor, style));
                 
@@ -834,6 +850,7 @@
         }
 
         function addNode(type, defaultText) {
+            saveState();
             const newNode = new Node(canvas.width / 2 / currentScale, canvas.height / 2 / currentScale, type, defaultText);
             nodes.push(newNode);
             // 確保在新增節點時退出連線模式
@@ -874,6 +891,7 @@
                 return;
             }
 
+            saveState();
             edges = edges.filter(edge => edge.start !== selectedNode && edge.end !== selectedNode);
 
             const nodeIndex = nodes.indexOf(selectedNode);
@@ -934,6 +952,117 @@
             messageBox.innerHTML = text;
         }
         
+        // 儲存當前狀態到歷史記錄
+        function saveState() {
+            const state = {
+                nodes: JSON.parse(JSON.stringify(nodes.map(n => ({
+                    x: n.x, y: n.y, type: n.type, text: n.text, width: n.width, height: n.height
+                })))),
+                edges: JSON.parse(JSON.stringify(edges.map(e => ({
+                    startIdx: nodes.indexOf(e.start),
+                    endIdx: nodes.indexOf(e.end),
+                    startAnchor: e.startAnchor,
+                    endAnchor: e.endAnchor,
+                    pathStyle: e.pathStyle
+                }))))
+            };
+            
+            // 清除當前索引之後的歷史
+            history = history.slice(0, historyIndex + 1);
+            history.push(state);
+            
+            // 限制歷史記錄數量
+            if (history.length > MAX_HISTORY) {
+                history.shift();
+            } else {
+                historyIndex++;
+            }
+            
+            updateUndoRedoButtons();
+        }
+        
+        // 恢復狀態
+        function restoreState(state) {
+            nodes = state.nodes.map(n => {
+                const node = new Node(n.x, n.y, n.type, n.text);
+                node.width = n.width;
+                node.height = n.height;
+                return node;
+            });
+            
+            edges = state.edges.map(e => {
+                return new Edge(
+                    nodes[e.startIdx],
+                    nodes[e.endIdx],
+                    e.startAnchor,
+                    e.endAnchor,
+                    e.pathStyle
+                );
+            });
+            
+            draw();
+        }
+        
+        // 上一步
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(history[historyIndex]);
+                showMessage('已還原上一步操作。', 'bg-purple-100 border-purple-300 text-purple-800');
+                updateUndoRedoButtons();
+            } else {
+                showMessage('沒有可還原的操作。', 'bg-gray-100 border-gray-300 text-gray-800');
+            }
+        }
+        
+        // 下一步
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                restoreState(history[historyIndex]);
+                showMessage('已重做操作。', 'bg-purple-100 border-purple-300 text-purple-800');
+                updateUndoRedoButtons();
+            } else {
+                showMessage('沒有可重做的操作。', 'bg-gray-100 border-gray-300 text-gray-800');
+            }
+        }
+        
+        // 清空畫布
+        function clearAll() {
+            if (nodes.length === 0 && edges.length === 0) {
+                showMessage('畫布已經是空的。', 'bg-gray-100 border-gray-300 text-gray-800');
+                return;
+            }
+            
+            if (confirm('確定要清空所有節點和連線嗎？此操作可以透過「上一步」還原。')) {
+                saveState();
+                nodes = [];
+                edges = [];
+                selectedNode = null;
+                resetConnectionState();
+                draw();
+                showMessage('已清空畫布。', 'bg-orange-100 border-orange-300 text-orange-800');
+            }
+        }
+        
+        // 更新上一步/下一步按鈕狀態
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('undo');
+            const redoBtn = document.getElementById('redo');
+            
+            if (historyIndex <= 0) {
+                undoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                undoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            
+            if (historyIndex >= history.length - 1) {
+                redoBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                redoBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
         function changeScale(delta) {
             const newScale = Math.min(2.0, Math.max(0.5, currentScale + delta));
             if (newScale !== currentScale) {
@@ -985,7 +1114,10 @@
             document.getElementById('addDatabase').addEventListener('click', () => addNode('database', '資料庫存取'));
             document.getElementById('addDataIO').addEventListener('click', () => addNode('dataio', '輸入/輸出資料'));
             document.getElementById('connectNodes').addEventListener('click', toggleConnectMode);
-            document.getElementById('removeNode').addEventListener('click', removeSelectedNode); 
+            document.getElementById('removeNode').addEventListener('click', removeSelectedNode);
+            document.getElementById('clearAll').addEventListener('click', clearAll);
+            document.getElementById('undo').addEventListener('click', undo);
+            document.getElementById('redo').addEventListener('click', redo);
             document.getElementById('exportPDF').addEventListener('click', exportToPDF);
             
             document.getElementById('zoomIn').addEventListener('click', () => changeScale(0.1));
@@ -1031,7 +1163,8 @@
             const a12 = getNodeAnchors(endNode).bottom; // 故意連到底部，測試 H-V-H 邏輯
             edges.push(new Edge(failNode, endNode, a11, a12, 'orthogonal'));
 
-
+            // 儲存初始狀態
+            saveState();
             draw();
         });
     </script>
