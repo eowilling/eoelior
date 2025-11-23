@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPhone HEIC 轉 PNG/JPG 轉換器</title>
+    <!-- 載入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 heic2any 函式庫及其必要 polyfill -->
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.15/dist/heic2any.min.js"></script>
+    <!-- 載入 JSZip 函式庫用於打包下載 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        /* 設定字體為 Inter (通用字體) */
+        :root {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#4f46e5',
+                        'primary-dark': '#4338ca',
+                        'secondary': '#10b981',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-lg bg-white shadow-xl rounded-xl p-8 space-y-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800">
+            HEIC 轉 PNG / JPG 轉換器
+        </h1>
+        <p class="text-center text-gray-500">
+            請選擇一個或多個 HEIC 檔案。轉換會在您的瀏覽器中本地完成。
+        </p>
+
+        <!-- 檔案輸入區塊 -->
+        <div class="space-y-4">
+            <label for="heic-input" class="block text-sm font-medium text-gray-700">選擇 HEIC 檔案 (.heic, .heif)</label>
+            <input type="file" id="heic-input" accept=".heic,.heif" multiple 
+                   class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 p-2.5 
+                          file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold
+                          file:bg-primary file:text-white hover:file:bg-primary-dark transition duration-150"
+                   onchange="handleFiles(this.files)">
+        </div>
+
+        <!-- 轉換選項 -->
+        <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6 items-center border-t border-gray-200 pt-6">
+            <div class="flex-shrink-0 text-sm font-medium text-gray-700">
+                目標格式：
+            </div>
+            <div class="flex items-center space-x-4">
+                <label class="inline-flex items-center">
+                    <input type="radio" name="format" value="image/png" checked id="format-png"
+                           class="form-radio h-4 w-4 text-primary transition duration-150 ease-in-out">
+                    <span class="ml-2 text-gray-700">PNG (無損)</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="format" value="image/jpeg" id="format-jpg"
+                           class="form-radio h-4 w-4 text-primary transition duration-150 ease-in-out">
+                    <span class="ml-2 text-gray-700">JPG (有損)</span>
+                </label>
+            </div>
+            
+            <div id="quality-control" class="flex-1 min-w-0 space-y-2 hidden">
+                <label for="quality-slider" class="block text-sm font-medium text-gray-700 flex justify-between">
+                    <span>JPG 品質 (0.1 - 1.0)</span>
+                    <span id="quality-value" class="font-bold text-primary">0.9</span>
+                </label>
+                <input type="range" id="quality-slider" min="0.1" max="1.0" step="0.05" value="0.9"
+                       class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+            </div>
+        </div>
+        
+        <!-- 轉換按鈕與狀態顯示 -->
+        <button id="convert-button" onclick="startConversion()"
+                class="w-full bg-secondary hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg 
+                       transition duration-200 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center space-x-2"
+                disabled>
+            <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0.0 0.0 24.0 24.0">
+                <circle class="opacity-25" cx="12.0" cy="12.0" r="10.0" stroke="currentColor" stroke-width="4.0"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4.0 12.0a8.0 8.0 0.0 0.1 8.0-8.0v3.0c0.0 0.6 0.4 1.0 1.0 1.0s1.0-0.4 1.0-1.0V4.0A8.0 8.0 0.0 0.0 4.0 12.0z"></path>
+            </svg>
+            <span id="button-text">開始轉換</span>
+        </button>
+
+        <!-- 檔案清單與結果區塊 -->
+        <div id="results-area" class="space-y-4 pt-4 border-t border-gray-200">
+            <h2 id="file-count-text" class="text-lg font-semibold text-gray-700 hidden">已選擇 0 個檔案</h2>
+            
+            <!-- 新增 ZIP 下載按鈕 -->
+            <button id="zip-download-button" onclick="downloadAllAsZip()"
+                    class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3 px-4 rounded-lg 
+                           transition duration-200 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50 hidden">
+                下載全部 (${targetExtension}) 為 ZIP 壓縮檔
+            </button>
+            <!-- 結束 ZIP 下載按鈕 -->
+
+            <div id="file-list" class="space-y-3">
+                <!-- 轉換結果將顯示在這裡 -->
+            </div>
+        </div>
+
+        <!-- 錯誤訊息模態框 -->
+        <div id="error-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-2xl">
+                <h3 class="text-xl font-bold text-red-600 mb-4">轉換錯誤</h3>
+                <p id="error-message" class="text-gray-700 mb-6"></p>
+                <button onclick="document.getElementById('error-modal').classList.add('hidden');" 
+                        class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg transition duration-150">
+                    關閉
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM 元素引用
+        const fileInput = document.getElementById('heic-input');
+        const convertButton = document.getElementById('convert-button');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+        const fileList = document.getElementById('file-list');
+        const fileCountText = document.getElementById('file-count-text');
+        const qualityControl = document.getElementById('quality-control');
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityValue = document.getElementById('quality-value');
+        const zipDownloadButton = document.getElementById('zip-download-button'); // 新增 ZIP 按鈕引用
+
+        let selectedFiles = [];
+        let convertedBlobs = []; // 新增：用於儲存轉換成功的 Blob 和檔名
+        let isConverting = false;
+
+        // --- 初始化與事件處理 ---
+
+        // 監聽格式選擇變化
+        document.querySelectorAll('input[name="format"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                // 顯示/隱藏 JPG 品質控制
+                if (e.target.value === 'image/jpeg') {
+                    qualityControl.classList.remove('hidden');
+                } else {
+                    qualityControl.classList.add('hidden');
+                }
+                // 更新 ZIP 按鈕上的檔名提示
+                updateZipButtonText();
+            });
+        });
+
+        // 監聽 JPG 品質滑塊變化
+        qualitySlider.addEventListener('input', (e) => {
+            qualityValue.textContent = e.target.value;
+        });
+
+        /**
+         * 根據選定的格式更新 ZIP 按鈕的文字
+         */
+        function updateZipButtonText() {
+            const targetType = document.querySelector('input[name="format"]:checked').value;
+            const extension = targetType === 'image/png' ? 'PNG' : 'JPG';
+            zipDownloadButton.textContent = `下載全部 (${extension}) 為 ZIP 壓縮檔`;
+        }
+
+        /**
+         * 處理檔案選擇事件
+         * @param {FileList} files 
+         */
+        function handleFiles(files) {
+            selectedFiles = Array.from(files).filter(file => 
+                file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')
+            );
+            convertedBlobs = []; // 清空之前的轉換結果
+            zipDownloadButton.classList.add('hidden'); // 隱藏 ZIP 按鈕
+            
+            // 更新狀態
+            if (selectedFiles.length > 0) {
+                convertButton.disabled = false;
+                fileCountText.textContent = `已選擇 ${selectedFiles.length} 個檔案`;
+                fileCountText.classList.remove('hidden');
+            } else {
+                convertButton.disabled = true;
+                fileCountText.classList.add('hidden');
+            }
+
+            // 清空列表並顯示準備轉換的檔案名
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.id = `file-status-${index}`;
+                item.className = 'flex justify-between items-center p-3 bg-gray-100 rounded-lg';
+                item.innerHTML = `
+                    <div class="font-medium text-gray-700 truncate mr-4">${file.name}</div>
+                    <div class="text-sm text-gray-500" id="status-text-${index}">待轉換</div>
+                `;
+                fileList.appendChild(item);
+            });
+            updateZipButtonText(); // 確保 ZIP 按鈕文字正確
+        }
+
+        // --- 轉換核心邏輯 ---
+
+        /**
+         * 顯示錯誤模態框
+         * @param {string} message 
+         */
+        function showErrorMessage(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-modal').classList.remove('hidden');
+            document.getElementById('error-modal').classList.add('flex');
+        }
+
+        /**
+         * 執行單一 HEIC 檔案的轉換
+         * @param {File} file - HEIC File 物件
+         * @param {string} targetType - 目標 MIME 類型 ('image/png' 或 'image/jpeg')
+         * @param {number} quality - JPG 品質 (0.1 到 1.0)
+         * @param {number} index - 檔案索引，用於更新狀態
+         */
+        async function convertFile(file, targetType, quality, index) {
+            const statusElement = document.getElementById(`file-status-${index}`);
+            const statusText = document.getElementById(`status-text-${index}`);
+            
+            if (!statusElement || !statusText) return;
+
+            statusText.textContent = '轉換中...';
+            statusText.className = 'text-sm font-semibold text-primary';
+            statusElement.classList.replace('bg-gray-100', 'bg-blue-50');
+
+            try {
+                // heic2any 轉換
+                const outputBlob = await heic2any({
+                    blob: file,
+                    toType: targetType,
+                    quality: parseFloat(quality), // 確保是數字
+                });
+
+                const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                const extension = targetType === 'image/png' ? 'png' : 'jpg';
+                const outputFilename = `${originalName}.${extension}`;
+
+                // 將轉換結果儲存到陣列中
+                convertedBlobs.push({ blob: outputBlob, filename: outputFilename });
+
+                // 準備下載連結 (供單獨下載用)
+                const outputURL = URL.createObjectURL(outputBlob);
+                
+                // 更新狀態為成功
+                statusText.innerHTML = `
+                    <a href="${outputURL}" download="${outputFilename}" 
+                       class="text-sm font-semibold text-secondary hover:underline flex items-center space-x-1"
+                       title="點擊下載 ${outputFilename}"
+                       onclick="revokeURL('${outputURL}')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        ${outputFilename} (完成)
+                    </a>
+                `;
+                statusElement.classList.replace('bg-blue-50', 'bg-green-50');
+                
+            } catch (error) {
+                console.error('轉換失敗:', error);
+                statusText.textContent = `失敗: ${error.message || '無法解碼檔案'}`;
+                statusText.className = 'text-sm font-semibold text-red-500';
+                statusElement.classList.replace('bg-blue-50', 'bg-red-50');
+            }
+        }
+
+        /**
+         * 撤銷 Blob URL 以釋放記憶體
+         * @param {string} url 
+         */
+        function revokeURL(url) {
+            setTimeout(() => URL.revokeObjectURL(url), 60000); // 1分鐘後撤銷
+        }
+
+        /**
+         * 將所有轉換成功的檔案打包成 ZIP 並下載
+         */
+        async function downloadAllAsZip() {
+            if (convertedBlobs.length === 0) {
+                showErrorMessage('沒有成功轉換的檔案可以打包下載。');
+                return;
+            }
+
+            zipDownloadButton.disabled = true;
+            const originalText = zipDownloadButton.textContent;
+            zipDownloadButton.textContent = '正在生成 ZIP...';
+
+            try {
+                const zip = new JSZip();
+                convertedBlobs.forEach(item => {
+                    zip.file(item.filename, item.blob);
+                });
+
+                const zipBlob = await zip.generateAsync({ type: "blob" });
+                
+                const targetType = document.querySelector('input[name="format"]:checked').value;
+                const extension = targetType === 'image/png' ? 'png' : 'jpg';
+
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(zipBlob);
+                a.download = `heic-converted-${extension}-images.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // 釋放記憶體
+                URL.revokeObjectURL(a.href);
+
+            } catch (error) {
+                console.error('ZIP 打包失敗:', error);
+                showErrorMessage(`ZIP 打包時發生錯誤: ${error.message}`);
+            } finally {
+                zipDownloadButton.disabled = false;
+                zipDownloadButton.textContent = originalText;
+            }
+        }
+
+
+        /**
+         * 啟動整個轉換流程
+         */
+        async function startConversion() {
+            if (isConverting || selectedFiles.length === 0) return;
+
+            isConverting = true;
+            convertedBlobs = []; // 每次轉換前清空結果
+            zipDownloadButton.classList.add('hidden'); // 隱藏 ZIP 按鈕
+            convertButton.disabled = true;
+            spinner.classList.remove('hidden');
+            buttonText.textContent = '轉換中...';
+            fileInput.disabled = true;
+
+            const targetType = document.querySelector('input[name="format"]:checked').value;
+            const quality = qualitySlider.value;
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                // 使用 await 確保檔案依序轉換，避免瀏覽器過載
+                await convertFile(selectedFiles[i], targetType, quality, i);
+            }
+
+            // 轉換完成
+            isConverting = false;
+            fileInput.disabled = false;
+            spinner.classList.add('hidden');
+            buttonText.textContent = '轉換完成';
+            
+            // 只有成功轉換的檔案數量大於 0 時才顯示 ZIP 按鈕
+            if (convertedBlobs.length > 0) {
+                zipDownloadButton.classList.remove('hidden');
+            }
+
+            // 讓按鈕在幾秒後恢復為「重新轉換」
+            setTimeout(() => {
+                if (selectedFiles.length > 0) {
+                    convertButton.disabled = false;
+                    buttonText.textContent = '重新轉換';
+                } else {
+                    buttonText.textContent = '開始轉換';
+                }
+            }, 3000);
+        }
+
+        // --- 啟動時的初始化 ---
+        window.onload = function() {
+            // 確保一開始就設定了品質值顯示
+            qualityValue.textContent = qualitySlider.value;
+            updateZipButtonText(); // 初始化 ZIP 按鈕文字
+        };
+    </script>
+</body>
+</html>
