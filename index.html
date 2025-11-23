@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eoelior | 個人工具倉庫入口</title>
+    <meta name="description" content="eoelior 個人工具倉庫：流程圖繪製器與實用腳本集合。" />
+    <meta property="og:title" content="eoelior 個人工具倉庫" />
+    <meta property="og:description" content="集中管理與展示工具、腳本、以及流程圖繪製器等功能。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://github.com/eowilling/eoelior" />
+    <meta name="theme-color" content="#4f46e5" />
+    <!-- 引入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 jsPDF CDN for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* 設定字體為 Inter，用於更好的顯示效果 */
+        :root {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Canvas 容器確保視覺上的集中 */
+        #canvas-container {
+            border: 2px solid #e5e7eb;
+            background-color: #ffffff;
+            aspect-ratio: 16 / 9;
+            max-width: 100%;
+            height: auto;
+        }
+        /* 確保編輯框在最上層 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+        /* Zoom 控制按鈕的樣式 */
+        .zoom-controls {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .zoom-button {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .zoom-button:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'start-end': '#4f46e5', // Primary blue
+                        'process': '#10b981', // Secondary green
+                        'decision': '#f59e0b', // Accent amber
+                        'database': '#ef4444', // Red
+                        'dataio': '#3b82f6', // Light Blue
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- 入口頁專用附加樣式 -->
+    <style>
+        header.site-header { backdrop-filter: blur(6px); }
+        .gradient-text { background: linear-gradient(90deg,#4f46e5,#6366f1,#10b981); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col items-center p-4 min-h-screen">
+    <!-- 導覽列 / GitHub 入口 -->
+    <header class="site-header w-full max-w-5xl mb-4 sticky top-0 z-50">
+        <nav class="flex items-center justify-between bg-white/90 shadow-md rounded-xl px-5 py-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-bold gradient-text">eoelior</span>
+                <span class="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">alpha</span>
+            </div>
+            <ul class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
+                <li><a class="hover:text-indigo-600" href="#about">關於</a></li>
+                <li><a class="hover:text-indigo-600" href="#features">特色</a></li>
+                <li><a class="hover:text-indigo-600" href="#flowchart">流程圖工具</a></li>
+                <li><a class="hover:text-indigo-600" href="./專案紀錄.md">紀錄</a></li>
+                <li><a class="hover:text-indigo-600" href="https://github.com/eowilling/eoelior/issues" target="_blank" rel="noopener">Issues</a></li>
+            </ul>
+            <div class="flex items-center gap-3">
+                <a href="https://github.com/eowilling/eoelior" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-gray-900 text-white hover:bg-black">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.38 7.86 10.9.58.11.79-.25.79-.56 0-.27-.01-1.16-.02-2.11-3.2.7-3.88-1.36-3.88-1.36-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.74 1.26 3.41.96.1-.75.41-1.26.74-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.2-3.09-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.77.11 3.06.75.8 1.2 1.83 1.2 3.09 0 4.43-2.69 5.41-5.25 5.7.42.36.79 1.08.79 2.18 0 1.58-.02 2.85-.02 3.24 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero 區塊 -->
+    <section id="about" class="w-full max-w-5xl bg-white rounded-2xl shadow-lg px-8 py-12 mb-6">
+        <h1 class="text-4xl font-extrabold tracking-tight mb-4 gradient-text">eoelior 工具集入口</h1>
+        <p class="text-gray-700 text-lg leading-relaxed max-w-3xl mb-6">這裡是 <strong>個人工具倉庫</strong> 的可視化入口。集中展示正在製作的腳本、實驗性功能與視覺化小工具。下方的「流程圖繪製器」是其中一個互動式元件，可用於建立邏輯與系統設計草稿。</p>
+        <div class="flex flex-wrap gap-4">
+            <a href="#flowchart" class="px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 shadow">進入流程圖工具</a>
+            <a href="./專案紀錄.md" class="px-5 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300">查看專案紀錄</a>
+            <a href="https://github.com/eowilling/eoelior/issues" target="_blank" rel="noopener" class="px-5 py-3 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 shadow">追蹤議題</a>
+        </div>
+    </section>
+
+    <!-- 特色區塊 -->
+    <section id="features" class="w-full max-w-5xl bg-white rounded-2xl shadow-md px-8 py-10 mb-8">
+        <h2 class="text-2xl font-bold mb-4">特色與目的</h2>
+        <ul class="grid md:grid-cols-3 gap-6 text-sm text-gray-700">
+            <li class="p-4 rounded-lg bg-gray-50 border border-gray-200"><strong>流程圖即時編輯</strong><br/>可拖曳、雙擊編輯、匯出 PDF。</li>
+            <li class="p-4 rounded-lg bg-gray-50 border border-gray-200"><strong>節點直角/直線連線</strong><br/>支援路徑樣式選擇與錨點精準偵測。</li>
+            <li class="p-4 rounded-lg bg-gray-50 border border-gray-200"><strong>漸進式工具集合</strong><br/>未來將加入批次處理、格式轉換等腳本。</li>
+            <li class="p-4 rounded-lg bg-gray-50 border border-gray-200"><strong>單頁靜態部署</strong><br/>無需後端即可使用，易於 GitHub Pages 發佈。</li>
+            <li class="p-4 rounded-lg bg-gray-50 border border-gray-200"><strong>擴充友善結構</strong><br/>語意化區塊與 Tailwind 方便快速迭代。</li>
+            <li class="p-4 rounded-lg bg-gray-50 border border-gray-200"><strong>版本紀錄同步</strong><br/>透過 <code>專案紀錄.md</code> 追蹤演進與計畫。</li>
+        </ul>
+    </section>
+
+    <!-- 流程圖工具原有內容包一個 anchor -->
+    <div id="flowchart" class="w-full"></div>
+    <div class="w-full max-w-5xl bg-white shadow-xl rounded-xl p-6 space-y-4">
+        <h1 class="text-3xl font-bold text-gray-800 border-b pb-2 mb-4">流程圖繪製器 (錨點連線)</h1>
+        
+        <!-- 節點操作區 -->
+        <div class="flex flex-wrap gap-3 items-center justify-start border-b pb-4 mb-4">
+            <span class="text-lg font-medium text-gray-700 mr-2">節點類型：</span>
+            
+            <button id="addStartEnd" class="flex-1 min-w-[100px] bg-start-end hover:bg-indigo-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                起點/終點
+            </button>
+            <button id="addProcess" class="flex-1 min-w-[100px] bg-process hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                處理/步驟
+            </button>
+            <button id="addDecision" class="flex-1 min-w-[100px] bg-decision hover:bg-amber-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                判斷/決策
+            </button>
+            <button id="addDatabase" class="flex-1 min-w-[100px] bg-database hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                資料庫
+            </button>
+            <button id="addDataIO" class="flex-1 min-w-[100px] bg-dataio hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                輸入/輸出
+            </button>
+        </div>
+
+        <!-- 連線與匯出操作區 -->
+        <div class="flex flex-wrap gap-3 items-center justify-start border-b pb-4 mb-4">
+            <span class="text-lg font-medium text-gray-700 mr-2">工具：</span>
+            <button id="connectNodes" class="flex-1 min-w-[100px] bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                連線模式
+            </button>
+            <button id="removeNode" class="flex-1 min-w-[100px] bg-red-500 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                移除節點
+            </button>
+            <button id="exportPDF" class="flex-1 min-w-[100px] bg-sky-500 hover:bg-sky-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                匯出PDF
+            </button>
+
+            <!-- 縮放控制 -->
+            <div class="zoom-controls ml-4">
+                <span class="text-gray-700 font-medium">縮放:</span>
+                <button id="zoomOut" class="zoom-button">-</button>
+                <span id="currentScaleText" class="text-gray-700 font-semibold w-10 text-center">100%</span>
+                <button id="zoomIn" class="zoom-button">+</button>
+            </div>
+        </div>
+
+        <!-- 狀態與提示訊息 -->
+        <div id="messageBox" class="p-3 bg-blue-100 border border-blue-300 text-blue-800 rounded-lg text-sm transition duration-300">
+            點擊上方的按鈕來新增節點，或點擊「連線模式」來連接兩個節點。
+        </div>
+
+        <!-- 繪圖區 -->
+        <div id="canvas-container" class="relative rounded-lg overflow-hidden shadow-inner">
+            <canvas id="flowchartCanvas" class="w-full h-full"></canvas>
+        </div>
+        
+        <!-- 節點編輯彈出框 (Modal) -->
+        <div id="editModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">編輯節點文字</h3>
+                <textarea id="nodeTextInput" rows="3" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-start-end focus:border-start-end mb-4 resize-y" placeholder="請輸入節點的新文字（使用 Shift+Enter 換行）"></textarea>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelEdit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-150">
+                        取消
+                    </button>
+                    <button id="saveEdit" class="bg-start-end hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-150">
+                        儲存 (Enter)
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 連線樣式選擇彈出框 (New Modal) -->
+        <div id="pathModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">選擇連線樣式</h3>
+                <p class="text-gray-600 mb-6">您希望這條連線如何呈現？</p>
+                <div class="space-y-3">
+                    <button data-path-style="orthogonal" class="w-full bg-process hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
+                        直角路徑 (V-H-V/H-V-H)
+                    </button>
+                    <button data-path-style="straight" class="w-full bg-dataio hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
+                        直線路徑 (斜線)
+                    </button>
+                </div>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button id="cancelPath" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-150">
+                        取消連線
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 操作說明 -->
+        <div class="text-sm text-gray-600 pt-2">
+            <p><strong>操作提示：</strong></p>
+            <ul class="list-disc list-inside ml-4 space-y-1">
+                <li>**連線**：進入連線模式後，**請精確點擊節點邊緣，以選取起點錨點**，然後點擊終點節點的邊緣來選取終點錨點。</li>
+                <li>**直角路徑**：會自動處理 V-H-V / H-V-H 分支，讓路徑看起來更整齊。</li>
+                <li>**直線路徑**：適用於不需要直角，只需要兩點間連線的簡單結構。</li>
+                <li>**拖曳**：點擊並按住節點即可移動。</li>
+                <li>**編輯文字**：**雙擊節點**會彈出編輯框來修改文字內容。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-10 w-full max-w-5xl text-center text-xs text-gray-500 pb-6">
+        <p>© 2025 eoelior · 建置於 GitHub · <a href="https://github.com/eowilling/eoelior" class="hover:text-indigo-600">Repository</a></p>
+    </footer>
+
+    <script type="text/javascript">
+        // JavaScript 流程圖邏輯
+        const canvas = document.getElementById('flowchartCanvas');
+        const ctx = canvas.getContext('2d');
+        const messageBox = document.getElementById('messageBox');
+        
+        let nodes = [];
+        let edges = [];
+        let selectedNode = null;
+        let editingNode = null; 
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let isConnecting = false;
+        let connectingStartNode = null;
+        let connectingStartAnchor = null; 
+        let connectingEndNode = null; 
+        let connectingEndAnchor = null; 
+        let currentScale = 1.0; 
+        let mousePosForTempLine = { x: 0, y: 0 }; 
+
+        const editModal = document.getElementById('editModal');
+        const nodeTextInput = document.getElementById('nodeTextInput');
+        const saveEditButton = document.getElementById('saveEdit');
+        const cancelEditButton = document.getElementById('cancelEdit');
+        const currentScaleText = document.getElementById('currentScaleText');
+
+        const pathModal = document.getElementById('pathModal');
+        const pathStyleButtons = pathModal.querySelectorAll('button[data-path-style]');
+        const cancelPathButton = document.getElementById('cancelPath');
+
+        // 定義節點的基礎尺寸和傾斜度
+        const MIN_NODE_WIDTH = 120;
+        const MIN_NODE_HEIGHT = 60;
+        const DECISION_SIZE = 80;
+        const TEXT_PADDING = 30;
+        const LINE_HEIGHT_SCALE_BASE = 20;
+        const IO_SHEAR = 20;
+        const ANCHOR_DETECTION_RANGE = 20; // 錨點偵測範圍 (點擊位置到錨點的距離)
+
+        // 節點顏色映射
+        const NodeColors = {
+            'startEnd': '#4f46e5',
+            'process': '#10b981',
+            'decision': '#f59e0b',
+            'database': '#ef4444',
+            'dataio': '#3b82f6'
+        };
+
+        // --- 輔助函式 ---
+        
+        /**
+         * 測量文字並進行自動換行和尺寸計算。
+         */
+        function measureTextDimensions(text, maxWrapWidth, lineHeight, context) {
+            const rawLines = text.split('\n');
+            const finalWrappedLines = [];
+            let maxLineWidth = 0;
+
+            context.font = `${14 / currentScale}px Inter, sans-serif`;
+
+            for (const rawLine of rawLines) {
+                if (rawLine.trim() === '') {
+                    finalWrappedLines.push('');
+                    continue;
+                }
+                
+                const words = rawLine.split(' ');
+                let currentLine = '';
+
+                for(let n = 0; n < words.length; n++) {
+                    const testLine = currentLine + words[n] + (n < words.length - 1 ? ' ' : '');
+                    const metrics = context.measureText(testLine);
+                    const testWidth = metrics.width;
+                    
+                    if (testWidth > maxWrapWidth && n > 0) {
+                        const lineToPush = currentLine.trim();
+                        finalWrappedLines.push(lineToPush);
+                        maxLineWidth = Math.max(maxLineWidth, context.measureText(lineToPush).width);
+                        currentLine = words[n] + ' ';
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                if (currentLine.trim() !== '') {
+                    const lineToPush = currentLine.trim();
+                    finalWrappedLines.push(lineToPush);
+                    maxLineWidth = Math.max(maxLineWidth, context.measureText(lineToPush).width);
+                }
+            }
+
+            const totalHeight = finalWrappedLines.length * lineHeight;
+            
+            return {
+                lines: finalWrappedLines,
+                contentWidth: maxLineWidth,
+                contentHeight: totalHeight,
+            };
+        }
+
+        /**
+         * 獲取節點的四個主要錨點座標 {x, y, side}。
+         */
+        function getNodeAnchors(node) {
+            const halfW = node.width / 2;
+            const halfH = node.height / 2;
+            
+            // 對所有形狀，錨點位置都是中心點的四個方向極值
+            return {
+                top: { x: node.x, y: node.y - halfH, side: 'top' },
+                right: { x: node.x + halfW, y: node.y, side: 'right' },
+                bottom: { x: node.x, y: node.y + halfH, side: 'bottom' },
+                left: { x: node.x - halfW, y: node.y, side: 'left' }
+            };
+        }
+
+        /**
+         * 找到點擊座標 (px, py) 距離最近的錨點。
+         */
+        function findNearestAnchor(node, px, py) {
+            const anchors = getNodeAnchors(node);
+            let bestAnchor = null;
+            let minDistanceSq = Infinity;
+
+            for (const key in anchors) {
+                const anchor = anchors[key];
+                const distSq = (anchor.x - px) ** 2 + (anchor.y - py) ** 2;
+
+                if (distSq < minDistanceSq) {
+                    minDistanceSq = distSq;
+                    bestAnchor = anchor;
+                }
+            }
+            
+            const distance = Math.sqrt(minDistanceSq);
+            // 只有當點擊距離最近錨點足夠近時，才返回該錨點
+            if (distance < ANCHOR_DETECTION_RANGE / currentScale) {
+                 return bestAnchor; 
+            }
+            return null;
+        }
+
+        // --- 核心類別 (Node, Edge) ---
+
+        class Node {
+            constructor(x, y, type, text) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.text = text;
+                this.width = MIN_NODE_WIDTH; 
+                this.height = MIN_NODE_HEIGHT;
+                this.wrappedLines = [];
+            }
+            
+            // 動態計算節點尺寸 (與前一版相同)
+            calculateSize(context) {
+                const lineHeight = LINE_HEIGHT_SCALE_BASE / currentScale;
+                let requiredWidth = MIN_NODE_WIDTH;
+                let requiredHeight = MIN_NODE_HEIGHT;
+                
+                let tempMaxWidth = MIN_NODE_WIDTH - TEXT_PADDING; 
+                let textMetrics = measureTextDimensions(this.text, tempMaxWidth, lineHeight, context);
+                
+                if (textMetrics.contentWidth > tempMaxWidth) {
+                    tempMaxWidth = textMetrics.contentWidth;
+                    textMetrics = measureTextDimensions(this.text, tempMaxWidth, lineHeight, context);
+                }
+
+                requiredWidth = Math.max(MIN_NODE_WIDTH, textMetrics.contentWidth + TEXT_PADDING);
+                requiredHeight = Math.max(MIN_NODE_HEIGHT, textMetrics.contentHeight + TEXT_PADDING);
+                
+                if (this.type === 'decision') {
+                    const requiredDim = Math.max(DECISION_SIZE, requiredWidth, requiredHeight);
+                    requiredWidth = requiredDim;
+                    requiredHeight = requiredDim;
+                }
+                
+                this.width = requiredWidth;
+                this.height = requiredHeight;
+                this.wrappedLines = textMetrics.lines;
+            }
+
+            // 檢查點擊是否在節點範圍內 (與前一版相同)
+            isHit(px, py) {
+                const halfW = this.width / 2;
+                const halfH = this.height / 2;
+                return px >= this.x - halfW && px <= this.x + halfW &&
+                       py >= this.y - halfH && py <= this.y + halfH;
+            }
+
+            draw(context, isSelected) {
+                this.calculateSize(context); 
+
+                context.save();
+                
+                const halfW = this.width / 2;
+                const halfH = this.height / 2;
+                const radius = 10;
+                const color = NodeColors[this.type];
+                const strokeStyle = isSelected ? '#ff0000' : '#333333';
+                const lineWidth = isSelected ? 4 / currentScale : 2 / currentScale;
+
+                // 根據類型繪製形狀
+                if (this.type === 'startEnd') {
+                    context.beginPath();
+                    this._drawRoundedRect(context, this.x - halfW, this.y - halfH, this.width, this.height, radius);
+                } else if (this.type === 'process') {
+                    context.beginPath();
+                    context.rect(this.x - halfW, this.y - halfH, this.width, this.height);
+                } else if (this.type === 'decision') {
+                    context.beginPath();
+                    context.moveTo(this.x, this.y - halfH); 
+                    context.lineTo(this.x + halfW, this.y);   
+                    context.lineTo(this.x, this.y + halfH); 
+                    context.lineTo(this.x - halfW, this.y);   
+                    context.closePath();
+                } else if (this.type === 'database') {
+                    const cyl_r = this.width / 2; 
+                    const cyl_ey = Math.min(10, this.height * 0.1); 
+                    const topY = this.y - halfH + cyl_ey;
+                    const bottomY = this.y + halfH - cyl_ey;
+
+                    context.setLineDash([]); 
+
+                    // 1. 繪製身體的路徑
+                    context.beginPath();
+                    context.moveTo(this.x - cyl_r, topY); 
+                    context.lineTo(this.x - cyl_r, bottomY); 
+                    context.ellipse(this.x, bottomY, cyl_r, cyl_ey, 0, Math.PI, 0, false); 
+                    context.lineTo(this.x + cyl_r, topY); 
+
+                    context.fillStyle = color;
+                    context.fill();
+                    context.strokeStyle = strokeStyle;
+                    context.lineWidth = lineWidth;
+                    context.stroke();
+
+                    // 2. 繪製頂部橢圓的外輪廓
+                    context.beginPath();
+                    context.ellipse(this.x, topY, cyl_r, cyl_ey, 0, 0, Math.PI, true);
+                    context.ellipse(this.x, topY, cyl_r, cyl_ey, 0, Math.PI, 0, true);
+
+                    context.fillStyle = color; 
+                    context.fill(); 
+                    context.stroke(); 
+
+                    // 3. 繪製頂部橢圓的凹形/隱藏弧線
+                    context.beginPath();
+                    context.ellipse(this.x, topY, cyl_r, cyl_ey, 0, 0, Math.PI, false); 
+                    context.strokeStyle = strokeStyle;
+                    context.lineWidth = lineWidth;
+                    context.stroke();
+                } else if (this.type === 'dataio') {
+                    context.beginPath();
+                    // 平行四邊形 (輸入/輸出)
+                    context.moveTo(this.x - halfW + IO_SHEAR, this.y - halfH);
+                    context.lineTo(this.x + halfW, this.y - halfH);
+                    context.lineTo(this.x + halfW - IO_SHEAR, this.y + halfH);
+                    context.lineTo(this.x - halfW, this.y + halfH);
+                    context.closePath();
+                }
+
+                if (this.type !== 'database') {
+                    context.fillStyle = color;
+                    context.fill();
+                    context.strokeStyle = strokeStyle;
+                    context.lineWidth = lineWidth; 
+                    context.stroke();
+                }
+
+                // 繪製文字
+                context.fillStyle = '#ffffff';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                const lineHeight = LINE_HEIGHT_SCALE_BASE / currentScale;
+                this._drawText(context, this.x, this.y, lineHeight);
+
+                context.restore();
+            }
+
+            _drawRoundedRect(context, x, y, width, height, radius) {
+                context.moveTo(x + radius, y);
+                context.lineTo(x + width - radius, y);
+                context.arcTo(x + width, y, x + width, y + radius, radius);
+                context.lineTo(x + width, y + height - radius);
+                context.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+                context.lineTo(x + radius, y + height);
+                context.arcTo(x, y + height, x, y + height - radius, radius);
+                context.lineTo(x, y + radius);
+                context.arcTo(x, y, x + radius, y, radius);
+            }
+
+            _drawText(context, x, y, lineHeight) {
+                const lines = this.wrappedLines;
+                if (lines.length === 0) return;
+
+                const totalHeight = lines.length * lineHeight;
+                let currentY = y - (totalHeight / 2) + (lineHeight / 2);
+
+                for(let i = 0; i < lines.length; i++) {
+                    context.fillText(lines[i], x, currentY);
+                    currentY += lineHeight;
+                }
+            }
+        }
+
+        class Edge {
+            constructor(startNode, endNode, startAnchor, endAnchor, pathStyle = 'orthogonal') {
+                this.start = startNode;
+                this.end = endNode;
+                this.startAnchor = startAnchor;
+                this.endAnchor = endAnchor;
+                this.pathStyle = pathStyle; 
+            }
+
+            draw(context) {
+                context.save();
+                context.strokeStyle = '#6b7280';
+                context.lineWidth = 2 / currentScale;
+                
+                // 使用錨點座標
+                const P_start = this.startAnchor;
+                const P_end = this.endAnchor;
+                
+                context.beginPath();
+                context.moveTo(P_start.x, P_start.y);
+
+                // --- 根據 pathStyle 選擇連線樣式 ---
+                
+                if (this.pathStyle === 'straight') {
+                    // 樣式 1: 直線連線 (最短路徑)
+                    context.lineTo(P_end.x, P_end.y);
+
+                } else {
+                    // 樣式 2: 正交路徑 (Orthogonal Path - 直角)
+                    const startSide = P_start.side;
+                    const endSide = P_end.side;
+
+                    // 1. 同側連線 (需繞開節點)
+                    if (startSide === endSide) {
+                        if (startSide === 'top' || startSide === 'bottom') { // V-H-V
+                            const detourY = P_start.y + (startSide === 'bottom' ? 50 / currentScale : -50 / currentScale);
+                            context.lineTo(P_start.x, detourY);
+                            context.lineTo(P_end.x, detourY);
+                        } else { // H-V-H
+                            const detourX = P_start.x + (startSide === 'right' ? 50 / currentScale : -50 / currentScale);
+                            context.lineTo(detourX, P_start.y);
+                            context.lineTo(detourX, P_end.y);
+                        }
+                    
+                    // 2. 垂直對向連線 (Top <-> Bottom) 或 水平對向連線 (Left <-> Right)
+                    } else if ((startSide === 'top' && endSide === 'bottom') || (startSide === 'bottom' && endSide === 'top')) {
+                        // V-H-V: 確保中間水平線在兩節點之間
+                        const midY = (P_start.y + P_end.y) / 2;
+                        context.lineTo(P_start.x, midY);
+                        context.lineTo(P_end.x, midY);
+
+                    } else if ((startSide === 'left' && endSide === 'right') || (startSide === 'right' && endSide === 'left')) {
+                        // H-V-H: 確保中間垂直線在兩節點之間
+                        const midX = (P_start.x + P_end.x) / 2;
+                        context.lineTo(midX, P_start.y);
+                        context.lineTo(midX, P_end.y);
+                        
+                    // 3. 鄰側連線 (L 形線)
+                    } else if (startSide === 'top' || startSide === 'bottom') {
+                        // 起點為垂直側 (V-H)
+                        context.lineTo(P_start.x, P_end.y);
+                    } else {
+                        // 起點為水平側 (H-V)
+                        context.lineTo(P_end.x, P_start.y);
+                    }
+
+                    context.lineTo(P_end.x, P_end.y); // 最後連到終點錨點
+                }
+                
+                context.stroke();
+
+                // 繪製箭頭: 傳遞 P_start 和 P_end 座標物件
+                this._drawArrowhead(context, P_start, P_end);
+
+                context.restore();
+            }
+
+            _drawArrowhead(context, P_start, P_end) { 
+                const toX = P_end.x;
+                const toY = P_end.y;
+                const headlen = 10 / currentScale;
+                let angle;
+                
+                // 箭頭方向由連線的最後一個線段決定。
+                // 由於我們使用分段連線，需要找到 P_end 前的那個點 P_prev。
+                let P_prev = P_start; 
+
+                if (this.pathStyle === 'orthogonal') {
+                    // 找出最後一段線的起點 (P_prev)
+                    const startSide = P_start.side;
+                    const endSide = P_end.side;
+
+                    if (startSide === endSide) {
+                         // Detour point logic for same side connection
+                         if (startSide === 'top' || startSide === 'bottom') { // V-H-V
+                             P_prev = { x: P_end.x, y: P_start.y + (startSide === 'bottom' ? 50 / currentScale : -50 / currentScale) };
+                         } else { // H-V-H
+                             P_prev = { x: P_start.x + (startSide === 'right' ? 50 / currentScale : -50 / currentScale), y: P_end.y };
+                         }
+                    } else if ((startSide === 'top' && endSide === 'bottom') || (startSide === 'bottom' && endSide === 'top')) {
+                        // V-H-V: P_prev 是 (P_end.x, midY)
+                        const midY = (P_start.y + P_end.y) / 2;
+                        P_prev = { x: P_end.x, y: midY };
+                    } else if ((startSide === 'left' && endSide === 'right') || (startSide === 'right' && endSide === 'left')) {
+                        // H-V-H: P_prev 是 (midX, P_end.y)
+                        const midX = (P_start.x + P_end.x) / 2;
+                        P_prev = { x: midX, y: P_end.y };
+                    } else if (startSide === 'top' || startSide === 'bottom') {
+                        // V-H: P_prev 是 (P_start.x, P_end.y)
+                        P_prev = { x: P_start.x, y: P_end.y };
+                    } else {
+                        // H-V: P_prev 是 (P_end.x, P_start.y)
+                        P_prev = { x: P_end.x, y: P_start.y };
+                    }
+
+                    angle = Math.atan2(toY - P_prev.y, toX - P_prev.x);
+                } else {
+                    // 直線模式: P_prev 就是 P_start
+                    angle = Math.atan2(toY - P_start.y, toX - P_start.x);
+                }
+
+                
+                context.fillStyle = '#6b7280';
+                context.beginPath();
+                context.moveTo(toX, toY);
+                context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+                context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+                context.closePath();
+                context.fill();
+            }
+        }
+
+        // --- 核心功能函數 ---
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            ctx.scale(currentScale, currentScale);
+
+            edges.forEach(edge => edge.draw(ctx));
+
+            nodes.forEach(node => {
+                const isHighlighted = (isConnecting && node === connectingStartNode) || node === selectedNode;
+                node.draw(ctx, isHighlighted);
+            });
+            
+            // --- 繪製連線預覽虛線 ---
+            if (isConnecting && connectingStartNode && connectingStartAnchor) {
+                ctx.save();
+                ctx.strokeStyle = '#9ca3af'; 
+                ctx.lineWidth = 2 / currentScale;
+                ctx.setLineDash([5 / currentScale, 5 / currentScale]); 
+                
+                // 預覽線從選定的錨點開始
+                const P_start = connectingStartAnchor; 
+
+                ctx.beginPath();
+                ctx.moveTo(P_start.x, P_start.y);
+                ctx.lineTo(mousePosForTempLine.x, mousePosForTempLine.y);
+                ctx.stroke();
+                ctx.restore();
+            }
+            // --- 結束繪製連線預覽虛線 ---
+            
+            ctx.restore();
+        }
+
+        function updateScaleText() {
+            currentScaleText.textContent = `${Math.round(currentScale * 100)}%`;
+        }
+
+        function getMousePos(event) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (event.clientX - rect.left) * scaleX / currentScale,
+                y: (event.clientY - rect.top) * scaleY / currentScale
+            };
+        }
+
+        function handleMouseDown(event) {
+            if (event.button !== 0) return;
+            if (!editModal.classList.contains('hidden') || !pathModal.classList.contains('hidden')) return;
+
+            const pos = getMousePos(event);
+            const hitNode = nodes.find(node => node.isHit(pos.x, pos.y));
+            
+            if (hitNode) {
+                selectedNode = hitNode; 
+                
+                if (isConnecting) {
+                    const nearestAnchor = findNearestAnchor(hitNode, pos.x, pos.y);
+                    
+                    if (!nearestAnchor) {
+                         showMessage('連線失敗：請更精確地點擊節點**邊緣附近**，選取一個錨點！', 'bg-red-100 border-red-300 text-red-800');
+                         return; // 必須點中錨點範圍才能連線
+                    }
+
+                    if (!connectingStartNode) {
+                        // 步驟 1: 選擇起點
+                        connectingStartNode = selectedNode;
+                        connectingStartAnchor = nearestAnchor; // 儲存起點錨點
+                        showMessage(`**連線模式** - 已選擇起點：${selectedNode.text.split('\n')[0].substring(0, 10)}...。請點擊終點節點的邊緣。`, 'bg-yellow-100 border-yellow-300 text-yellow-800');
+                    } else if (connectingStartNode !== selectedNode) {
+                        // 步驟 2: 選擇終點
+                        connectingEndNode = selectedNode;
+                        connectingEndAnchor = nearestAnchor; // 儲存終點錨點
+                        pathModal.classList.remove('hidden');
+                        showMessage(`請為連線選擇樣式。`, 'bg-amber-100 border-amber-300 text-amber-800');
+                    } else {
+                        // 點擊同一個節點，取消
+                        connectingStartNode = null;
+                        connectingStartAnchor = null;
+                        showMessage('已取消選擇起點。請重新點擊起點。', 'bg-red-100 border-red-300 text-red-800');
+                    }
+                } else {
+                    // 處理拖曳模式的點擊
+                    isDragging = true;
+                    dragOffsetX = pos.x - selectedNode.x;
+                    dragOffsetY = pos.y - selectedNode.y;
+                }
+                draw();
+            } else {
+                // 取消選定和連線狀態
+                connectingStartNode = null;
+                connectingStartAnchor = null;
+                connectingEndNode = null;
+                connectingEndAnchor = null;
+                selectedNode = null; 
+                // isConnecting 不在此處切換，必須由按鈕控制
+                draw();
+                showMessage('點擊上方的按鈕來新增節點，或點擊「連線模式」切換。');
+            }
+        }
+
+        function handleMouseMove(event) {
+            const pos = getMousePos(event);
+            mousePosForTempLine = pos; 
+
+            if (isDragging && selectedNode) {
+                selectedNode.x = pos.x - dragOffsetX;
+                selectedNode.y = pos.y - dragOffsetY;
+                draw();
+            } else if (isConnecting && connectingStartAnchor) {
+                draw(); // 重繪以顯示預覽虛線
+            }
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+        }
+        
+        function handleDoubleClick(event) {
+            const pos = getMousePos(event);
+            const node = nodes.find(n => n.isHit(pos.x, pos.y));
+
+            if (node) {
+                editingNode = node;
+                nodeTextInput.value = node.text; 
+                editModal.classList.remove('hidden');
+                nodeTextInput.focus();
+                
+                isDragging = false;
+                selectedNode = node;
+                draw();
+            }
+        }
+
+        function saveNodeText() {
+            if (editingNode) {
+                const newText = nodeTextInput.value;
+                if (newText.trim() !== "") {
+                    editingNode.text = newText;
+                    draw();
+                    showMessage(`已將節點文字更新為：「${newText.split('\n')[0].substring(0, 10)}...」。`, 'bg-green-100 border-green-300 text-green-800');
+                } else {
+                    showMessage('節點文字不能為空。', 'bg-red-100 border-red-300 text-red-800');
+                }
+            }
+            editModal.classList.add('hidden');
+            editingNode = null;
+        }
+
+        function cancelEdit() {
+            editModal.classList.add('hidden');
+            editingNode = null;
+            showMessage('已取消編輯。');
+        }
+
+        // 處理連線樣式選擇
+        function handlePathSelection(style) {
+            if (connectingStartNode && connectingEndNode && connectingStartAnchor && connectingEndAnchor) {
+                // 使用選擇的樣式和錨點建立連線
+                edges.push(new Edge(connectingStartNode, connectingEndNode, connectingStartAnchor, connectingEndAnchor, style));
+                
+                showMessage(`連線已建立，使用「${style === 'orthogonal' ? '直角路徑' : '直線路徑'}」。**已退出連線模式**。`, 'bg-green-100 border-green-300 text-green-800');
+            }
+            
+            // 清除連線狀態，隱藏彈出框，並退出連線模式
+            resetConnectionState();
+            isConnecting = false; // 確保退出模式
+            pathModal.classList.add('hidden');
+            draw();
+            // 更新按鈕樣式以反映退出連線模式
+            document.getElementById('connectNodes').classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+            document.getElementById('connectNodes').classList.add('bg-gray-500', 'hover:bg-gray-700');
+        }
+
+        function resetConnectionState() {
+            connectingStartNode = null;
+            connectingStartAnchor = null;
+            connectingEndNode = null;
+            connectingEndAnchor = null;
+        }
+
+        // 取消連線
+        function cancelPath() {
+            resetConnectionState();
+            isConnecting = false; // 確保退出模式
+            pathModal.classList.add('hidden');
+            draw();
+            showMessage('已取消連線。**已退出連線模式**。', 'bg-red-100 border-red-300 text-red-800');
+            // 更新按鈕樣式以反映退出連線模式
+            document.getElementById('connectNodes').classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+            document.getElementById('connectNodes').classList.add('bg-gray-500', 'hover:bg-gray-700');
+        }
+
+        function addNode(type, defaultText) {
+            const newNode = new Node(canvas.width / 2 / currentScale, canvas.height / 2 / currentScale, type, defaultText);
+            nodes.push(newNode);
+            // 確保在新增節點時退出連線模式
+            if (isConnecting) {
+                isConnecting = false;
+                document.getElementById('connectNodes').classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+                document.getElementById('connectNodes').classList.add('bg-gray-500', 'hover:bg-gray-700');
+            }
+            resetConnectionState();
+            selectedNode = newNode; 
+            draw();
+            showMessage(`已新增「${defaultText.split('\n')[0]}...」節點。雙擊可編輯文字。`);
+        }
+        
+        function toggleConnectMode() {
+            isConnecting = !isConnecting;
+            resetConnectionState();
+            selectedNode = null;
+            const connectButton = document.getElementById('connectNodes');
+
+            if (isConnecting) {
+                // 進入連線模式：變黃色
+                connectButton.classList.remove('bg-gray-500', 'hover:bg-gray-700');
+                connectButton.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+                showMessage('**已進入連線模式**。請點擊**節點邊緣**作為起點錨點。', 'bg-yellow-100 border-yellow-300 text-yellow-800');
+            } else {
+                // 退出連線模式：變回灰色
+                connectButton.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+                connectButton.classList.add('bg-gray-500', 'hover:bg-gray-700');
+                showMessage('已退出連線模式。', 'bg-blue-100 border-blue-300 text-blue-800');
+            }
+            draw(); 
+        }
+
+        function removeSelectedNode() {
+            if (!selectedNode) {
+                showMessage('請先點擊並選中您要移除的節點。', 'bg-red-100 border-red-300 text-red-800');
+                return;
+            }
+
+            edges = edges.filter(edge => edge.start !== selectedNode && edge.end !== selectedNode);
+
+            const nodeIndex = nodes.indexOf(selectedNode);
+            if (nodeIndex > -1) {
+                nodes.splice(nodeIndex, 1);
+            }
+            
+            const removedText = selectedNode.text.split('\n')[0].substring(0, 10) + '...';
+            selectedNode = null;
+            isDragging = false;
+            resetConnectionState();
+
+            // 確保在移除節點時退出連線模式
+            if (isConnecting) {
+                isConnecting = false;
+                document.getElementById('connectNodes').classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+                document.getElementById('connectNodes').classList.add('bg-gray-500', 'hover:bg-gray-700');
+            }
+
+            draw();
+            showMessage(`已移除節點：「${removedText}」。`, 'bg-green-100 border-green-300 text-green-800');
+        }
+
+        function exportToPDF() {
+            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+                showMessage('錯誤：jsPDF 函式庫未載入。無法匯出 PDF。', 'bg-red-100 border-red-300 text-red-800');
+                return;
+            }
+
+            showMessage('正在準備 PDF 檔案，請稍候...', 'bg-yellow-100 border-yellow-300 text-yellow-800');
+
+            const { jsPDF } = window.jspdf;
+            
+            const tempScale = currentScale;
+            currentScale = 1.0; 
+            const previousSelectedNode = selectedNode;
+            selectedNode = null;
+            draw(); 
+
+            const imgData = canvas.toDataURL('image/png');
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+
+            const pdf = new jsPDF('landscape', 'px', [canvasWidth, canvasHeight]); 
+            pdf.addImage(imgData, 'PNG', 0, 0, canvasWidth, canvasHeight);
+            pdf.save("流程圖_" + new Date().toISOString().slice(0, 10) + ".pdf");
+            
+            currentScale = tempScale;
+            selectedNode = previousSelectedNode;
+            draw();
+            updateScaleText();
+            
+            showMessage('PDF 匯出成功！', 'bg-green-100 border-green-300 text-green-800');
+        }
+
+        function showMessage(text, classes = 'bg-blue-100 border-blue-300 text-blue-800') {
+            messageBox.className = `p-3 border rounded-lg text-sm transition duration-300 ${classes}`;
+            messageBox.innerHTML = text;
+        }
+        
+        function changeScale(delta) {
+            const newScale = Math.min(2.0, Math.max(0.5, currentScale + delta));
+            if (newScale !== currentScale) {
+                currentScale = newScale;
+                updateScaleText();
+                draw();
+                showMessage(`縮放比例已調整為 ${Math.round(currentScale * 100)}%。`);
+            }
+        }
+
+
+        // --- 初始化與事件監聽 ---
+
+        window.addEventListener('load', () => {
+            resizeCanvas(); 
+            updateScaleText();
+
+            window.addEventListener('resize', resizeCanvas);
+            
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('mouseout', handleMouseUp);
+            canvas.addEventListener('dblclick', handleDoubleClick);
+
+            // 編輯框事件監聽
+            saveEditButton.addEventListener('click', saveNodeText);
+            cancelEditButton.addEventListener('click', cancelEdit);
+            nodeTextInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveNodeText();
+                }
+            });
+
+            // 連線樣式選擇框事件監聽
+            pathStyleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    handlePathSelection(button.getAttribute('data-path-style'));
+                });
+            });
+            cancelPathButton.addEventListener('click', cancelPath);
+
+
+            // UI 按鈕事件監聽
+            document.getElementById('addStartEnd').addEventListener('click', () => addNode('startEnd', '應用程式啟動'));
+            document.getElementById('addProcess').addEventListener('click', () => addNode('process', '處理請求'));
+            document.getElementById('addDecision').addEventListener('click', () => addNode('decision', '條件\n成立?'));
+            document.getElementById('addDatabase').addEventListener('click', () => addNode('database', '資料庫存取'));
+            document.getElementById('addDataIO').addEventListener('click', () => addNode('dataio', '輸入/輸出資料'));
+            document.getElementById('connectNodes').addEventListener('click', toggleConnectMode);
+            document.getElementById('removeNode').addEventListener('click', removeSelectedNode); 
+            document.getElementById('exportPDF').addEventListener('click', exportToPDF);
+            
+            document.getElementById('zoomIn').addEventListener('click', () => changeScale(0.1));
+            document.getElementById('zoomOut').addEventListener('click', () => changeScale(-0.1));
+
+            // 預設流程範例 (包含兩種連線樣式，並使用明確的錨點)
+            const initialWidth = canvas.width / 1.0;
+            const initialHeight = canvas.height / 1.0;
+            
+            const startNode = new Node(initialWidth / 4, initialHeight / 5, 'startEnd', '應用程式啟動');
+            const processNode = new Node(initialWidth / 4, initialHeight * 2 / 5, 'process', '接收用戶資料');
+            const decisionNode = new Node(initialWidth * 2 / 3, initialHeight * 2 / 5, 'decision', '數據\n有效?');
+            const successNode = new Node(initialWidth / 2, initialHeight * 4 / 5, 'process', '成功路徑：處理請求');
+            const failNode = new Node(initialWidth * 5 / 6, initialHeight * 4 / 5, 'process', '失敗路徑：顯示錯誤');
+            const endNode = new Node(initialWidth / 6, initialHeight * 4 / 5, 'startEnd', '流程結束');
+
+            nodes.push(startNode, processNode, decisionNode, successNode, failNode, endNode);
+            
+            // 預設連線：直角路徑
+            const a1 = getNodeAnchors(startNode).bottom;
+            const a2 = getNodeAnchors(processNode).top;
+            edges.push(new Edge(startNode, processNode, a1, a2, 'orthogonal')); 
+
+            const a3 = getNodeAnchors(processNode).right;
+            const a4 = getNodeAnchors(decisionNode).left;
+            edges.push(new Edge(processNode, decisionNode, a3, a4, 'orthogonal')); 
+            
+            // 菱形向下分支：使用直角路徑實現分支效果
+            const a5 = getNodeAnchors(decisionNode).bottom;
+            const a6 = getNodeAnchors(successNode).top;
+            edges.push(new Edge(decisionNode, successNode, a5, a6, 'orthogonal')); 
+
+            const a7 = getNodeAnchors(decisionNode).right;
+            const a8 = getNodeAnchors(failNode).top;
+            edges.push(new Edge(decisionNode, failNode, a7, a8, 'orthogonal')); 
+            
+            // 跨越長距離的直線連線
+            const a9 = getNodeAnchors(successNode).left;
+            const a10 = getNodeAnchors(endNode).right;
+            edges.push(new Edge(successNode, endNode, a9, a10, 'straight'));
+
+            const a11 = getNodeAnchors(failNode).left;
+            const a12 = getNodeAnchors(endNode).bottom; // 故意連到底部，測試 H-V-H 邏輯
+            edges.push(new Edge(failNode, endNode, a11, a12, 'orthogonal'));
+
+
+            draw();
+        });
+    </script>
+</body>
+</html>
