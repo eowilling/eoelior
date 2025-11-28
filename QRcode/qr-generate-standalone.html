@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code 生成器 - 15mm x 15mm PDF</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "微軟正黑體", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", "Noto Sans SC", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #0369a1;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #4338ca;
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn-loading {
+            position: relative;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .preview-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .preview-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .qr-preview {
+            text-align: center;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .qr-preview canvas {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QR Code 生成器</h1>
+        <p class="subtitle">生成 PDF QR Code（紙張：寬 3.3cm × 高 1.8cm，QR Code：1.5cm × 1.5cm，300 DPI）</p>
+
+        <div class="info-box">
+            <strong>使用說明：</strong>
+            輸入數字或特殊符號組成的文字，系統將生成對應的 QR Code PDF 檔案。<br>
+            <strong>規格：</strong>PDF 紙張大小 寬 3.3cm（水平）× 高 1.8cm（垂直），QR Code 尺寸 1.5cm × 1.5cm，解析度 300 DPI，位置：水平靠左、垂直置中。
+        </div>
+
+        <form id="qr-form">
+            <div class="form-group">
+                <label for="content">輸入內容（數字或特殊符號）</label>
+                <input
+                    type="text"
+                    id="content"
+                    name="content"
+                    placeholder="例如：123456, ABC-123, 250731316,100376371161"
+                    required
+                    autofocus
+                />
+            </div>
+
+            <button type="button" class="btn" id="preview-btn">
+                預覽 QR Code
+            </button>
+
+            <div class="btn-group" style="margin-top: 10px;">
+                <button type="submit" class="btn" id="generate-btn" style="flex: 1;">
+                    生成 QR Code PDF
+                </button>
+                <button type="button" class="btn btn-secondary" id="download-png-btn" style="flex: 1;">
+                    下載 PNG
+                </button>
+            </div>
+        </form>
+
+        <div class="preview-section" id="preview-section" style="display: none;">
+            <div class="preview-title">QR Code 預覽</div>
+            <div class="qr-preview">
+                <canvas id="qr-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            let qrCanvas = null;
+
+            // 預覽 QR Code
+            $('#preview-btn').on('click', function() {
+                const content = $('#content').val().trim();
+                if (!content) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '請輸入內容',
+                        text: '請輸入要編碼的文字內容'
+                    });
+                    return;
+                }
+
+                // 生成 QR Code 預覽
+                const canvas = document.getElementById('qr-canvas');
+                QRCode.toCanvas(canvas, content, {
+                    width: 200,
+                    margin: 1,
+                    color: {
+                        dark: '#000000',
+                        light: '#FFFFFF'
+                    }
+                }, function (error) {
+                    if (error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '生成失敗',
+                            text: '無法生成 QR Code：' + error.message
+                        });
+                        return;
+                    }
+                    $('#preview-section').show();
+                    qrCanvas = canvas;
+                });
+            });
+
+            // 下載 PNG
+            $('#download-png-btn').on('click', function() {
+                if (!qrCanvas) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '請先預覽',
+                        text: '請先點擊「預覽 QR Code」按鈕生成預覽'
+                    });
+                    return;
+                }
+
+                const content = $('#content').val().trim();
+                const fileName = 'qrcode_' + content.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30) + '_' + Date.now() + '.png';
+
+                qrCanvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+            });
+
+            // 生成 PDF（需要後端 API）
+            $('#qr-form').on('submit', function(e) {
+                e.preventDefault();
+
+                const content = $('#content').val().trim();
+                if (!content) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '請輸入內容',
+                        text: '請輸入要編碼的文字內容'
+                    });
+                    return;
+                }
+
+                // 檢查是否有後端 API
+                const apiUrl = window.location.origin + '/aflow/colortube/qr/generatePdf';
+
+                const $btn = $('#generate-btn');
+                $btn.prop('disabled', true).addClass('btn-loading').text('生成中...');
+
+                // 使用 POST 請求生成 PDF
+                const form = $('<form>', {
+                    method: 'POST',
+                    action: apiUrl,
+                    target: '_blank'
+                });
+
+                form.append($('<input>', {
+                    type: 'hidden',
+                    name: 'content',
+                    value: content
+                }));
+
+                // 嘗試獲取 CSRF token（如果有的話）
+                const csrfToken = $('meta[name="csrf-token"]').attr('content') || '';
+                if (csrfToken) {
+                    form.append($('<input>', {
+                        type: 'hidden',
+                        name: '_token',
+                        value: csrfToken
+                    }));
+                }
+
+                $('body').append(form);
+                form.submit();
+                form.remove();
+
+                // 重置按鈕狀態
+                setTimeout(function() {
+                    $btn.prop('disabled', false).removeClass('btn-loading').text('生成 QR Code PDF');
+                }, 1000);
+            });
+
+            // 輸入內容時自動預覽（可選）
+            let previewTimer = null;
+            $('#content').on('input', function() {
+                const content = $(this).val().trim();
+                if (content.length > 0) {
+                    if (previewTimer) clearTimeout(previewTimer);
+                    previewTimer = setTimeout(function() {
+                        $('#preview-btn').click();
+                    }, 500);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
