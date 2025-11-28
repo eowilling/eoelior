@@ -6,7 +6,7 @@
     <title>QR Code 生成器 - 15mm x 15mm PDF</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         * {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "微軟正黑體", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", "Noto Sans SC", sans-serif;
@@ -150,7 +150,16 @@
             margin-bottom: 15px;
         }
 
-        .qr-preview canvas {
+        .qr-preview #qr-canvas {
+            display: inline-block;
+        }
+
+        .qr-preview #qr-canvas canvas {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .qr-preview #qr-canvas img {
             max-width: 200px;
             height: auto;
         }
@@ -210,7 +219,7 @@
         <div class="preview-section" id="preview-section" style="display: none;">
             <div class="preview-title">QR Code 預覽</div>
             <div class="qr-preview">
-                <canvas id="qr-canvas"></canvas>
+                <div id="qr-canvas"></div>
             </div>
         </div>
     </div>
@@ -231,27 +240,34 @@
                     return;
                 }
 
-                // 生成 QR Code 預覽
-                const canvas = document.getElementById('qr-canvas');
-                QRCode.toCanvas(canvas, content, {
-                    width: 200,
-                    margin: 1,
-                    color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    }
-                }, function (error) {
-                    if (error) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '生成失敗',
-                            text: '無法生成 QR Code：' + error.message
-                        });
-                        return;
-                    }
+                // 清空之前的 QR Code
+                const qrDiv = document.getElementById('qr-canvas');
+                qrDiv.innerHTML = '';
+
+                // 生成 QR Code
+                try {
+                    new QRCode(qrDiv, {
+                        text: content,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    
                     $('#preview-section').show();
-                    qrCanvas = canvas;
-                });
+                    
+                    // 保存 canvas 引用供下載使用
+                    setTimeout(function() {
+                        qrCanvas = qrDiv.querySelector('canvas');
+                    }, 100);
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '生成失敗',
+                        text: '無法生成 QR Code：' + error.message
+                    });
+                }
             });
 
             // 下載 PNG
