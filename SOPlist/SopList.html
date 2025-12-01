@@ -56,9 +56,30 @@
 </head>
 <body>
 
+<!-- 返回入口導覽 -->
+<div style="position: sticky; top: 0; z-index: 50; background: #111827; padding: 0.75rem 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
+        <div style="color: #fff; font-weight: 700; letter-spacing: .5px;">SOP 標準作業程序撰寫工具</div>
+        <a href="../index.html" style="background: #2563EB; color: #fff; padding: 0.5rem 0.9rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+            返回小工具入口
+        </a>
+    </div>
+    <div style="font-size: 12px; color: #9CA3AF; max-width: 1200px; margin: 0.25rem auto 0;">按下可回到首頁選擇其他小工具</div>
+</div>
+
 <div id="app" class="container-card">
-    <h1 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">⚙️ SOP 標準作業程序撰寫工具</h1>
-    <p class="text-center text-gray-500 mb-8">請依照步驟填寫，最後生成標準化 SOP 文件。</p>
+    <h1 class="text-3xl font-extrabold text-gray-800 mb-3 text-center">⚙️ SOP 標準作業程序撰寫工具</h1>
+    <p class="text-center text-gray-500 mb-4">請依照步驟填寫，最後生成標準化 SOP 文件。</p>
+    <!-- 儲存 / 匯入 操作列 -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-center gap-3 mb-8">
+        <button id="save-draft-btn" class="btn-primary bg-green-600 hover:bg-green-700">儲存草稿（本機）</button>
+        <button id="load-draft-btn" class="btn-primary bg-gray-600 hover:bg-gray-700">載入草稿（本機）</button>
+        <button id="export-json-btn" class="btn-primary bg-amber-600 hover:bg-amber-700">下載草稿（JSON）</button>
+        <label class="btn-primary bg-purple-600 hover:bg-purple-700 cursor-pointer" style="display:inline-block;">
+            匯入草稿（JSON）
+            <input type="file" id="import-json-input" accept="application/json" style="display:none;">
+        </label>
+    </div>
 
     <!-- 區塊 1: 基本資訊 -->
     <div class="mb-10 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
@@ -117,15 +138,14 @@
     <!-- 區塊 4: 生成 SOP -->
     <div class="p-6 bg-gray-100 rounded-lg text-center">
         <h2 class="text-2xl font-bold text-gray-800 section-title mb-4 border-l-4 border-gray-500">4. SOP 文件生成與輸出</h2>
-        <button onclick="generateSOPMarkdown()" class="btn-primary w-full md:w-1/2 mx-auto">
-            一鍵生成 SOP 文件 (Markdown 格式)
-        </button>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-center gap-3">
+            <button onclick="generateSOPMarkdown()" class="btn-primary">生成 SOP（Markdown）</button>
+            <button id="copy-markdown-btn" class="btn-primary bg-green-600 hover:bg-green-700">複製</button>
+            <button id="download-markdown-btn" class="btn-primary bg-indigo-600 hover:bg-indigo-700">下載</button>
+        </div>
         <div id="output-area" class="mt-6 hidden">
             <h3 class="text-xl font-semibold mb-3 text-left">Generated SOP Output (Markdown)</h3>
             <textarea id="markdown-output" class="input-style h-64 font-mono text-xs" readonly></textarea>
-            <button onclick="copyToClipboard()" class="mt-3 w-full btn-primary bg-green-600 hover:bg-green-700">
-                複製到剪貼簿
-            </button>
         </div>
     </div>
 </div>
@@ -333,16 +353,86 @@
         document.getElementById('output-area').classList.remove('hidden');
     };
 
-    // 複製到剪貼簿 (使用較為兼容的 execCommand)
-    const copyToClipboard = () => {
-        const textarea = document.getElementById('markdown-output');
-        textarea.select();
+    // 生成 Markdown 的同時顯示輸出區域
+    const ensureOutputVisible = () => {
+        const area = document.getElementById('output-area');
+        area.classList.remove('hidden');
+    };
+
+    // 下載 Markdown 為檔案
+    const downloadMarkdownFile = () => {
+        const content = document.getElementById('markdown-output').value || '';
+        const titleSafe = (sopData.title || 'SOP').replace(/[^\w\-\u4e00-\u9fa5]/g, '_').substring(0, 40);
+        const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${titleSafe}_${sopData.id || 'ID'}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alertMessage('已下載 Markdown 檔案。', 'bg-indigo-600');
+    };
+
+    // 儲存草稿到本機（localStorage）
+    const saveDraft = () => {
         try {
-            document.execCommand('copy');
-            alertMessage('複製成功！請將 Markdown 文件貼至您的文件系統中。', 'bg-green-500');
-        } catch (err) {
-            alertMessage('複製失敗，請手動選取並複製。', 'bg-red-500');
+            localStorage.setItem('eoelior_sop_draft', JSON.stringify(sopData));
+            alertMessage('草稿已儲存到本機。', 'bg-green-600');
+        } catch (e) {
+            alertMessage('儲存失敗：' + e.message, 'bg-red-600');
         }
+    };
+
+    // 從本機載入草稿（localStorage）
+    const loadDraft = () => {
+        const raw = localStorage.getItem('eoelior_sop_draft');
+        if (!raw) {
+            alertMessage('尚未有本機草稿可載入。', 'bg-gray-600');
+            return;
+        }
+        try {
+            const json = JSON.parse(raw);
+            restoreSopData(json);
+            alertMessage('已載入本機草稿。', 'bg-gray-700');
+        } catch (e) {
+            alertMessage('載入失敗：' + e.message, 'bg-red-600');
+        }
+    };
+
+    // 匯出草稿為 JSON 檔
+    const exportJson = () => {
+        const blob = new Blob([JSON.stringify(sopData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const titleSafe = (sopData.title || 'SOP').replace(/[^\w\-\u4e00-\u9fa5]/g, '_').substring(0, 40);
+        a.href = url;
+        a.download = `${titleSafe}_${sopData.id || 'ID'}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alertMessage('已下載草稿 JSON。', 'bg-amber-600');
+    };
+
+    // 由 JSON 還原 sopData 並更新畫面
+    const restoreSopData = (data) => {
+        // 校驗基本結構
+        const keys = ['title','id','version','date','purpose','scope','responsibility','steps'];
+        keys.forEach(k => { if (data[k] === undefined) data[k] = sopData[k]; });
+        sopData = data;
+
+        // 更新表單輸入值
+        document.getElementById('date').value = sopData.date || '';
+        document.getElementById('title').value = sopData.title || '';
+        document.getElementById('id').value = sopData.id || '';
+        document.getElementById('version').value = sopData.version || '';
+        document.getElementById('purpose').value = sopData.purpose || '';
+        document.getElementById('scope').value = sopData.scope || '';
+        document.getElementById('responsibility').value = sopData.responsibility || '';
+
+        renderSteps();
     };
 
     // 替代 alert() 的訊息框
@@ -364,8 +454,63 @@
 
     // 啟動應用
     window.onload = () => {
-        renderSteps();
+        // 開啟頁面時若有本機草稿則提示並載入
+        const raw = localStorage.getItem('eoelior_sop_draft');
+        if (raw) {
+            try {
+                const json = JSON.parse(raw);
+                restoreSopData(json);
+                alertMessage('偵測到本機草稿，已自動載入。', 'bg-blue-600');
+            } catch {}
+        } else {
+            renderSteps();
+        }
+
+        // 綁定操作列事件
+        document.getElementById('save-draft-btn').onclick = saveDraft;
+        document.getElementById('load-draft-btn').onclick = loadDraft;
+        document.getElementById('export-json-btn').onclick = exportJson;
+        document.getElementById('import-json-input').onchange = (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const json = JSON.parse(reader.result);
+                    restoreSopData(json);
+                    alertMessage('已匯入草稿檔案。', 'bg-purple-600');
+                } catch (err) {
+                    alertMessage('匯入失敗：' + err.message, 'bg-red-600');
+                }
+            };
+            reader.readAsText(file, 'utf-8');
+        };
+
+        // 複製/下載 Markdown 綁定
+        document.getElementById('copy-markdown-btn').onclick = () => {
+            ensureOutputVisible();
+            const textarea = document.getElementById('markdown-output');
+            if (!textarea.value) generateSOPMarkdown();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alertMessage('Markdown 已複製到剪貼簿。', 'bg-green-600');
+            } catch (err) {
+                alertMessage('複製失敗，請手動選取並複製。', 'bg-red-600');
+            }
+        };
+
+        document.getElementById('download-markdown-btn').onclick = () => {
+            ensureOutputVisible();
+            if (!document.getElementById('markdown-output').value) generateSOPMarkdown();
+            downloadMarkdownFile();
+        };
     };
+
+    // 生成 Markdown 後顯示區塊
+    const originalGenerate = generateSOPMarkdown;
+    const _gen = generateSOPMarkdown;
+    generateSOPMarkdown = () => { _gen(); ensureOutputVisible(); };
 
 </script>
 </body>
