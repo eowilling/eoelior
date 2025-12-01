@@ -60,15 +60,10 @@
 <div id="app" class="container-card">
     <h1 class="text-3xl font-extrabold text-gray-800 mb-3 text-center">⚙️ SOP 標準作業程序撰寫工具</h1>
     <p class="text-center text-gray-500 mb-4">請依照步驟填寫，最後生成標準化 SOP 文件。</p>
-    <!-- 儲存 / 匯入 操作列 -->
+    <!-- 儲存 / 下載 操作列（簡化版） -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-center gap-3 mb-8">
-        <button id="save-draft-btn" class="btn-primary bg-green-600 hover:bg-green-700">儲存草稿（本機）</button>
-        <button id="load-draft-btn" class="btn-primary bg-gray-600 hover:bg-gray-700">載入草稿（本機）</button>
-        <button id="export-json-btn" class="btn-primary bg-amber-600 hover:bg-amber-700">下載草稿（JSON）</button>
-        <label class="btn-primary bg-purple-600 hover:bg-purple-700 cursor-pointer" style="display:inline-block;">
-            匯入草稿（JSON）
-            <input type="file" id="import-json-input" accept="application/json" style="display:none;">
-        </label>
+        <button id="save-draft-btn" class="btn-primary bg-green-600 hover:bg-green-700">儲存（本機）</button>
+        <button id="export-json-btn" class="btn-primary bg-amber-600 hover:bg-amber-700">下載（JSON）</button>
     </div>
 
     <!-- 區塊 1: 基本資訊 -->
@@ -375,22 +370,6 @@
         }
     };
 
-    // 從本機載入草稿（localStorage）
-    const loadDraft = () => {
-        const raw = localStorage.getItem('eoelior_sop_draft');
-        if (!raw) {
-            alertMessage('尚未有本機草稿可載入。', 'bg-gray-600');
-            return;
-        }
-        try {
-            const json = JSON.parse(raw);
-            restoreSopData(json);
-            alertMessage('已載入本機草稿。', 'bg-gray-700');
-        } catch (e) {
-            alertMessage('載入失敗：' + e.message, 'bg-red-600');
-        }
-    };
-
     // 匯出草稿為 JSON 檔
     const exportJson = () => {
         const blob = new Blob([JSON.stringify(sopData, null, 2)], { type: 'application/json' });
@@ -456,25 +435,9 @@
             renderSteps();
         }
 
-        // 綁定操作列事件
+        // 綁定操作列事件（簡化版）
         document.getElementById('save-draft-btn').onclick = saveDraft;
-        document.getElementById('load-draft-btn').onclick = loadDraft;
         document.getElementById('export-json-btn').onclick = exportJson;
-        document.getElementById('import-json-input').onchange = (e) => {
-            const file = e.target.files && e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-                try {
-                    const json = JSON.parse(reader.result);
-                    restoreSopData(json);
-                    alertMessage('已匯入草稿檔案。', 'bg-purple-600');
-                } catch (err) {
-                    alertMessage('匯入失敗：' + err.message, 'bg-red-600');
-                }
-            };
-            reader.readAsText(file, 'utf-8');
-        };
 
         // 複製/下載 Markdown 綁定
         document.getElementById('copy-markdown-btn').onclick = () => {
