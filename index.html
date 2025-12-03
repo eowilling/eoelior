@@ -24,6 +24,7 @@
 			<button class="tool-btn" onclick="loadTool('h2pj')">HEIC 轉 PNG/JPG</button>
 			<button class="tool-btn" onclick="loadTool('qrcode')">QRcode 產生器</button>
 			<button class="tool-btn" onclick="loadTool('sop')">SOP 編寫工具</button>
+			<button class="tool-btn" onclick="loadTool('debt')">債權工具</button>
 		</div>
 	</header>
 	<main>
@@ -42,6 +43,8 @@
 				container.innerHTML = `<iframe src='QRcode/qr-generate-standalone.html' style='width:100%;height:650px;border:none;border-radius:8px;'></iframe>`;
 			} else if (tool === 'sop') {
 				container.innerHTML = `<iframe src='SOPlist/SopList.html' style='width:100%;height:800px;border:none;border-radius:8px;'></iframe>`;
+			} else if (tool === 'debt') {
+				container.innerHTML = `<iframe src='flower/債權.html' style='width:100%;height:800px;border:none;border-radius:8px;'></iframe>`;
 			} else {
 				container.innerHTML = `<div style='text-align:center;color:#888;'>尚未實作此工具。</div>`;
 			}
