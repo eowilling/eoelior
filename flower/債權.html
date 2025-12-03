@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>債權管理與法律策略儀表板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #F5F5F4; color: #1C1917; }
+        .chart-container { position: relative; width: 100%; max-width: 400px; margin: 0 auto; height: 300px; }
+        .card { background-color: white; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: all 0.3s ease; }
+        .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .relationship-node { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; position: absolute; transition: all 0.5s ease; border-width: 4px; z-index: 10; background: white; }
+        .connection-line { position: absolute; height: 4px; background-color: #E5E7EB; transform-origin: 0 50%; transition: all 0.5s ease; z-index: 1; }
+        .active-path { background-color: #F59E0B; } /* Amber-500 */
+        .doc-preview { font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; line-height: 1.6; }
+        .tab-btn.active { border-bottom: 2px solid #F59E0B; color: #D97706; }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Stone/Warm Gray) with Amber/Gold accents for financial/legal importance. -->
+    <!-- Application Structure Plan:
+         1. Header: Context setting.
+         2. Strategy Control: Toggle between "Assignment" and "Authorization". This drives the entire app state.
+         3. Analysis Grid:
+            - Left: Relationship Visualizer (Canvas/CSS) to show who owns the debt.
+            - Right: Financial Breakdown (Chart.js) to show value.
+         4. Comparison Matrix: Textual pros/cons of the selected strategy.
+         5. Document Engine: Live preview of the specific contracts needed for the active strategy.
+    -->
+    <!-- Visualization & Content Choices:
+         - Relationship Map: CSS-based node graph. Goal: Clarify the abstract legal relationship. Shows A->B transfer vs A->B agency.
+         - Debt Chart: Chart.js Donut. Goal: Visualize the asset being discussed.
+         - Comparison Table: Dynamic HTML. Goal: Help B decide "Do I want to own this or just help?".
+         - Live Docs: Text replacement. Goal: Immediate utility.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-100 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-amber-500 rounded flex items-center justify-center text-white font-bold">B</div>
+                <h1 class="text-xl font-bold text-stone-800">債權管理決策系統</h1>
+            </div>
+            <div class="text-sm text-stone-500">操作者: 協助老闆 (B) 處理 A 之債務</div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Intro Section -->
+        <section class="max-w-4xl mx-auto text-center space-y-4">
+            <h2 class="text-3xl font-bold text-stone-900">請選擇法律策略</h2>
+            <p class="text-stone-600">您正協助老闆 (B) 處理陳大偉 (A) 對林志玲 (C) 的債權。請選擇以下一種模式，系統將自動生成對應的法律文件與分析。</p>
+
+            <!-- Strategy Toggle -->
+            <div class="flex justify-center mt-6">
+                <div class="bg-stone-200 p-1 rounded-lg inline-flex">
+                    <button id="btn-assign" onclick="setStrategy('assignment')" class="px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm bg-white text-stone-900 ring-1 ring-stone-900/5">
+                        情境一：債權讓與 (買斷)
+                    </button>
+                    <button id="btn-auth" onclick="setStrategy('authorization')" class="px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 text-stone-600 hover:text-stone-900">
+                        情境二：授權委託 (代討)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Visualization & Context (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Relationship Visualizer -->
+                <div class="card p-6 min-h-[400px] flex flex-col">
+                    <h3 class="text-lg font-bold text-stone-800 mb-2">法律關係圖解</h3>
+                    <p id="visual-desc" class="text-sm text-stone-500 mb-8">展示各方之間的權利流動。</p>
+
+                    <div class="relative w-full h-64 bg-stone-50 rounded-lg border border-stone-100 overflow-hidden" id="diagram-container">
+                        <!-- Dynamic Nodes & Lines implemented in JS/CSS below -->
+                        <!-- A Node -->
+                        <div id="node-a" class="relationship-node border-stone-300 text-stone-600" style="top: 20px; left: 20px;">
+                            A<br><span class="text-xs font-normal">原債權人</span>
+                        </div>
+                        <!-- B Node -->
+                        <div id="node-b" class="relationship-node border-amber-500 text-amber-700 bg-amber-50" style="top: 20px; right: 20px;">
+                            B<br><span class="text-xs font-normal">老闆</span>
+                        </div>
+                        <!-- C Node -->
+                        <div id="node-c" class="relationship-node border-stone-300 text-stone-600" style="bottom: 20px; left: 50%; transform: translateX(-50%);">
+                            C<br><span class="text-xs font-normal">債務人</span>
+                        </div>
+
+                        <!-- Lines -->
+                        <div id="line-ab" class="connection-line" style="top: 60px; left: 100px; width: calc(100% - 200px);"></div>
+                        <div id="line-ac" class="connection-line" style="height: 100px; width: 4px; left: 100px; top: 100px; transform: rotate(25deg);"></div> <!-- Approx visual only -->
+
+                        <!-- Status Badge -->
+                        <div id="status-badge" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-full shadow border border-stone-200 text-sm font-bold text-center">
+                            狀態載入中...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategy Comparison -->
+                <div class="card p-6">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">策略分析</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <div class="mt-1 w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
+                            <div>
+                                <span class="block text-sm font-bold text-stone-700">優點</span>
+                                <p id="analysis-pros" class="text-sm text-stone-600">...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="mt-1 w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                            <div>
+                                <span class="block text-sm font-bold text-stone-700">風險/缺點</span>
+                                <p id="analysis-cons" class="text-sm text-stone-600">...</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="mt-1 w-2 h-2 rounded-full bg-blue-500 flex-shrink-0"></div>
+                            <div>
+                                <span class="block text-sm font-bold text-stone-700">所需文件</span>
+                                <p id="analysis-docs" class="text-sm text-stone-600 font-mono bg-stone-100 p-1 rounded mt-1">...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debt Composition Chart -->
+                <div class="card p-6">
+                    <h3 class="text-lg font-bold text-stone-800 mb-2">標的債權結構</h3>
+                     <div class="chart-container">
+                        <canvas id="debtChart"></canvas>
+                    </div>
+                    <p class="text-xs text-center text-stone-400 mt-2">*此圖表為範例數據，展示債權組成</p>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Document Generator (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Inputs -->
+                <div class="card p-6 border-l-4 border-amber-500">
+                    <h3 class="text-lg font-bold text-stone-800 mb-4">資料輸入 (即時預覽)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 uppercase">讓與人/授權人 (A)</label>
+                            <input type="text" id="input-a" value="陳大偉" class="w-full mt-1 px-3 py-2 bg-stone-50 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 uppercase">老闆/受讓人 (B)</label>
+                            <input type="text" id="input-b" value="王總經理" class="w-full mt-1 px-3 py-2 bg-stone-50 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 uppercase">債務人 (C)</label>
+                            <input type="text" id="input-c" value="林志玲" class="w-full mt-1 px-3 py-2 bg-stone-50 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 uppercase">債權金額 (新台幣)</label>
+                            <input type="text" id="input-amount" value="壹佰伍拾萬" class="w-full mt-1 px-3 py-2 bg-stone-50 border border-stone-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Tabs -->
+                <div class="bg-white rounded-t-lg border-b border-stone-200 px-4 pt-4 flex gap-6" id="doc-tabs">
+                    <!-- Tabs injected by JS -->
+                </div>
+
+                <!-- Document Preview -->
+                <div class="card rounded-t-none p-8 bg-white min-h-[600px] shadow-inner">
+                    <div id="doc-content" class="doc-preview text-stone-800 text-sm md:text-base">
+                        <!-- Content injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="flex justify-end">
+                    <button onclick="window.print()" class="bg-stone-800 hover:bg-stone-900 text-white px-8 py-3 rounded-lg shadow-lg flex items-center gap-2 transition-transform transform hover:-translate-y-1">
+                        <span class="text-xl">🖨️</span> 列印/存檔當前文件
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- State Management ---
+        const state = {
+            strategy: 'assignment', // 'assignment' or 'authorization'
+            inputs: {
+                aName: '陳大偉',
+                bName: '王總經理',
+                cName: '林志玲',
+                amount: '壹佰伍拾萬',
+                source: '113年5月10日簽訂之借款契約',
+                date: '中華民國 114 年 5 月 10 日'
+            },
+            activeTab: 0
+        };
+
+        // --- Templates from Generated Markdown ---
+        const templates = {
+            assignment: {
+                title: "情境一：債權讓與 (買斷)",
+                desc: "A 將債權賣給 B。B 成為新債權人，C 直接欠 B 錢。",
+                pros: "債權關係單純化，B 擁有完全處分權 (可再轉讓、免除)。A 完全脫身。",
+                cons: "B 需承擔 C 不還錢的風險。通常需支付 A 一筆對價 (買債權)。",
+                docs: ["債權讓與契約書", "三方協議書 (讓與版)"],
+                contents: [
+                    `# 債權讓與契約書\n\n立契約書人：\n讓與人 (A)：{{A}}\n受讓人 (B)：{{B}}\n\n第一條 讓與標的\n讓與人 A 將其對債務人 C (姓名：{{C}}) 所享有之下列債權 (下稱系爭債權)：\n1. 債務金額：新台幣 {{AMOUNT}} 元整\n2. 債務來源：{{SOURCE}}\n\n悉數讓與予受讓人 B。\n\n第二條 讓與範圍\n本次讓與包含主債權及其附隨權利，包括利息、違約金、擔保權利等。\n\n第三條 讓與後責任\n簽署日起，債權由 B 全權行使，A 不再負回收責任。\n\n立約人簽章：\n讓與人 A：__________________\n受讓人 B：__________________\n\n日期：{{DATE}}`,
+
+                    `# 三方協議書 (債權讓與確認)\n\n立協議書人：\n債權人 (A)：{{A}}\n受讓人 (B)：{{B}}\n債務人 (C)：{{C}}\n\n第一條 債務確認\nC 確認欠 A 金額：新台幣 {{AMOUNT}} 元整。\n\n第二條 債權讓與\nA 已將系爭債權讓與予 B。C 確認收受通知，並同意自即日起，將對 A 之清償義務轉向 B 履行，向 B 清償亦生清償予 A 之效力。\n\n第三條 違約處理\n若 C 遲延給付，B 得逕行採取法律途徑。\n\n簽署：\nA：__________  B：__________  C：__________\n\n日期：{{DATE}}`
+                ]
+            },
+            authorization: {
+                title: "情境二：授權委託 (代討)",
+                desc: "A 仍是債權人，B 只是「打手」或代理人。",
+                pros: "B 不需先出資買債權。若 C 不還錢，損失仍在 A 身上。",
+                cons: "B 的權限受限於授權書。法律程序 (如起訴) 可能仍需以 A 名義進行。",
+                docs: ["授權書", "三方協議書 (委託版)"],
+                contents: [
+                    `# 授權書\n\n本人 A ({{A}}) 授權受任人 B ({{B}})\n得向債務人 C (姓名：{{C}}) 代為處理債務相關事宜。\n\n債權金額：新台幣 {{AMOUNT}} 元整\n\n授權範圍：\n1. 代為催收、協商、收受該債款。\n2. 代為簽署協商與還款文件。\n3. 代為進行調解或法律前置作業。\n\n代收款項處理：\nB 代收之款項，扣除報酬後應轉交予 A。\n\n授權人 A：__________________\n受任人 B：__________________\n\n日期：{{DATE}}`,
+
+                    `# 三方協議書 (代理權確認)\n\n立協議書人：\n債權人 (A)：{{A}}\n受託人 (B)：{{B}}\n債務人 (C)：{{C}}\n\n第一條 債務確認\nC 確認欠 A 金額：新台幣 {{AMOUNT}} 元整。\n\n第二條 授權確認\nA 授權 B 代為收受系爭債權，C 同意 B 之身分為 A 之合法受託人，並同意向 B 履行清償義務。\n\n簽署：\nA：__________  B：__________  C：__________\n\n日期：{{DATE}}`
+                ]
+            }
+        };
+
+        // --- Core Functions ---
+
+        function init() {
+            // Listeners
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', updateData);
+            });
+
+            // Initial Render
+            updateChart();
+            render();
+        }
+
+        function setStrategy(strat) {
+            state.strategy = strat;
+            state.activeTab = 0; // Reset tab
+            render();
+            animateVisuals();
+        }
+
+        function setTab(index) {
+            state.activeTab = index;
+            renderDocs();
+        }
+
+        function updateData() {
+            state.inputs.aName = document.getElementById('input-a').value;
+            state.inputs.bName = document.getElementById('input-b').value;
+            state.inputs.cName = document.getElementById('input-c').value;
+            state.inputs.amount = document.getElementById('input-amount').value;
+            renderDocs(); // Re-render text only
+        }
+
+        function render() {
+            // 1. Update Buttons
+            const btnAssign = document.getElementById('btn-assign');
+            const btnAuth = document.getElementById('btn-auth');
+
+            if (state.strategy === 'assignment') {
+                btnAssign.className = "px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm bg-amber-500 text-white shadow-md transform scale-105";
+                btnAuth.className = "px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 text-stone-500 hover:text-stone-900";
+            } else {
+                btnAssign.className = "px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 text-stone-500 hover:text-stone-900";
+                btnAuth.className = "px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 shadow-sm bg-amber-500 text-white shadow-md transform scale-105";
+            }
+
+            // 2. Update Analysis Text
+            const currentData = templates[state.strategy];
+            document.getElementById('analysis-pros').textContent = currentData.pros;
+            document.getElementById('analysis-cons').textContent = currentData.cons;
+            document.getElementById('analysis-docs').textContent = currentData.docs.join(" + ");
+
+            // 3. Update Visuals
+            updateVisualNodes();
+
+            // 4. Update Tabs & Docs
+            renderTabs();
+            renderDocs();
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('doc-tabs');
+            const currentDocs = templates[state.strategy].docs;
+
+            tabsContainer.innerHTML = currentDocs.map((docName, index) => {
+                const isActive = index === state.activeTab;
+                const activeClass = isActive ? "border-b-4 border-amber-500 text-amber-600 font-bold bg-stone-50" : "text-stone-500 hover:text-stone-700";
+                return `<button onclick="setTab(${index})" class="pb-3 px-4 text-sm focus:outline-none transition-colors ${activeClass}">
+                            ${docName}
+                        </button>`;
+            }).join('');
+        }
+
+        function renderDocs() {
+            const currentTemplate = templates[state.strategy].contents[state.activeTab];
+            let content = currentTemplate
+                .replace(/{{A}}/g, state.inputs.aName)
+                .replace(/{{B}}/g, state.inputs.bName)
+                .replace(/{{C}}/g, state.inputs.cName)
+                .replace(/{{AMOUNT}}/g, state.inputs.amount)
+                .replace(/{{SOURCE}}/g, state.inputs.source)
+                .replace(/{{DATE}}/g, state.inputs.date);
+
+            document.getElementById('doc-content').textContent = content;
+        }
+
+        // --- Visual Animation Logic ---
+        function updateVisualNodes() {
+            const badge = document.getElementById('status-badge');
+            const lineAB = document.getElementById('line-ab');
+
+            if (state.strategy === 'assignment') {
+                // A sends Debt to B
+                badge.innerHTML = "債權移轉 <span class='text-amber-500'>➜</span>";
+                badge.className = "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-full shadow-lg border-2 border-amber-500 text-sm font-bold text-center z-20 text-stone-800";
+
+                lineAB.className = "connection-line active-path bg-amber-400"; // Solid active line
+                lineAB.style.height = "6px";
+
+            } else {
+                // A authorizes B
+                badge.innerHTML = "授予代理權 <span class='text-blue-500'>●</span>";
+                badge.className = "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-full shadow-lg border-2 border-blue-500 text-sm font-bold text-center z-20 text-stone-800";
+
+                lineAB.className = "connection-line bg-blue-300 border-t-4 border-dashed border-blue-500 h-0 bg-transparent"; // Dashed line
+                lineAB.style.height = "0px"; // Reset for border trick
+            }
+        }
+
+        function animateVisuals() {
+            // Simple animation trigger for "wow" factor
+            const nodes = document.querySelectorAll('.relationship-node');
+            nodes.forEach(node => {
+                node.style.transform = "scale(1.1)";
+                setTimeout(() => node.style.transform = "scale(1)", 200);
+            });
+        }
+
+        // --- Chart.js Implementation ---
+        function updateChart() {
+            const ctx = document.getElementById('debtChart').getContext('2d');
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['本金 (Principal)', '利息 (Interest)', '違約金 (Penalty)'],
+                    datasets: [{
+                        data: [1200000, 200000, 100000], // Mock breakdown of the 1.5M
+                        backgroundColor: [
+                            '#F59E0B', // Amber 500
+                            '#78716C', // Stone 500
+                            '#D6D3D1'  // Stone 300
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { family: "'Noto Sans TC', sans-serif" },
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.raw.toLocaleString() + ' TWD';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Boot
+        window.onload = init;
+
+    </script>
+</body>
+</html>
