@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高鐵搶票小幫手設定</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-generate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .btn-generate:active {
+            transform: translateY(0);
+        }
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .info-box p {
+            color: #555;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .generated-code {
+            background: #2d3748;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        .copy-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .copy-btn:hover {
+            background: #38a169;
+        }
+        .highlight { color: #ffd700; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚄 高鐵搶票小幫手</h1>
+        <p class="subtitle">設定您的搶票需求，自動產生腳本</p>
+
+        <div class="form-group">
+            <label for="startStation">🚉 出發站</label>
+            <select id="startStation">
+                <option value="南港">南港</option>
+                <option value="台北">台北</option>
+                <option value="板橋">板橋</option>
+                <option value="桃園">桃園</option>
+                <option value="新竹">新竹</option>
+                <option value="苗栗" selected>苗栗</option>
+                <option value="台中">台中</option>
+                <option value="彰化">彰化</option>
+                <option value="雲林">雲林</option>
+                <option value="嘉義">嘉義</option>
+                <option value="台南">台南</option>
+                <option value="左營">左營</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="endStation">🎯 抵達站</label>
+            <select id="endStation">
+                <option value="南港">南港</option>
+                <option value="台北" selected>台北</option>
+                <option value="板橋">板橋</option>
+                <option value="桃園">桃園</option>
+                <option value="新竹">新竹</option>
+                <option value="苗栗">苗栗</option>
+                <option value="台中">台中</option>
+                <option value="彰化">彰化</option>
+                <option value="雲林">雲林</option>
+                <option value="嘉義">嘉義</option>
+                <option value="台南">台南</option>
+                <option value="左營">左營</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label for="departDate">📅 乘車日期</label>
+                <input type="date" id="departDate" value="2025-12-20">
+            </div>
+            <div class="form-group">
+                <label for="departTime">⏰ 出發時間</label>
+                <input type="time" id="departTime" value="08:00">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label for="trainNo">🚄 車次號碼（選填）</label>
+                <input type="text" id="trainNo" placeholder="例如：1522" value="1522">
+            </div>
+            <div class="form-group">
+                <label for="ticketQty">🎫 票數</label>
+                <select id="ticketQty">
+                    <option value="1">1 張</option>
+                    <option value="2" selected>2 張</option>
+                    <option value="3">3 張</option>
+                    <option value="4">4 張</option>
+                    <option value="5">5 張</option>
+                    <option value="6">6 張</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="refreshInterval">🔄 刷新間隔（秒）</label>
+            <select id="refreshInterval">
+                <option value="1">1 秒（極速）</option>
+                <option value="3" selected>3 秒（快速）</option>
+                <option value="5">5 秒（標準）</option>
+                <option value="10">10 秒（穩定）</option>
+                <option value="30">30 秒（保守）</option>
+                <option value="60">60 秒（緩慢）</option>
+            </select>
+        </div>
+
+        <button class="btn-generate" onclick="generateScript()">🚀 產生搶票腳本</button>
+
+        <div class="info-box">
+            <h3>📌 使用說明</h3>
+            <p>
+                1. 設定好搶票條件後，點擊「產生搶票腳本」<br>
+                2. 複製產生的 Python 程式碼<br>
+                3. 覆蓋原本的 <code>thsr_booking_assistant.py</code> 設定區<br>
+                4. 執行「啟動高鐵搶票.ps1」即可開始監控<br>
+                5. 車次號碼留空則監控所有有票的車次
+            </p>
+        </div>
+
+        <div class="generated-code" id="generatedCode"></div>
+        <button class="copy-btn" id="copyBtn" onclick="copyCode()" style="display:none;">📋 複製設定</button>
+    </div>
+
+    <script>
+        function generateScript() {
+            const startStation = document.getElementById('startStation').value;
+            const endStation = document.getElementById('endStation').value;
+            const departDateInput = document.getElementById('departDate').value;
+            const departTimeInput = document.getElementById('departTime').value;
+            const trainNo = document.getElementById('trainNo').value.trim();
+            const ticketQty = document.getElementById('ticketQty').value;
+            const refreshInterval = document.getElementById('refreshInterval').value;
+
+            // 轉換日期格式 YYYY-MM-DD -> YYYY/MM/DD
+            const departDate = departDateInput.replace(/-/g, '/');
+
+            const code = `# ==========================================
+# 設定區 (Configuration)
+# ==========================================
+
+# 預設參數
+START_STATION = "${startStation}"      # 出發站
+END_STATION = "${endStation}"        # 抵達站
+DEPART_DATE = "${departDate}" # 格式：YYYY/MM/DD
+DEPART_TIME = "${departTimeInput}"      # 格式：HH:mm
+TICKET_QTY = "${ticketQty}"           # 訂票張數
+
+# 【重要設定】指定車次號碼
+TRAIN_NO = "${trainNo || '請在查詢後手動選擇'}"          # 監控車次${trainNo ? '：' + trainNo : '（未指定，將監控所有車次）'}
+
+# 【重要設定】自動重新查詢間隔時間 (秒)
+REFRESH_INTERVAL_SECONDS = ${refreshInterval}  # ${getIntervalDesc(refreshInterval)}`;
+
+            const codeContainer = document.getElementById('generatedCode');
+            const copyBtn = document.getElementById('copyBtn');
+
+            codeContainer.textContent = code;
+            codeContainer.style.display = 'block';
+            copyBtn.style.display = 'inline-block';
+
+            // 滾動到結果
+            codeContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function getIntervalDesc(seconds) {
+            const map = {
+                '1': '極速模式',
+                '3': '快速模式',
+                '5': '標準模式',
+                '10': '穩定模式',
+                '30': '保守模式',
+                '60': '緩慢模式'
+            };
+            return map[seconds] || `${seconds} 秒`;
+        }
+
+        function copyCode() {
+            const code = document.getElementById('generatedCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ 已複製！';
+                btn.style.background = '#48bb78';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#48bb78';
+                }, 2000);
+            });
+        }
+
+        // 設定預設日期為今天+15天（高鐵最多提前28天訂票）
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            today.setDate(today.getDate() + 15);
+            const dateStr = today.toISOString().split('T')[0];
+            document.getElementById('departDate').value = dateStr;
+        });
+    </script>
+</body>
+</html>
