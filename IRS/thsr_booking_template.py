@@ -16,17 +16,17 @@ logging.basicConfig(level=logging.INFO)
 # ==========================================
 
 # 預設參數
-START_STATION = "苗栗"      # 出發站
-END_STATION = "台北"        # 抵達站
-DEPART_DATE = "2025/12/20" # 格式：YYYY/MM/DD
-DEPART_TIME = "08:00"      # 格式：HH:mm（從 08:00 開始查詢）
-TICKET_QTY = "2"           # 訂票張數
+START_STATION = "{{START_STATION}}"      # 出發站
+END_STATION = "{{END_STATION}}"        # 抵達站
+DEPART_DATE = "{{DEPART_DATE}}" # 格式：YYYY/MM/DD
+DEPART_TIME = "{{DEPART_TIME}}"      # 格式：HH:mm（從 08:00 開始查詢）
+TICKET_QTY = "{{TICKET_QTY}}"           # 訂票張數
 
 # 【重要設定】指定車次號碼
-TRAIN_NO = "1522"          # 監控車次：1522（10:24 發車）
+TRAIN_NO = "{{TRAIN_NO}}"          # 監控車次
 
 # 【重要設定】自動重新查詢間隔時間 (秒)
-REFRESH_INTERVAL_SECONDS = 3  # 3 秒
+REFRESH_INTERVAL_SECONDS = {{REFRESH_INTERVAL}}  # 刷新間隔
 
 def find_and_select_train(driver, train_no):
     """嘗試尋找並選取指定的車次，並點擊確認。"""
