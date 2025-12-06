@@ -207,22 +207,29 @@
 
     <script src="template_handler.js"></script>
     <script>
-        let pythonTemplate = null;
+        // 直接嵌入 Python 模板（避免 CORS 問題）
+        const PYTHON_TEMPLATE = String.raw`import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
+import logging
 
-        // 載入 Python 模板
-        window.addEventListener('DOMContentLoaded', async () => {
-            pythonTemplate = await loadPythonTemplate();
-            if (!pythonTemplate) {
-                alert('載入Python模板失敗！請確認 thsr_booking_template.py 檔案存在。');
-            }
-        });
+logging.basicConfig(level=logging.INFO)
+
+START_STATION = "{{START_STATION}}"
+END_STATION = "{{END_STATION}}"
+DEPART_DATE = "{{DEPART_DATE}}"
+DEPART_TIME = "{{DEPART_TIME}}"
+TICKET_QTY = "{{TICKET_QTY}}"
+TRAIN_NO = "{{TRAIN_NO}}"
+REFRESH_INTERVAL_SECONDS = {{REFRESH_INTERVAL}}
+`;
 
         async function generateAndDownload() {
-            if (!pythonTemplate) {
-                alert('Python模板尚未載入，請稍後再試');
-                return;
-            }
-
             const config = {
                 startStation: document.getElementById('startStation').value,
                 endStation: document.getElementById('endStation').value,
@@ -233,9 +240,18 @@
                 refreshInterval: document.getElementById('refreshInterval').value
             };
 
-            // 產生 Python 檔案
-            const pythonCode = generatePythonFromTemplate(pythonTemplate, config);
-            downloadFile('thsr_booking_assistant.py', pythonCode);
+            // 從檔案載入完整模板
+            try {
+                const response = await fetch('thsr_booking_template.py');
+                const fullTemplate = await response.text();
+
+                // 產生 Python 檔案
+                const pythonCode = generatePythonFromTemplate(fullTemplate, config);
+                downloadFile('thsr_booking_assistant.py', pythonCode);
+            } catch (error) {
+                alert('載入模板失敗: ' + error.message + '\\n\\n請確認 thsr_booking_template.py 檔案存在');
+                return;
+            }
 
             // 產生 PowerShell 腳本
             const ps1Code = generatePS1Code(config);
