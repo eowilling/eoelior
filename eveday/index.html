@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待辦事項日曆</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .calendar-day {
+            min-height: 100px;
+            transition: all 0.2s;
+        }
+        .calendar-day:hover {
+            background-color: #f3f4f6;
+        }
+        .calendar-day.has-todos {
+            background-color: #fef3c7;
+        }
+        .todo-item {
+            transition: all 0.2s;
+        }
+        .todo-item:hover {
+            background-color: #f9fafb;
+        }
+        .todo-item.completed {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #10b981;
+        }
+        .todo-item.completed:hover {
+            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+        }
+        .todo-item.failed {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border-color: #9ca3af;
+            opacity: 0.7;
+        }
+        .todo-item.failed:hover {
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+            <header class="mb-8">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-800 mb-2">📅 待辦事項日曆</h1>
+                        <p class="text-gray-600">管理您的每日待辦事項</p>
+                    </div>
+                    <!-- 使用者選擇區域 -->
+                    <div class="flex items-center gap-3">
+                        <div class="bg-white rounded-lg shadow-md p-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">使用者：</span>
+                                <select id="userSelect" onchange="switchUser()"
+                                        class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold text-gray-800">
+                                    <!-- 使用者選項將由 JavaScript 生成 -->
+                                </select>
+                                <button onclick="openAddUserModal()"
+                                        class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold">
+                                    ➕ 新增
+                                </button>
+                                <button onclick="openResetModal()"
+                                        class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold"
+                                        title="重置所有數據">
+                                    🔄 重置
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+        </header>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- 左側：月曆 -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <!-- 月曆控制 -->
+                        <div class="flex justify-between items-center mb-6">
+                            <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <h2 class="text-2xl font-bold text-gray-800" id="currentMonthYear"></h2>
+                            <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                    </div>
+
+                        <!-- 星期標題 -->
+                        <div class="grid grid-cols-7 gap-2 mb-2">
+                            <div class="text-center font-semibold text-gray-600 py-2">日</div>
+                            <div class="text-center font-semibold text-gray-600 py-2">一</div>
+                            <div class="text-center font-semibold text-gray-600 py-2">二</div>
+                            <div class="text-center font-semibold text-gray-600 py-2">三</div>
+                            <div class="text-center font-semibold text-gray-600 py-2">四</div>
+                            <div class="text-center font-semibold text-gray-600 py-2">五</div>
+                            <div class="text-center font-semibold text-gray-600 py-2">六</div>
+                    </div>
+
+                        <!-- 月曆網格 -->
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+                            <!-- 月曆內容將由 JavaScript 生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右側：選中日期的待辦事項 -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- 每日語錄區塊 -->
+                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-lg p-6 border-2 border-purple-200">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-purple-800 flex items-center text-lg">
+                                <span class="mr-2">✨</span> 每日語錄
+                            </h4>
+                            <button onclick="openApiKeyModal()"
+                                    class="text-xs text-purple-600 hover:text-purple-800 underline"
+                                    title="設置 Gemini API Key">
+                                🔑 API Key
+                            </button>
+                        </div>
+                        <div id="dailyQuoteCard" class="min-h-[120px]">
+                            <!-- 每日語錄內容將由 JavaScript 生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 選中日期的待辦事項區塊 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-gray-800 mb-1" id="selectedDateTitle">
+                                選擇日期
+                            </h3>
+                            <p class="text-xs text-gray-500" id="currentUserDisplay">當前使用者：<span id="currentUserName"></span></p>
+            </div>
+
+                        <!-- 待辦事項列表 -->
+                        <div id="todoList" class="space-y-2 mb-4 min-h-[200px]">
+                            <p class="text-gray-400 text-sm text-center py-8">請選擇日期查看待辦事項</p>
+                </div>
+
+                        <!-- 新增待辦事項表單 -->
+                        <div id="addTodoForm" class="hidden">
+                            <div class="border-t pt-4 mt-4">
+                                <h4 class="font-semibold text-gray-700 mb-3">新增待辦事項</h4>
+                                <input type="text"
+                                       id="newTodoInput"
+                                       placeholder="輸入待辦事項..."
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2">
+                                <button onclick="addTodo()"
+                                        class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                                    ➕ 新增
+                                </button>
+                    </div>
+                </div>
+            </div>
+
+                    <!-- 所有待辦事項日期列表區塊（獨立區塊） -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h4 class="font-semibold text-gray-700 mb-4 flex items-center text-lg">
+                            <span class="mr-2">📋</span> 所有待辦事項
+                        </h4>
+                        <div id="allTodosContent" class="space-y-2 max-h-[400px] overflow-y-auto">
+                            <!-- 待辦事項日期列表將由 JavaScript 生成 -->
+                    </div>
+                    </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+    <!-- API Key 設置 Modal -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">🔑 設置 Gemini API Key</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Gemini API Key</label>
+                    <input type="password" id="geminiApiKeyInput" placeholder="輸入您的 Gemini API Key..."
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="text-xs text-gray-500 mt-2">用於生成語錄卡片圖片（可選）</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="saveApiKey()"
+                            class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                        保存
+                    </button>
+                    <button onclick="closeApiKeyModal()"
+                            class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 解鎖日期 Modal -->
+    <div id="unlockDateModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">🔓 解鎖日期</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">請輸入日期（格式：MMDD）</label>
+                    <p class="text-xs text-gray-500 mb-2">例如：12月17日請輸入 <span class="font-semibold text-blue-600">1217</span></p>
+                    <input type="text" id="unlockDateInput" placeholder="輸入日期..."
+                           maxlength="4"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl font-bold tracking-widest">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="confirmUnlockDate()"
+                            class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                        解鎖
+                    </button>
+                    <button onclick="closeUnlockModal()"
+                            class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        取消
+                    </button>
+                </div>
+                <p id="unlockErrorMsg" class="text-red-500 text-sm text-center hidden"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增使用者 Modal -->
+    <div id="addUserModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">新增使用者</h3>
+                <div class="space-y-4">
+                        <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">使用者名稱</label>
+                    <input type="text" id="newUserNameInput" placeholder="輸入使用者名稱..."
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                <div class="flex gap-3">
+                    <button onclick="addNewUser()"
+                            class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                        新增
+                    </button>
+                    <button onclick="closeAddUserModal()"
+                            class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        取消
+                    </button>
+                        </div>
+                    </div>
+                </div>
+    </div>
+
+    <!-- 重置確認 Modal -->
+    <div id="resetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-2xl font-bold text-red-600 mb-4">⚠️ 重置所有數據</h3>
+            <div class="space-y-4">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-sm text-red-800 font-semibold mb-2">此操作將清除：</p>
+                    <ul class="text-sm text-red-700 space-y-1 list-disc list-inside">
+                        <li>所有使用者的待辦事項</li>
+                        <li>所有使用者的解鎖記錄</li>
+                        <li>所有使用者的每日語錄</li>
+                        <li>所有自訂使用者（保留默認使用者）</li>
+                    </ul>
+                    <p class="text-sm text-red-800 font-semibold mt-3">⚠️ 此操作無法復原！</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="confirmReset()"
+                            class="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">
+                        確認重置
+                    </button>
+                    <button onclick="closeResetModal()"
+                            class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 狀態管理
+        let currentDate = new Date();
+        let selectedDate = null;
+        let currentUserId = localStorage.getItem('currentUserId') || 'default';
+        let users = JSON.parse(localStorage.getItem('users') || '["default"]');
+        let todos = {};
+
+        // 使用者管理
+        function initUsers() {
+            // 如果沒有使用者，創建預設使用者
+            if (users.length === 0) {
+                users = ['default'];
+                saveUsers();
+            }
+
+            // 如果當前使用者不存在，使用第一個使用者
+            if (!users.includes(currentUserId)) {
+                currentUserId = users[0];
+                saveCurrentUser();
+            }
+
+            // 載入當前使用者的待辦事項
+            loadUserTodos();
+
+            // 渲染使用者選單
+            renderUserSelect();
+            updateCurrentUserDisplay();
+        }
+
+        function renderUserSelect() {
+            const userSelect = document.getElementById('userSelect');
+            userSelect.innerHTML = users.map(userId => {
+                const isSelected = userId === currentUserId ? 'selected' : '';
+                return `<option value="${userId}" ${isSelected}>${userId}</option>`;
+            }).join('');
+        }
+
+        function updateCurrentUserDisplay() {
+            document.getElementById('currentUserName').textContent = currentUserId;
+        }
+
+        function loadUserTodos() {
+            const todosKey = `todos_${currentUserId}`;
+            todos = JSON.parse(localStorage.getItem(todosKey) || '{}');
+            renderAllTodosList(); // 載入使用者資料後更新列表
+        }
+
+        function saveUserTodos() {
+            const todosKey = `todos_${currentUserId}`;
+            localStorage.setItem(todosKey, JSON.stringify(todos));
+        }
+
+        function saveUsers() {
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        function saveCurrentUser() {
+            localStorage.setItem('currentUserId', currentUserId);
+        }
+
+        function switchUser() {
+            const userSelect = document.getElementById('userSelect');
+            const newUserId = userSelect.value;
+
+            if (newUserId !== currentUserId) {
+                // 儲存當前使用者的資料
+                saveUserTodos();
+
+                // 切換使用者
+                currentUserId = newUserId;
+                saveCurrentUser();
+
+                // 載入新使用者的資料
+                loadUserTodos();
+
+                // 清除選中狀態
+                selectedDate = null;
+                document.getElementById('selectedDateTitle').textContent = '選擇日期';
+                document.getElementById('todoList').innerHTML = '<p class="text-gray-400 text-sm text-center py-8">請選擇日期查看待辦事項</p>';
+                document.getElementById('addTodoForm').classList.add('hidden');
+
+                // 重新渲染
+                renderCalendar();
+                updateCurrentUserDisplay();
+                renderAllTodosList(); // 更新所有待辦事項列表
+                renderDailyQuote(); // 更新每日語錄
+            }
+        }
+
+        function openAddUserModal() {
+            document.getElementById('addUserModal').classList.remove('hidden');
+            document.getElementById('newUserNameInput').value = '';
+            document.getElementById('newUserNameInput').focus();
+        }
+
+        function closeAddUserModal() {
+            document.getElementById('addUserModal').classList.add('hidden');
+        }
+
+        function addNewUser() {
+            const input = document.getElementById('newUserNameInput');
+            const userName = input.value.trim();
+
+            if (!userName) {
+                alert('請輸入使用者名稱');
+                return;
+            }
+
+            if (users.includes(userName)) {
+                alert('此使用者名稱已存在');
+                return;
+            }
+
+            // 新增使用者
+            users.push(userName);
+            saveUsers();
+
+            // 切換到新使用者
+            currentUserId = userName;
+            saveCurrentUser();
+            todos = {};
+            saveUserTodos();
+
+            // 更新 UI
+            renderUserSelect();
+            updateCurrentUserDisplay();
+            renderCalendar();
+            renderAllTodosList(); // 更新所有待辦事項列表
+            renderDailyQuote(); // 更新每日語錄
+            closeAddUserModal();
+
+            // 清除選中狀態
+            selectedDate = null;
+            document.getElementById('selectedDateTitle').textContent = '選擇日期';
+            document.getElementById('todoList').innerHTML = '<p class="text-gray-400 text-sm text-center py-8">請選擇日期查看待辦事項</p>';
+            document.getElementById('addTodoForm').classList.add('hidden');
+        }
+
+        // 重置功能
+        function openResetModal() {
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function confirmReset() {
+            // 清除所有使用者的待辦事項
+            const allKeys = Object.keys(localStorage);
+            allKeys.forEach(key => {
+                if (key.startsWith('todos_')) {
+                    localStorage.removeItem(key);
+                }
+                if (key.startsWith('unlockedDates_')) {
+                    localStorage.removeItem(key);
+                }
+                if (key.startsWith('dailyQuotes_')) {
+                    localStorage.removeItem(key);
+                }
+                if (key.startsWith('usedQuotes_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // 重置使用者列表（保留默認使用者）
+            users = ['default'];
+            saveUsers();
+
+            // 重置當前使用者
+            currentUserId = 'default';
+            saveCurrentUser();
+
+            // 重置待辦事項
+            todos = {};
+            saveUserTodos();
+
+            // 重置選中日期
+            selectedDate = null;
+
+            // 關閉 Modal
+            closeResetModal();
+
+            // 重新初始化並渲染
+            initUsers();
+            renderCalendar();
+            renderTodos();
+            renderAllTodosList();
+            renderDailyQuote();
+
+            alert('✅ 所有數據已重置！');
+        }
+
+        // 支援 Enter 鍵新增使用者
+        document.getElementById('newUserNameInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addNewUser();
+            }
+        });
+
+        // 月份名稱
+        const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+        // 每日語錄數據庫
+        const dailyQuotes = [
+            "不期待 不假設 不強求\n是保持情緒穩定的秘訣",
+            "沒人能打擾你內心的平靜\n除非你拱手相讓",
+            "別希望別盼望\n別指望 就不會失望",
+            "勇敢就是\n把做自己當成日常",
+            "這一路很難\n但還是撐過來了",
+            "如果不是這個\n就一定有更好的",
+            "不要因為現實生活的煩躁\n而放棄感覺的能力",
+            "學會自愛\n就不怕被打敗",
+            "絕對不要在糟糕的那天\n揚言放棄",
+            "首先你要開心\n其次都是其次",
+            "I am because you are\n我存在 是因為你",
+            "Let it be\nTo be or not to be",
+            "如果方向錯了\n停止就是最大的進步",
+            "你拼命逗笑的人\n終究比不過",
+            "出生不該被嘲笑\n夢想不該被羞恥",
+            "夢想不會逃走 \n逃走的一直都是自己",
+            "情況不會變得更好\n但也變得更不一樣了",
+            "只要活得夠久 生命的長度\n就會稀釋錯誤的濃度",
+            "人生有兩種事 一種是好事\n另一種是不知道好在哪的事",
+            "竹籃打水一場空\n至少竹籃乾淨了",
+            "先開口 被拒絕了再說\n記得先做個垃圾出來",
+            "不要害怕三分鐘熱度\n至少會有三分鐘收穫",
+            "恨是生產力\n愛 只能生產",
+            "成長不是讓所有人喜歡你\n而是學會接受有人不喜歡你",
+            "有些人能夠共存已經很好\n硬要相處就是奢求",
+            "懂事聽起來是稱讚\n但其實是要我們受委屈",
+            "憂鬱的根本\n是失去自我",
+            "心太累的時候\n先原諒自己",
+            "盡情生活\n做過的事情都不要後悔",
+            "睡前原諒一切\n醒來便是重生",
+            "GoogleMap不會責備你\n所以你也別責備你自己",
+            "不必急著讓努力立刻見效\n也不必事事都做到完美",
+            "不需要爭強好勝\n只要活出精彩",
+            "沒有憂愁的時候\n就是最好的時候",
+            "把痛苦放回他該去的位置\n人生有很多值得期待的事",
+            "沒有人一直在看你\n活著不需要有任何包袱",
+            "照顧好自己\n就是成家了",
+            "三思而後行\n再，斯可矣",
+            "要嘛大爆炸\n要嘛一起死",
+            "凡事先去做\n過程在縫縫補補",
+            "周圍吵雜的聲音\n真的沒有那麼重要",
+            "不要因為別人的看法\n影響自己的情緒",
+            "每一天每一個層面\n我都越來越好",
+            "在好起來之前\n先接受自己無能為力",
+            "別指望任何人\n請好好愛自己",
+            "公平的是\n我們的失去都是對等的",
+            "什麼都無所謂\n才是支離破碎",
+            "不會因為你善良就對你溫柔\n記得對自己溫柔一點",
+            "拎著一袋垃圾 \n就會錯過很多的禮物",
+            "沒有什麼放不下\n想得太多只會讓人生更累",
+            "安慰並鼓勵所有人\n唯獨不肯放過自己",
+            "學會溫柔以待\n接納不完美的自己",
+            "清者自清\n不需要向任何人解釋",
+            "我經歷黑暗\n但我保持清澈初心",
+            "誰都可以不喜歡你\n但你自己不可以",
+            "人總要嚥下些委屈\n接著隻字不提的向前走",
+            "若無法改變現狀\n那就享受當下",
+            "這只是糟糕的一天\n沒什麼大不了",
+            "人生除了生死\n其他都是小事",
+            "我們都不用改\n不舒服的關係就斷開",
+            "天黑可以矯情\n天亮就得拼命",
+            "成年人的最大成就\n是克制糾正他人的慾望",
+            "你比你自己想像的還要勇敢\n別因他人的話而讓自己黯淡",
+            "這個世界不缺少成功的人\n我們需要更多的講故事",
+            "長大吧！\n這個世界不是你的老母親。",
+            "悲觀通常不意味著生活艱難和疲憊\n而是無法控制的想像。",
+            "當命運要求你逆風飛翔時\n希望你不要選擇隨波逐流。",
+            "能從暴風雨中走出來的人\n從來不是因為有把傘。",
+            "我們沒有做錯什麼\n但我們輸了。",
+            "只有經過深刻的教訓\n才能明白這句話的意義。",
+            "珍惜你低潮的時候\n你會看到很多真相。",
+            "照亮生命的不是美景\n而是一個好的希望。",
+            "無論如何，歲月漫長\n但值得等待。",
+            "禁錮自己\n是一個標籤，一個偏見。",
+            "心氣是不可再生之物\n珍惜",
+            "讓生命如夏花般絢麗\n死亡如秋葉般靜美。",
+            "在變好之前\n事情總會變得更糟。",
+            "它總是會發光的\n即使沒有太陽。",
+            "讓自己變得更好\n讓自己快樂。",
+            "不要為不重要的人和事操心\n長期心結。",
+            "死亡\n只是另一場偉大的冒險。",
+            "人生無非就是兩種結果\n可笑且有效。",
+            "人生就是這樣\n無論怎麼走，總會有遺憾。",
+            "當下坡足夠快的時候\n展開翅膀，克服困難。",
+            "及時醒悟\n也願意付出一切。",
+            "沒有人會永遠愛你\n但總會有人愛你。",
+            "風停在窗邊\n告訴你要愛這個世界。",
+            "別人的看法僅僅是看法\n沒有人比你自己更懂得做自己。",
+            "在人生中\n沒有一定要實現的目標。",
+            "每一個雨天之後都是晴天\n風暴過後會有彩虹。",
+            "勇敢面對\n迎接下一個挑戰。",
+            "跌倒了沒關係\n再站起來就好，或者就躺著吧。",
+            "如果你不知道如何休息\n怎麼知道如何前進。",
+            "放過這條小溪吧\n還有更美的山川。",
+            "如果人生是一列火車\n車票就是經歷。",
+            "不要因為別人\n而影響自己的心情。",
+            "幸福是一種修行\n但它不是人生的唯一。",
+            "真正的幸福\n是努力爬上山巔。",
+            "我是天空\n容納任何一朵雲。",
+            "生活繼續\n超越心情之外。",
+            "告別那些心痛\n剩下的人生每一刻都值得激動。",
+            "人生沒有標準答案\n珍惜當下就是最好的答案。",
+            "經歷風雨\n才能在動盪中保持平靜。",
+            "累了，說明又在上坡路上了。\n難了，說明我們在進步。",
+            "在沒有人在意的地方\n在聚光燈下出現。",
+            "玩得開心\n卻也悲傷。",
+            "長大\n是人必須經歷的一場腐爛。",
+            "忘記是一個部分的複數詞\n我騙自己忘了，但其實還記得。",
+            "不知道我要去哪裡\n但我已經在路上了。",
+            "即使大家都不放在心上\n我還是我。",
+            "雲想衣裳花想容\n春風拂檻露華濃。",
+            "你在意什麼\n什麼就會折磨你。",
+            "沒有人不在努力\n只是沒喊出痛苦。",
+            "有好的心態\n才能有好的狀態。",
+            "一切都會結束\n我的煩惱無盡。",
+            "最黑暗的時刻\n總會有一絲光亮。",
+            "擺脫不必要的內疚\n不要委屈自己去討好別人。",
+            "接受自己每個階段的樣子\n努力與自己和解。",
+            "努力成為值得被愛的人\n而不是強迫別人愛上自己糟糕的一面。",
+            "許多事情都是個人選擇\n你必須喜歡那個做出選擇的自己。",
+            "知道你不完美\n接受你不完美。",
+            "找不到要走的路\n那就先走眼前的路吧。",
+            "你並不缺乏正能量\n只怕自己不夠強大。",
+            "走得慢沒關係\n只要你不停下來。",
+            "不要讓當前的遺憾\n成為未來生活的嘆息。",
+            "我是隻烏龜\n我不想打敗兔子，我只想喜歡我自己。",
+            "被忽視的感覺\n真的很難受。",
+            "沒有人會無緣無故消失\n只有不想聯繫的人。",
+            "當生活都是上坡路的時候\n那才會這麼吃力。",
+            "即使走得蹣跚\n也要努力前行。",
+            "做自己\n也可以活得很精彩。",
+            "好好活著，好好告別\n那就是幸福。",
+            "如果明天還在\n今天我們能不能重新開始？",
+            "當你做自己的時候\n真的不應該期待被喜歡。",
+            "不是真的想死\n只是不知道如何活下去。",
+            "做自己\n因為別人已經被做過了。",
+            "多一分\n就是多一分。",
+            "不要踮起腳尖去愛\n這只會讓狗吃屎。",
+            "與你無關的事\n卻是別人一生的痛苦。",
+            "當你選擇這條路\n另一條路上的風景就與你無關了。",
+            "所謂低調\n就是不露痕跡的高調。",
+            "接受自己平凡的樣子\n然後盡力做到不一樣。",
+            "幸福不是羨慕別人\n而是活得像自己。",
+            "放手吧\n不要再執著了。",
+            "不要害怕前方的黑暗\n你正在散發光芒。",
+            "正義或許會遲到\n但永不缺席。",
+            "雖然今天的努力很艱辛，\n但那些都是來自未來的禮物。",
+            "你只會年輕一次\n去享受你的青春吧。",
+            "生命就是不斷遇見\n又不斷分別的過程",
+            "時間比眼睛\n更能看清一些東西",
+            "醒來\n方知是夢",
+            "路上總有陰影\n但抬頭總能見光",
+            "有心者有所累\n無心者無所謂",
+            "不要騙自己努力過了\n就會長出翅膀",
+            "自我感動的付出 \n既危險又愚蠢",
+            "盛不盛開 \n花都是花",
+            "既然去不了遠方\n就感受沿路的風景",
+            "去吹吹風吧\n能清醒，感冒也沒關係",
+            "人生是用來體驗的\n不是用來演繹完美的",
+            "加油不要放棄 \n現在害怕是因為沒有做好",
+            "別對自己失望\n你只是太想把事情做好",
+            "累了就慢慢走\n偶爾停下來沒關係",
+            "都要高處相見\n海裡的美怎麼參觀",
+            "希望你別有壓力\n人生不是競技",
+            "沒有事事如意\n只能順其心意",
+            "大多沒有正確答案\n只有適合自己的解答",
+            "給自己一對翅膀\n強迫自己學會飛翔",
+            "我是大海\n與波濤共存",
+            "好好記得 \n自己努力時的樣子",
+            "不打開的開門\n再敲就不禮貌了",
+            "已歡喜之心\n度平日之日",
+            "先努力優秀\n再大方擁有",
+            "時間來不及細算\n過往來不及想看",
+            "不用很厲害才開始\n要先開始才會很厲害",
+            "殺不死你的\n終會使你強大",
+            "遺憾的反面不是完美\n而是懂得放下",
+            "這個世界不美好\n但總有人守護著你",
+            "偏見\n是無法僭越的高牆",
+            "生活需要煙火\n也需要靜靜的美好",
+            "這個世界本來就不好\n但，你要記得，你很好",
+            "有些煩惱，丟掉了\n才有雲淡風輕的機會",
+            "如果沒有躺贏的命\n那就站起來奔跑吧",
+            "每天都在學習放手\n活在當下就別害怕失去",
+            "萬般皆是命\n半點不由人",
+            "風雨人生\n給自己一個微笑",
+            "即便很堅強\n也不代表不會受傷",
+            "播種美好希望\n收穫幸福時光",
+            "沒有期待的日子\n反而順順利利",
+            "學會發現自己的好\n別把重要的自己當作隱形人",
+            "大部分的人不會感謝你的善良\n除了得寸進尺還是得寸進尺",
+            "活成一座孤島\n也要有屬於自己的美好",
+            "沒必要體諒所有人\n有些人也不會體諒你",
+            "人生沒有白走的路\n每一步都算數",
+            "沒有過不去的坎\n只有轉不過的念",
+            "如果兔子都拼命奔跑 \n烏龜該怎麼辦？",
+            "不能與之為敵\n便與之為伍",
+            "有時後也想問\n是不是這樣就好",
+            "沒什麼好後悔的\n即使可以再來一次",
+            "你停下腳步的時候\n世界並不會停下來等你",
+            "現在的堅持\n是為了讓未來有更多選擇",
+            "不用太認真的活著\n對得起自己就好",
+            "寧可讓人討厭真實的你\n也好過讓別人愛上虛偽的自己",
+            "握在手裡的風箏\n也會突然斷了線",
+            "你所經歷的一切\n都會過去",
+            "照顧好自己\n才是最負責任的生活方式",
+            "學會自嘲\n我們都不完美",
+            "起得晚\n就要更努力",
+            "別在機場等船\n只會等到得寸進尺",
+            "寧肯天真的哭\n也不願無恥的笑",
+            "既然放不下\n就先擱著吧",
+            "思念的聲音很輕\n但我們都聽得到",
+            "雖然人生充滿遺憾\n但也因此更美好",
+            "人生難題一再出現\n都是為了考驗你有沒有改變",
+            "不願意種花\n是不願意看到他凋零",
+            "喜是初見歡\n愛是久不厭",
+            "想改變\n什麼時候都不晚",
+            "不要覺得路途遙遠\n回頭都是你堅持的足跡",
+            "早餐店沒有賣晚上的\n想買的人，早上就來了",
+            "放平心態 偷偷厲害\n萬事盡可期待",
+            "有一種聰明 叫做傻\n有一種傻 叫自作聰明",
+            "最好的貴人\n就是努力的自己",
+            "巧克力變巧克力之前\n都是苦的",
+            "沒有熱忱\n世間便無進步",
+            "沒有人能獨自堅強\n我們都要幫助所愛的人",
+            "你成為什麼\n就會吸引什麼",
+            "當你找到自己\n全世界都會來愛你",
+            "只要你願意努力\n最壞的結果也只是大器晚成",
+            "如果你想攀登高峰\n別把彩虹當作階梯，會摔死",
+            "把簡單弄複雜是找麻煩\n把複雜弄簡單才是本事",
+            "獨立的過程很辛苦  但走過這段路\n獲得的東西也一定比別人多",
+            "人生路上死不了人的，\n都是擦傷。",
+            "開始迷茫的時候不要逃避\n那是解決麻煩的開始",
+            "沒必要去做第一\n但必須去做唯一",
+            "讓朋友低估你的優點\n讓敵人高估你的缺點",
+            "我望著自己伸出的手\n疑惑能成為誰的救贖",
+            "練習自己的快樂\n不要跟別人比較",
+            "如果沒見過太陽\n我本可以忍受黑暗",
+            "哭不是堅強\n忍住不哭才是成長",
+            "做對的事情\n比把事情做對更重要",
+            "屬於你的就珍惜\n不是你的就別要",
+            "一個不了解自己的人\n很難得到自己想要的東西",
+            "煽動的話語必定好聽\n誣衊的語言必能成長",
+            "成為自己喜歡的樣子吧！\n不要放棄過往的努力。",
+            "訂個目標\n告訴自己能行的",
+            "未盡全力，\n除了自己又能怪誰？",
+            "所有看似美好的\n都經歷過或者正在經歷著不美好。",
+            "不是所有碎片都能拼湊\n就像那些昨天無法重新擁有",
+            "想念離我如此之近\n才發現你多遙不可及",
+            "你要給在 身邊的人機會\n他們才會告訴你，你值得",
+            "溫婉的憐憫來敲門\n再厚的鐵門也總會打開",
+            "現實中壞人不會是巫婆樣\n好人也不會寫在臉上",
+            "你不用對這個世界太沮喪\n因為你一定也曾經傷害過一些人",
+            "贏不一定有道理\n輸肯定有原因",
+            "哪有什麼輕易得到的幸運\n幸運只是結果而已",
+            "你相信什麼\n就會朝向什麼",
+            "為了融入社會不得不偽裝自己\n問自己，有必要嗎？",
+            "可，因為信念\n不可，因為信仰",
+            "不要憎恨敵人\n那會影響你的判斷能力",
+            "恐懼，是看見你不相信的\n信念，是相信你看不見的",
+            "生活也許很苦\n但他並不會放棄你",
+            "不要守着那份委屈\n屬於你的光芒終會為你綻放",
+            "I like you\nbut just like you",
+            "過不了高牆\n看不到遠方",
+            "自己不堅強\n弱給誰看",
+            "精力好的人\n會集中能量做重要的事",
+            "逆水行舟\n不進則退",
+            "你不需要很厲害才能開始\n你需要開始才能很厲害",
+            "只有開始，\n才有故事。",
+            "唯有做思想的旁觀者\n才能看清自己。",
+            "為強者  積于弱\n有余者 積于不足",
+            "迷路的時候放下自尊與面子\n是自我成長的第一步",
+            "世界是你自己的\n與他人毫無關係",
+            "回頭看自己走過的路才開始後悔\n後悔沒能活成自己想要的樣子",
+            "不能改變未來，就改變當下\n唯有改變，未來的路才能越漸不同",
+            "每個人都希望善惡有報\n但沒人想要弄髒自己的手，人間。",
+            "你必須找到你所愛的東西\n不僅是工作、戀愛，亦是生活",
+            "處無為之事\n行不言之教",
+            "對自己好一點\n那是會跟你最久的人",
+            "這人間真的不值得\n但你  超值得。",
+            "知道和做到是兩碼事\n別總是敷衍著回答來掩藏自己的無能",
+            "你現在焦慮的事情\n後來一件都沒有發生，告訴未來的我",
+            "世界之大 何吾處\n世界不小 何苦吾",
+            "日子苦了\n連黑咖啡有點是甜的",
+            "英雄路過時總會有人拍手\n我只想當那個拍手的人，不想當英雄",
+            "你的生活，需要點儀式感\n可以很講究也可以很隨便。",
+            "要懂得知而不言\n因為言多必失",
+            "盡情生活\n做過的每件事情都別後悔",
+            "如果你沒有完美的人生\n那就自己創造吧",
+            "做好當前點滴 學會學習\n相信人間真善美",
+            "人生總會遇到許多問題\n如果只會抱怨，那還真是廢物。",
+            "生活是面鏡子\n你對他笑，他便笑。 你哭，他哭。",
+            "再怎麼不開心，秒針還是再走\n人生要跟時間賽跑，別鬧脾氣。"
+        ];
+
+        // 解鎖狀態管理
+        let unlockModalDateKey = null;
+        let unlockModalDate = null;
+        let geminiApiKey = localStorage.getItem('geminiApiKey') || '';
+
+        // 載入解鎖記錄
+        function loadUnlockedDates() {
+            const key = `unlockedDates_${currentUserId}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+
+        // 保存解鎖記錄
+        function saveUnlockedDates(dates) {
+            const key = `unlockedDates_${currentUserId}`;
+            localStorage.setItem(key, JSON.stringify(dates));
+        }
+
+        // 檢查日期是否已解鎖
+        function checkDateUnlocked(dateKey) {
+            const unlockedDates = loadUnlockedDates();
+            return unlockedDates.includes(dateKey);
+        }
+
+        // 解鎖日期
+        function unlockDate(dateKey) {
+            const unlockedDates = loadUnlockedDates();
+            if (!unlockedDates.includes(dateKey)) {
+                unlockedDates.push(dateKey);
+                saveUnlockedDates(unlockedDates);
+            }
+        }
+
+        // 打開解鎖彈窗
+        function openUnlockModal(dateKey, date) {
+            unlockModalDateKey = dateKey;
+            unlockModalDate = date;
+            document.getElementById('unlockDateModal').classList.remove('hidden');
+            document.getElementById('unlockDateInput').value = '';
+            document.getElementById('unlockDateInput').focus();
+            document.getElementById('unlockErrorMsg').classList.add('hidden');
+        }
+
+        // 關閉解鎖彈窗
+        function closeUnlockModal() {
+            document.getElementById('unlockDateModal').classList.add('hidden');
+            unlockModalDateKey = null;
+            unlockModalDate = null;
+        }
+
+        // 確認解鎖日期
+        function confirmUnlockDate() {
+            const input = document.getElementById('unlockDateInput');
+            const inputValue = input.value.trim();
+            const errorMsg = document.getElementById('unlockErrorMsg');
+
+            // 首先檢查是否只能解鎖當天
+            const todayKey = getTodayKey();
+            if (unlockModalDateKey !== todayKey) {
+                errorMsg.textContent = '只能解鎖當天的日期！';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            if (!inputValue || inputValue.length !== 4) {
+                errorMsg.textContent = '請輸入4位數字（格式：MMDD）';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // 驗證輸入是否為數字
+            if (!/^\d{4}$/.test(inputValue)) {
+                errorMsg.textContent = '請輸入有效的數字';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // 解析輸入的日期
+            const month = parseInt(inputValue.substring(0, 2));
+            const day = parseInt(inputValue.substring(2, 4));
+
+            // 驗證月份和日期
+            if (month < 1 || month > 12) {
+                errorMsg.textContent = '月份必須在 01-12 之間';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            if (day < 1 || day > 31) {
+                errorMsg.textContent = '日期必須在 01-31 之間';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // 檢查輸入的日期是否與今天的日期匹配
+            const today = new Date();
+            const todayMonth = today.getMonth() + 1;
+            const todayDay = today.getDate();
+
+            if (month !== todayMonth || day !== todayDay) {
+                errorMsg.textContent = `日期不正確！請輸入今天的日期：${todayMonth.toString().padStart(2, '0')}${todayDay.toString().padStart(2, '0')}`;
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // 解鎖成功
+            unlockDate(unlockModalDateKey);
+            closeUnlockModal();
+
+            // 重新渲染月曆
+            renderCalendar();
+
+            // 解鎖的是今天，自動領取語錄並生成圖片
+            claimDailyQuoteWithImage();
+        }
+
+        // API Key 管理
+        function openApiKeyModal() {
+            document.getElementById('apiKeyModal').classList.remove('hidden');
+            document.getElementById('geminiApiKeyInput').value = geminiApiKey;
+            document.getElementById('geminiApiKeyInput').focus();
+        }
+
+        function closeApiKeyModal() {
+            document.getElementById('apiKeyModal').classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('geminiApiKeyInput');
+            geminiApiKey = input.value.trim();
+            localStorage.setItem('geminiApiKey', geminiApiKey);
+            closeApiKeyModal();
+            alert('API Key 已保存！');
+        }
+
+        // 支援 Enter 鍵解鎖
+        document.addEventListener('DOMContentLoaded', function() {
+            const unlockInput = document.getElementById('unlockDateInput');
+            if (unlockInput) {
+                unlockInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        confirmUnlockDate();
+                    }
+                });
+            }
+        });
+
+        // 獲取今日日期字串 (YYYY-MM-DD)
+        function getTodayKey() {
+            const today = new Date();
+            return formatDateKey(today);
+        }
+
+        // 載入每日語錄記錄
+        function loadDailyQuotes() {
+            const key = `dailyQuotes_${currentUserId}`;
+            return JSON.parse(localStorage.getItem(key) || '{}');
+        }
+
+        // 保存每日語錄記錄
+        function saveDailyQuotes(quotesData) {
+            const key = `dailyQuotes_${currentUserId}`;
+            localStorage.setItem(key, JSON.stringify(quotesData));
+        }
+
+        // 獲取今日語錄（如果已領取）
+        function getTodayQuote() {
+            const quotesData = loadDailyQuotes();
+            const todayKey = getTodayKey();
+            return quotesData[todayKey] || null;
+        }
+
+        // 領取今日語錄（需要先解鎖）
+        function claimDailyQuote() {
+            const todayKey = getTodayKey();
+
+            // 檢查是否已解鎖
+            if (!checkDateUnlocked(todayKey)) {
+                alert('請先解鎖今天的日期！點擊月曆上的鎖圖標解鎖。');
+                return;
+            }
+
+            claimDailyQuoteWithImage();
+        }
+
+        // 獲取已使用的語錄列表
+        function getUsedQuotes() {
+            const key = `usedQuotes_${currentUserId}`;
+            return JSON.parse(localStorage.getItem(key) || '[]');
+        }
+
+        // 保存已使用的語錄列表
+        function saveUsedQuotes(usedQuotes) {
+            const key = `usedQuotes_${currentUserId}`;
+            localStorage.setItem(key, JSON.stringify(usedQuotes));
+        }
+
+        // 選擇一個未使用過的語錄（確保每天都不一樣）
+        function selectRandomQuote() {
+            const usedQuotes = getUsedQuotes();
+            const availableQuotes = dailyQuotes.filter(quote => !usedQuotes.includes(quote));
+
+            // 如果所有語錄都用過了，重置記錄
+            if (availableQuotes.length === 0) {
+                saveUsedQuotes([]);
+                return dailyQuotes[Math.floor(Math.random() * dailyQuotes.length)];
+            }
+
+            // 從未使用的語錄中隨機選擇
+            const randomIndex = Math.floor(Math.random() * availableQuotes.length);
+            const selectedQuote = availableQuotes[randomIndex];
+
+            // 記錄已使用的語錄
+            usedQuotes.push(selectedQuote);
+            saveUsedQuotes(usedQuotes);
+
+            return selectedQuote;
+        }
+
+        // 領取語錄並生成圖片
+        async function claimDailyQuoteWithImage() {
+            const todayKey = getTodayKey();
+            const quotesData = loadDailyQuotes();
+
+            // 如果今天已經領取過，不重複領取
+            if (quotesData[todayKey] && quotesData[todayKey].image) {
+                renderDailyQuote();
+                return;
+            }
+
+            // 從未使用的語錄中隨機選擇，確保每天都不一樣
+            const selectedQuote = selectRandomQuote();
+
+            // 顯示載入狀態
+            const card = document.getElementById('dailyQuoteCard');
+            card.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-2"></div>
+                    <p class="text-gray-600">正在生成語錄卡片...</p>
+                </div>
+            `;
+
+            try {
+                // 生成圖片（優先使用 html2canvas，如果失敗則嘗試 Gemini API）
+                let imageBase64 = null;
+
+                // 方法1：使用 html2canvas（不需要 API）
+                try {
+                    imageBase64 = await generateQuoteImageWithCanvas(selectedQuote, todayKey);
+                } catch (error) {
+                    console.warn('Canvas 圖片生成失敗，嘗試使用 Gemini API:', error);
+
+                    // 方法2：如果設置了 Gemini API Key，則使用 API
+                    if (geminiApiKey) {
+                        try {
+                            imageBase64 = await generateQuoteImageWithGemini(selectedQuote);
+                        } catch (apiError) {
+                            console.warn('Gemini API 圖片生成失敗:', apiError);
+                        }
+                    }
+                }
+
+                // 保存今日語錄
+                quotesData[todayKey] = {
+                    quote: selectedQuote,
+                    date: todayKey,
+                    image: imageBase64
+                };
+                saveDailyQuotes(quotesData);
+
+                // 重新渲染
+                renderDailyQuote();
+            } catch (error) {
+                console.error('領取語錄失敗:', error);
+                card.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-red-600 mb-2">領取失敗，請重試</p>
+                        <button onclick="claimDailyQuoteWithImage()"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            重試
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // 分析語錄意境，根據心境生成對應的視覺景致
+        function getQuoteTheme(quote) {
+            const quoteLower = quote.toLowerCase();
+
+            // 定義關鍵詞與對應的意境主題
+            const moodKeywords = {
+                // 平靜、寧靜、內省
+                peaceful: {
+                    keywords: ['平靜', '寧靜', '內心', '原諒', '接受', '平凡', '穩定', '情緒穩定', '平靜', '安靜', '沉靜'],
+                    theme: {
+                        name: '寧靜湖面',
+                        gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 30%, #4facfe 60%, #00f2fe 100%)',
+                        accent: '#00f2fe',
+                        decor: '🌊',
+                        pattern: 'wave',
+                        description: '如平靜湖面般的寧靜藍紫色調'
+                    }
+                },
+                // 溫暖、希望、鼓勵
+                warm: {
+                    keywords: ['開心', '快樂', '希望', '期待', '更好', '成長', '進步', '加油', '努力', '勇敢', '堅持'],
+                    theme: {
+                        name: '溫暖晨曦',
+                        gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 30%, #f6d365 60%, #fee140 100%)',
+                        accent: '#fee140',
+                        decor: '🌅',
+                        pattern: 'star',
+                        description: '如晨曦般溫暖的橙金色調'
+                    }
+                },
+                // 夢幻、溫柔、美好
+                dreamy: {
+                    keywords: ['夢想', '美好', '溫柔', '愛', '感覺', '期待', '浪漫', '美好', '溫柔', '夢幻'],
+                    theme: {
+                        name: '夢幻花園',
+                        gradient: 'linear-gradient(135deg, #fa709a 0%, #fee140 30%, #f093fb 60%, #667eea 100%)',
+                        accent: '#f093fb',
+                        decor: '🌸',
+                        pattern: 'star',
+                        description: '如夢幻花園般的粉紫色調'
+                    }
+                },
+                // 清新、自由、開闊
+                fresh: {
+                    keywords: ['自由', '開闊', '清新', '自然', '呼吸', '放鬆', '輕鬆', '自由', '開闊', '廣闊'],
+                    theme: {
+                        name: '清新原野',
+                        gradient: 'linear-gradient(135deg, #30cfd0 0%, #4facfe 30%, #00f2fe 60%, #667eea 100%)',
+                        accent: '#30cfd0',
+                        decor: '🌿',
+                        pattern: 'leaf',
+                        description: '如原野般清新的青藍色調'
+                    }
+                },
+                // 力量、堅強、決心
+                strong: {
+                    keywords: ['力量', '堅強', '勇敢', '不怕', '打敗', '戰勝', '決心', '堅持', '勇敢', '堅強'],
+                    theme: {
+                        name: '堅韌山巒',
+                        gradient: 'linear-gradient(135deg, #330867 0%, #764ba2 30%, #667eea 60%, #f093fb 100%)',
+                        accent: '#764ba2',
+                        decor: '⛰️',
+                        pattern: 'diamond',
+                        description: '如山巒般堅韌的深紫色調'
+                    }
+                },
+                // 憂鬱、思考、深沉
+                contemplative: {
+                    keywords: ['憂鬱', '思考', '深沉', '失去', '痛苦', '困難', '難過', '憂愁', '思考', '深沉'],
+                    theme: {
+                        name: '深邃夜空',
+                        gradient: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 30%, #667eea 60%, #764ba2 100%)',
+                        accent: '#667eea',
+                        decor: '🌙',
+                        pattern: 'dot',
+                        description: '如夜空般深邃的藍紫色調'
+                    }
+                },
+                // 喜悅、慶祝、成就
+                joyful: {
+                    keywords: ['開心', '快樂', '成功', '成就', '慶祝', '開心', '快樂', '喜悅', '歡樂', '慶祝'],
+                    theme: {
+                        name: '歡樂煙火',
+                        gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 30%, #fa709a 60%, #f093fb 100%)',
+                        accent: '#fda085',
+                        decor: '🎉',
+                        pattern: 'star',
+                        description: '如煙火般絢爛的金粉色調'
+                    }
+                },
+                // 溫柔、關懷、愛
+                gentle: {
+                    keywords: ['溫柔', '關懷', '愛', '照顧', '關心', '溫柔', '關懷', '愛', '溫暖', '體貼'],
+                    theme: {
+                        name: '溫柔月光',
+                        gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 60%, #fa709a 100%)',
+                        accent: '#f093fb',
+                        decor: '💜',
+                        pattern: 'circle',
+                        description: '如月光般溫柔的紫粉色調'
+                    }
+                }
+            };
+
+            // 分析語錄，找出匹配的意境
+            let matchedMood = null;
+            let maxScore = 0;
+
+            for (const [mood, data] of Object.entries(moodKeywords)) {
+                let score = 0;
+                data.keywords.forEach(keyword => {
+                    if (quoteLower.includes(keyword)) {
+                        score += keyword.length; // 關鍵詞越長，權重越高
+                    }
+                });
+                if (score > maxScore) {
+                    maxScore = score;
+                    matchedMood = data.theme;
+                }
+            }
+
+            // 如果沒有匹配到，根據語錄的整體情感傾向選擇
+            if (!matchedMood || maxScore === 0) {
+                // 分析語錄的整體情感
+                const hasPositive = /開心|快樂|希望|美好|成功|成長|進步|勇敢|堅持|努力/.test(quoteLower);
+                const hasNegative = /憂鬱|痛苦|困難|失去|難過|憂愁|失望/.test(quoteLower);
+                const hasNeutral = /平靜|寧靜|接受|平凡|穩定|情緒/.test(quoteLower);
+
+                if (hasPositive && !hasNegative) {
+                    matchedMood = moodKeywords.warm.theme;
+                } else if (hasNegative && !hasPositive) {
+                    matchedMood = moodKeywords.contemplative.theme;
+                } else if (hasNeutral) {
+                    matchedMood = moodKeywords.peaceful.theme;
+                } else {
+                    // 默認使用溫柔主題
+                    matchedMood = moodKeywords.gentle.theme;
+                }
+            }
+
+            return matchedMood;
+        }
+
+        // 使用 html2canvas 生成語錄卡片圖片（不需要 API）
+        async function generateQuoteImageWithCanvas(quote, dateKey) {
+            const theme = getQuoteTheme(quote);
+
+            // 創建一個臨時的卡片元素
+            const tempCard = document.createElement('div');
+            tempCard.style.position = 'fixed';
+            tempCard.style.left = '-9999px';
+            tempCard.style.width = '1000px';
+            tempCard.style.height = '700px';
+            tempCard.style.padding = '0';
+            tempCard.style.background = theme.gradient;
+            tempCard.style.borderRadius = '30px';
+            tempCard.style.boxShadow = '0 30px 80px rgba(0,0,0,0.4)';
+            tempCard.style.display = 'flex';
+            tempCard.style.flexDirection = 'column';
+            tempCard.style.justifyContent = 'center';
+            tempCard.style.alignItems = 'center';
+            tempCard.style.color = 'white';
+            tempCard.style.fontFamily = "'Inter', sans-serif";
+            tempCard.style.overflow = 'hidden';
+            tempCard.style.position = 'relative';
+
+            // 添加背景裝飾圖案
+            const bgPattern = document.createElement('div');
+            bgPattern.style.position = 'absolute';
+            bgPattern.style.top = '0';
+            bgPattern.style.left = '0';
+            bgPattern.style.width = '100%';
+            bgPattern.style.height = '100%';
+            bgPattern.style.opacity = '0.15';
+            bgPattern.style.backgroundImage = createPatternSVG(theme.pattern, theme.accent);
+            bgPattern.style.backgroundRepeat = 'repeat';
+            bgPattern.style.backgroundSize = '200px 200px';
+            tempCard.appendChild(bgPattern);
+
+            // 添加光暈效果
+            const glow1 = document.createElement('div');
+            glow1.style.position = 'absolute';
+            glow1.style.top = '-100px';
+            glow1.style.right = '-100px';
+            glow1.style.width = '400px';
+            glow1.style.height = '400px';
+            glow1.style.borderRadius = '50%';
+            glow1.style.background = `radial-gradient(circle, ${theme.accent}40 0%, transparent 70%)`;
+            glow1.style.filter = 'blur(60px)';
+            tempCard.appendChild(glow1);
+
+            const glow2 = document.createElement('div');
+            glow2.style.position = 'absolute';
+            glow2.style.bottom = '-150px';
+            glow2.style.left = '-150px';
+            glow2.style.width = '500px';
+            glow2.style.height = '500px';
+            glow2.style.borderRadius = '50%';
+            glow2.style.background = `radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)`;
+            glow2.style.filter = 'blur(80px)';
+            tempCard.appendChild(glow2);
+
+            // 創建內容容器
+            const contentContainer = document.createElement('div');
+            contentContainer.style.position = 'relative';
+            contentContainer.style.zIndex = '10';
+            contentContainer.style.width = '100%';
+            contentContainer.style.height = '100%';
+            contentContainer.style.display = 'flex';
+            contentContainer.style.flexDirection = 'column';
+            contentContainer.style.justifyContent = 'center';
+            contentContainer.style.alignItems = 'center';
+            contentContainer.style.padding = '60px';
+            tempCard.appendChild(contentContainer);
+
+            // 添加頂部裝飾線
+            const topLine = document.createElement('div');
+            topLine.style.width = '100px';
+            topLine.style.height = '3px';
+            topLine.style.background = `linear-gradient(90deg, transparent, ${theme.accent}, transparent)`;
+            topLine.style.marginBottom = '40px';
+            topLine.style.borderRadius = '2px';
+            contentContainer.appendChild(topLine);
+
+            // 添加日期
+            const dateElement = document.createElement('div');
+            dateElement.style.fontSize = '20px';
+            dateElement.style.opacity = '0.95';
+            dateElement.style.marginBottom = '50px';
+            dateElement.style.fontWeight = '500';
+            dateElement.style.letterSpacing = '2px';
+            dateElement.style.textShadow = '0 2px 15px rgba(0,0,0,0.3)';
+            dateElement.textContent = dateKey;
+            contentContainer.appendChild(dateElement);
+
+            // 添加引號裝飾
+            const quoteMark = document.createElement('div');
+            quoteMark.style.fontSize = '80px';
+            quoteMark.style.opacity = '0.3';
+            quoteMark.style.position = 'absolute';
+            quoteMark.style.top = '120px';
+            quoteMark.style.left = '80px';
+            quoteMark.style.fontFamily = 'serif';
+            quoteMark.textContent = '"';
+            quoteMark.style.transform = 'rotate(180deg)';
+            contentContainer.appendChild(quoteMark);
+
+            // 添加語錄文字
+            const quoteElement = document.createElement('div');
+            quoteElement.style.fontSize = '42px';
+            quoteElement.style.fontWeight = '600';
+            quoteElement.style.lineHeight = '1.8';
+            quoteElement.style.textAlign = 'center';
+            quoteElement.style.whiteSpace = 'pre-line';
+            quoteElement.style.maxWidth = '800px';
+            quoteElement.style.textShadow = '0 4px 20px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)';
+            quoteElement.style.letterSpacing = '1px';
+            quoteElement.style.position = 'relative';
+            quoteElement.style.zIndex = '5';
+            quoteElement.textContent = quote;
+            contentContainer.appendChild(quoteElement);
+
+            // 添加底部裝飾線
+            const bottomLine = document.createElement('div');
+            bottomLine.style.width = '100px';
+            bottomLine.style.height = '3px';
+            bottomLine.style.background = `linear-gradient(90deg, transparent, ${theme.accent}, transparent)`;
+            bottomLine.style.marginTop = '50px';
+            bottomLine.style.borderRadius = '2px';
+            contentContainer.appendChild(bottomLine);
+
+            // 根據主題選擇合適的裝飾元素
+            const getDecorEmojis = (themeName) => {
+                const decorMap = {
+                    '寧靜湖面': ['🌊', '💙', '🌌'],
+                    '溫暖晨曦': ['🌅', '☀️', '✨'],
+                    '夢幻花園': ['🌸', '🌺', '💐'],
+                    '清新原野': ['🌿', '🍃', '🌱'],
+                    '堅韌山巒': ['⛰️', '🏔️', '💎'],
+                    '深邃夜空': ['🌙', '⭐', '🌌'],
+                    '歡樂煙火': ['🎉', '🎊', '✨'],
+                    '溫柔月光': ['💜', '🌙', '✨']
+                };
+                return decorMap[themeName] || ['✨', '💫', '⭐'];
+            };
+
+            const decorEmojis = getDecorEmojis(theme.name);
+            const topDecor = decorEmojis[0];
+            const bottomDecor = decorEmojis[1] || theme.decor;
+
+            // 左上角裝飾
+            const topLeftDecor = document.createElement('div');
+            topLeftDecor.style.position = 'absolute';
+            topLeftDecor.style.top = '40px';
+            topLeftDecor.style.left = '40px';
+            topLeftDecor.style.fontSize = '50px';
+            topLeftDecor.style.opacity = '0.25';
+            topLeftDecor.style.transform = 'rotate(-15deg)';
+            topLeftDecor.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))';
+            topLeftDecor.textContent = topDecor;
+            contentContainer.appendChild(topLeftDecor);
+
+            // 右下角裝飾
+            const bottomRightDecor = document.createElement('div');
+            bottomRightDecor.style.position = 'absolute';
+            bottomRightDecor.style.bottom = '40px';
+            bottomRightDecor.style.right = '40px';
+            bottomRightDecor.style.fontSize = '50px';
+            bottomRightDecor.style.opacity = '0.25';
+            bottomRightDecor.style.transform = 'rotate(15deg)';
+            bottomRightDecor.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))';
+            bottomRightDecor.textContent = bottomDecor;
+            contentContainer.appendChild(bottomRightDecor);
+
+            // 根據意境添加額外的視覺元素
+            if (theme.name.includes('湖面') || theme.name.includes('原野')) {
+                // 添加水平線條，模擬地平線
+                const horizonLine = document.createElement('div');
+                horizonLine.style.position = 'absolute';
+                horizonLine.style.bottom = '150px';
+                horizonLine.style.left = '0';
+                horizonLine.style.width = '100%';
+                horizonLine.style.height = '2px';
+                horizonLine.style.background = `linear-gradient(90deg, transparent, ${theme.accent}60, transparent)`;
+                horizonLine.style.opacity = '0.4';
+                tempCard.appendChild(horizonLine);
+            }
+
+            if (theme.name.includes('夜空') || theme.name.includes('月光')) {
+                // 添加星星點點
+                for (let i = 0; i < 5; i++) {
+                    const star = document.createElement('div');
+                    star.style.position = 'absolute';
+                    star.style.top = `${20 + i * 15}%`;
+                    star.style.left = `${10 + i * 18}%`;
+                    star.style.width = '4px';
+                    star.style.height = '4px';
+                    star.style.background = 'white';
+                    star.style.borderRadius = '50%';
+                    star.style.opacity = '0.6';
+                    star.style.boxShadow = '0 0 6px white';
+                    tempCard.appendChild(star);
+                }
+            }
+
+            if (theme.name.includes('煙火') || theme.name.includes('晨曦')) {
+                // 添加光線效果
+                const lightRay = document.createElement('div');
+                lightRay.style.position = 'absolute';
+                lightRay.style.top = '0';
+                lightRay.style.left = '50%';
+                lightRay.style.width = '200px';
+                lightRay.style.height = '100%';
+                lightRay.style.background = `linear-gradient(180deg, ${theme.accent}30 0%, transparent 100%)`;
+                lightRay.style.transform = 'translateX(-50%)';
+                lightRay.style.filter = 'blur(40px)';
+                tempCard.appendChild(lightRay);
+            }
+
+            document.body.appendChild(tempCard);
+
+            try {
+                // 使用 html2canvas 轉換為圖片
+                const canvas = await html2canvas(tempCard, {
+                    width: 1000,
+                    height: 700,
+                    scale: 2,
+                    backgroundColor: null,
+                    useCORS: true,
+                    logging: false
+                });
+
+                // 轉換為 base64
+                const base64 = canvas.toDataURL('image/png');
+
+                // 移除臨時元素
+                document.body.removeChild(tempCard);
+
+                // 返回 base64（去掉 data:image/png;base64, 前綴）
+                return base64.split(',')[1];
+            } catch (error) {
+                // 確保移除臨時元素
+                if (tempCard.parentNode) {
+                    document.body.removeChild(tempCard);
+                }
+                throw error;
+            }
+        }
+
+        // 創建背景圖案 SVG
+        function createPatternSVG(patternType, color) {
+            const svgPatterns = {
+                circle: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='20' fill='${encodeURIComponent(color)}' opacity='0.3'/%3E%3C/svg%3E")`,
+                wave: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,50 Q25,30 50,50 T100,50' stroke='${encodeURIComponent(color)}' fill='none' stroke-width='2' opacity='0.3'/%3E%3C/svg%3E")`,
+                dot: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='3' fill='${encodeURIComponent(color)}' opacity='0.4'/%3E%3Ccircle cx='80' cy='80' r='3' fill='${encodeURIComponent(color)}' opacity='0.4'/%3E%3C/svg%3E")`,
+                star: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='50,10 55,35 80,35 60,50 65,75 50,60 35,75 40,50 20,35 45,35' fill='${encodeURIComponent(color)}' opacity='0.2'/%3E%3C/svg%3E")`,
+                leaf: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50,20 Q30,40 50,60 Q70,40 50,20' fill='${encodeURIComponent(color)}' opacity='0.25'/%3E%3C/svg%3E")`,
+                diamond: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='50,10 70,50 50,90 30,50' fill='${encodeURIComponent(color)}' opacity='0.2'/%3E%3C/svg%3E")`
+            };
+            return svgPatterns[patternType] || svgPatterns.circle;
+        }
+
+        // 使用 Gemini API 生成語錄圖片（可選）
+        async function generateQuoteImageWithGemini(quote) {
+            if (!geminiApiKey) {
+                throw new Error('Gemini API Key 未設定');
+            }
+
+            const prompt = `A highly aesthetic, minimalist abstract digital art background suitable for a daily quote card. Use soft, ambient lighting and colors inspired by the current time of day. Incorporate subtle elements related to inspiration or success, like a gentle upward curve or a blurred horizon. The style should be modern, serene, and clean. Resolution 1024x1024. The central theme relates to: "${quote}".`;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${geminiApiKey}`;
+
+            const payload = {
+                instances: [{ prompt: prompt }],
+                parameters: {
+                    "sampleCount": 1,
+                    "aspectRatio": "1:1"
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API returned status ${response.status}`);
+            }
+
+            const result = await response.json();
+            const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
+
+            if (base64Data) {
+                return base64Data;
+            } else {
+                throw new Error("Image generation failed to return base64 data.");
+            }
+        }
+
+        // 渲染每日語錄卡片
+        function renderDailyQuote() {
+            const card = document.getElementById('dailyQuoteCard');
+            const todayQuote = getTodayQuote();
+            const todayKey = getTodayKey();
+            const isUnlocked = checkDateUnlocked(todayKey);
+
+            if (todayQuote) {
+                // 已領取，顯示語錄和圖片
+                let imageHtml = '';
+                if (todayQuote.image) {
+                    // 判斷是 data URL 還是純 base64
+                    const imageSrc = todayQuote.image.startsWith('data:')
+                        ? todayQuote.image
+                        : `data:image/png;base64,${todayQuote.image}`;
+                    imageHtml = `
+                        <div class="mt-3 rounded-lg overflow-hidden">
+                            <img src="${imageSrc}"
+                                 alt="語錄卡片"
+                                 class="w-full h-auto rounded-lg shadow-md">
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-purple-500">
+                        <div class="text-sm text-purple-600 mb-2 font-semibold">${todayKey}</div>
+                        <div class="text-gray-800 text-base leading-relaxed whitespace-pre-line font-medium">
+                            ${escapeHtml(todayQuote.quote)}
+                        </div>
+                        ${imageHtml}
+                    </div>
+                `;
+            } else if (!isUnlocked) {
+                // 未解鎖
+                card.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-gray-600 mb-4">🔒 請先解鎖今天的日期</p>
+                        <p class="text-xs text-gray-500">點擊月曆上的鎖圖標解鎖</p>
+                    </div>
+                `;
+            } else {
+                // 已解鎖但未領取，顯示領取按鈕
+                card.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-gray-600 mb-4">今天還沒領取語錄哦～</p>
+                        <button onclick="claimDailyQuote()"
+                                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105">
+                            🎁 領取今日語錄
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // 初始化
+        function init() {
+            initUsers();
+            renderCalendar();
+            updateMonthYear();
+            renderAllTodosList(); // 初始化時顯示所有待辦事項列表
+            renderDailyQuote(); // 初始化每日語錄
+        }
+
+        // 更新月份年份顯示
+        function updateMonthYear() {
+            const monthYear = `${currentDate.getFullYear()} 年 ${monthNames[currentDate.getMonth()]}`;
+            document.getElementById('currentMonthYear').textContent = monthYear;
+        }
+
+        // 渲染月曆
+        function renderCalendar() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            // 當月第一天
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+
+            // 填充空白（上個月的日期）
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day rounded-lg';
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            // 當月的日期
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateKey = formatDateKey(date);
+                const dayElement = document.createElement('div');
+
+                let classes = 'calendar-day rounded-lg p-2 cursor-pointer border-2 border-transparent';
+
+                // 檢查是否為今天
+                if (isToday(date)) {
+                    classes += ' today';
+                }
+
+                // 檢查是否有未完成的待辦事項
+                const dateTodos = todos[dateKey] || [];
+                const hasUncompletedTodos = dateTodos.some(todo => {
+                    if (typeof todo === 'string') return true; // 舊格式視為未完成
+                    // 檢查 status 或 completed/failed 屬性
+                    if (todo.status) {
+                        return todo.status === 'pending';
+                    }
+                    return !todo.completed && !todo.failed;
+                });
+                if (hasUncompletedTodos) {
+                    classes += ' has-todos';
+                }
+
+                dayElement.className = classes;
+                dayElement.onclick = () => selectDate(date);
+
+                // 日期數字和 Today 標籤容器（同一行）
+                const dayNumberContainer = document.createElement('div');
+                dayNumberContainer.className = 'flex items-center gap-1 mb-1';
+
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'font-semibold text-gray-800';
+                dayNumber.textContent = day;
+                dayNumberContainer.appendChild(dayNumber);
+
+                // 今天的標籤（與數字同一行）
+                if (isToday(date)) {
+                    const todayLabel = document.createElement('div');
+                    todayLabel.className = 'text-xs bg-blue-500 text-white rounded-full px-2 py-0.5 inline-block font-semibold';
+                    todayLabel.textContent = 'Today';
+                    dayNumberContainer.appendChild(todayLabel);
+                }
+
+                dayElement.appendChild(dayNumberContainer);
+
+                // 待辦事項數量標記（只計算未完成的）
+                const uncompletedCount = dateTodos.filter(todo => {
+                    if (typeof todo === 'string') return true; // 舊格式視為未完成
+                    // 檢查 status 或 completed/failed 屬性
+                    if (todo.status) {
+                        return todo.status === 'pending';
+                    }
+                    return !todo.completed && !todo.failed;
+                }).length;
+                if (uncompletedCount > 0) {
+                    const todoCount = document.createElement('div');
+                    todoCount.className = 'text-xs bg-yellow-400 text-yellow-900 rounded-full px-2 py-0.5 inline-block font-semibold';
+                    todoCount.textContent = uncompletedCount;
+                    dayElement.appendChild(todoCount);
+                }
+
+                // 鎖圖標（只有當天且未解鎖時才顯示）
+                const todayKey = getTodayKey();
+                const isUnlocked = checkDateUnlocked(dateKey);
+                if (dateKey === todayKey && !isUnlocked) {
+                    const lockButton = document.createElement('button');
+                    lockButton.className = 'absolute top-1 right-1 p-1 text-gray-400 hover:text-gray-600 transition';
+                    lockButton.innerHTML = `
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                    `;
+                    lockButton.onclick = (e) => {
+                        e.stopPropagation(); // 阻止觸發日期選擇
+                        openUnlockModal(dateKey, date);
+                    };
+                    dayElement.style.position = 'relative';
+                    dayElement.appendChild(lockButton);
+                }
+
+                // 儲存日期資訊到元素，方便後續查找
+                dayElement.setAttribute('data-date-key', dateKey);
+                dayElement.setAttribute('data-day', day);
+
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        // 選擇日期
+        function selectDate(date) {
+            selectedDate = date;
+            const dateKey = formatDateKey(date);
+
+            // 更新標題
+            const dateStr = `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日`;
+            const dayOfWeek = dayNames[date.getDay()];
+            document.getElementById('selectedDateTitle').textContent = `${dateStr}（${dayOfWeek}）`;
+
+            // 顯示待辦事項
+            renderTodos(dateKey);
+
+            // 顯示新增表單
+            document.getElementById('addTodoForm').classList.remove('hidden');
+
+            // 更新月曆選中狀態
+            updateSelectedDay();
+        }
+
+        // 更新選中的日期樣式
+        function updateSelectedDay() {
+            // 移除所有選中樣式
+            const allDays = document.querySelectorAll('.calendar-day');
+            allDays.forEach(day => {
+                day.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2');
+            });
+
+            // 為選中的日期添加藍色框
+            if (selectedDate) {
+                const selectedDateKey = formatDateKey(selectedDate);
+                const selectedDayElement = document.querySelector(`[data-date-key="${selectedDateKey}"]`);
+
+                if (selectedDayElement) {
+                    selectedDayElement.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2');
+                }
+            }
+        }
+
+        // 渲染待辦事項
+        function renderTodos(dateKey) {
+            const todoList = document.getElementById('todoList');
+            const dateTodos = todos[dateKey] || [];
+
+            if (dateTodos.length === 0) {
+                todoList.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">這一天沒有待辦事項</p>';
+                return;
+            }
+
+            todoList.innerHTML = dateTodos.map((todo, index) => {
+                // 支援舊格式（字串）和新格式（物件）
+                const todoText = typeof todo === 'string' ? todo : todo.text;
+                let status = 'pending'; // pending, completed, failed
+
+                if (typeof todo === 'object') {
+                    // 新格式：使用 status 或 completed/failed 屬性
+                    if (todo.status) {
+                        status = todo.status;
+                    } else if (todo.completed) {
+                        status = 'completed';
+                    } else if (todo.failed) {
+                        status = 'failed';
+                    }
+                }
+
+                const isCompleted = status === 'completed';
+                const isFailed = status === 'failed';
+
+                return `
+                    <div class="todo-item flex items-center gap-2 p-3 rounded-lg border ${isCompleted ? 'completed' : isFailed ? 'failed' : 'bg-gray-50 border-gray-200'}">
+                        <!-- 完成按鈕（打勾） -->
+                        <button onclick="markAsCompleted('${dateKey}', ${index})"
+                                class="flex-shrink-0 p-1 ${isCompleted ? 'text-emerald-600' : 'text-gray-400'} hover:bg-gray-200 rounded transition"
+                                title="標記為完成">
+                            ${isCompleted ? `
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                            ` : `
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            `}
+                        </button>
+                        <!-- 失敗按鈕（X） -->
+                        <button onclick="markAsFailed('${dateKey}', ${index})"
+                                class="flex-shrink-0 p-1 ${isFailed ? 'text-gray-500' : 'text-gray-400'} hover:bg-gray-200 rounded transition"
+                                title="標記為失敗">
+                            ${isFailed ? `
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            ` : `
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            `}
+                        </button>
+                        <div class="flex-1 flex flex-col">
+                            <span class="flex items-center gap-2 ${isFailed ? 'line-through text-gray-500' : isCompleted ? 'text-emerald-800 font-semibold' : 'text-gray-800'}">
+                                ${isCompleted ? '<span class="text-lg">✨</span>' : ''}
+                                ${escapeHtml(todoText)}
+                                ${isCompleted ? '<span class="text-lg">🎉</span>' : ''}
+                            </span>
+                            ${isFailed ? '<span class="text-xs text-amber-700 mt-1 flex items-center gap-1">💪 你還是很棒</span>' : ''}
+                        </div>
+                        <!-- 刪除按鈕（垃圾桶） -->
+                        <button onclick="removeTodo('${dateKey}', ${index})"
+                                class="flex-shrink-0 p-1 text-red-600 hover:bg-red-100 rounded transition"
+                                title="刪除">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 渲染所有待辦事項日期列表
+        function renderAllTodosList() {
+            const allTodosContent = document.getElementById('allTodosContent');
+            const allDatesWithTodos = Object.keys(todos).filter(dateKey => {
+                const dateTodos = todos[dateKey] || [];
+                // 只顯示有未完成待辦事項的日期
+                return dateTodos.some(todo => {
+                    if (typeof todo === 'string') return true; // 舊格式視為未完成
+                    // 檢查 status 或 completed/failed 屬性
+                    if (todo.status) {
+                        return todo.status === 'pending';
+                    }
+                    return !todo.completed && !todo.failed;
+                });
+            });
+
+            if (allDatesWithTodos.length === 0) {
+                allTodosContent.innerHTML = '<p class="text-gray-400 text-sm text-center py-4">目前沒有待辦事項</p>';
+                return;
+            }
+
+            // 按日期排序（最新的在前）
+            allDatesWithTodos.sort((a, b) => b.localeCompare(a));
+
+            allTodosContent.innerHTML = allDatesWithTodos.map(dateKey => {
+                const date = parseDateKey(dateKey);
+                const dateStr = `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日`;
+                const dateTodos = todos[dateKey] || [];
+                // 只計算未完成的待辦事項
+                const uncompletedCount = dateTodos.filter(todo => {
+                    if (typeof todo === 'string') return true; // 舊格式視為未完成
+                    // 檢查 status 或 completed/failed 屬性
+                    if (todo.status) {
+                        return todo.status === 'pending';
+                    }
+                    return !todo.completed && !todo.failed;
+                }).length;
+                const dayOfWeek = dayNames[date.getDay()];
+
+                return `
+                    <div onclick="selectDateFromList('${dateKey}')"
+                         class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-blue-300 transition">
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-800 text-sm">${dateStr}（${dayOfWeek}）</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-yellow-400 text-yellow-900 rounded-full px-2 py-1 text-xs font-bold">${uncompletedCount}</span>
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+            </div>
+    </div>
+                `;
+            }).join('');
+        }
+
+        // 從日期列表選擇日期
+        function selectDateFromList(dateKey) {
+            const date = parseDateKey(dateKey);
+            selectDate(date);
+
+            // 如果該日期不在當前顯示的月份，切換到該月份
+            if (date.getFullYear() !== currentDate.getFullYear() ||
+                date.getMonth() !== currentDate.getMonth()) {
+                currentDate = new Date(date.getFullYear(), date.getMonth(), 1);
+                renderCalendar();
+                updateMonthYear();
+            }
+
+            updateSelectedDay();
+        }
+
+        // 解析日期 key 為 Date 物件
+        function parseDateKey(dateKey) {
+            const [year, month, day] = dateKey.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        // 新增待辦事項
+        function addTodo() {
+            if (!selectedDate) {
+                alert('請先選擇日期');
+                return;
+            }
+
+            const input = document.getElementById('newTodoInput');
+            const todoText = input.value.trim();
+
+            if (!todoText) {
+                alert('請輸入待辦事項');
+                return;
+            }
+
+            const dateKey = formatDateKey(selectedDate);
+
+            if (!todos[dateKey]) {
+                todos[dateKey] = [];
+            }
+
+            // 使用物件格式儲存待辦事項
+            todos[dateKey].push({ text: todoText, status: 'pending' });
+            saveTodos();
+            renderTodos(dateKey);
+            renderCalendar();
+            renderAllTodosList(); // 更新所有待辦事項列表
+            input.value = '';
+        }
+
+        // 標記為完成（點擊第二次可取消）
+        function markAsCompleted(dateKey, index) {
+            if (todos[dateKey] && todos[dateKey][index] !== undefined) {
+                const todo = todos[dateKey][index];
+                let currentStatus = 'pending';
+
+                // 判斷當前狀態
+                if (typeof todo === 'object') {
+                    if (todo.status) {
+                        currentStatus = todo.status;
+                    } else if (todo.completed) {
+                        currentStatus = 'completed';
+                    } else if (todo.failed) {
+                        currentStatus = 'failed';
+                    }
+                }
+
+                // 如果已經是完成狀態，點擊第二次則取消（變回未完成）
+                if (currentStatus === 'completed') {
+                    todos[dateKey][index] = {
+                        text: typeof todo === 'string' ? todo : (todo.text || todo),
+                        status: 'pending'
+                    };
+                } else {
+                    // 否則標記為完成
+                    todos[dateKey][index] = {
+                        text: typeof todo === 'string' ? todo : (todo.text || todo),
+                        status: 'completed'
+                    };
+                }
+
+                saveTodos();
+                renderTodos(dateKey);
+                renderCalendar();
+                renderAllTodosList(); // 更新所有待辦事項列表
+            }
+        }
+
+        // 標記為失敗（點擊第二次可取消）
+        function markAsFailed(dateKey, index) {
+            if (todos[dateKey] && todos[dateKey][index] !== undefined) {
+                const todo = todos[dateKey][index];
+                let currentStatus = 'pending';
+
+                // 判斷當前狀態
+                if (typeof todo === 'object') {
+                    if (todo.status) {
+                        currentStatus = todo.status;
+                    } else if (todo.completed) {
+                        currentStatus = 'completed';
+                    } else if (todo.failed) {
+                        currentStatus = 'failed';
+                    }
+                }
+
+                // 如果已經是失敗狀態，點擊第二次則取消（變回未完成）
+                if (currentStatus === 'failed') {
+                    todos[dateKey][index] = {
+                        text: typeof todo === 'string' ? todo : (todo.text || todo),
+                        status: 'pending'
+                    };
+                } else {
+                    // 否則標記為失敗
+                    todos[dateKey][index] = {
+                        text: typeof todo === 'string' ? todo : (todo.text || todo),
+                        status: 'failed'
+                    };
+                }
+
+                saveTodos();
+                renderTodos(dateKey);
+                renderCalendar();
+                renderAllTodosList(); // 更新所有待辦事項列表
+            }
+        }
+
+        // 移除待辦事項
+        function removeTodo(dateKey, index) {
+            if (todos[dateKey] && todos[dateKey][index] !== undefined) {
+                todos[dateKey].splice(index, 1);
+
+                // 如果陣列為空，刪除該日期
+                if (todos[dateKey].length === 0) {
+                    delete todos[dateKey];
+                }
+
+                saveTodos();
+                renderTodos(dateKey);
+                renderCalendar();
+                renderAllTodosList(); // 更新所有待辦事項列表
+            }
+        }
+
+        // 切換月份
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+            updateMonthYear();
+            // 如果選中的日期在新月份中，保持選中狀態
+            if (selectedDate) {
+                const selectedDateKey = formatDateKey(selectedDate);
+                const selectedDayElement = document.querySelector(`[data-date-key="${selectedDateKey}"]`);
+                if (selectedDayElement) {
+                    updateSelectedDay();
+                } else {
+                    // 如果選中的日期不在當前月份，清除選中狀態
+                    selectedDate = null;
+                    document.getElementById('selectedDateTitle').textContent = '選擇日期';
+                    document.getElementById('todoList').innerHTML = '<p class="text-gray-400 text-sm text-center py-8">請選擇日期查看待辦事項</p>';
+                    document.getElementById('addTodoForm').classList.add('hidden');
+                }
+            }
+        }
+
+        // 格式化日期為 key (YYYY-MM-DD)
+        function formatDateKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // 檢查是否為今天
+        function isToday(date) {
+            const today = new Date();
+            return date.getFullYear() === today.getFullYear() &&
+                   date.getMonth() === today.getMonth() &&
+                   date.getDate() === today.getDate();
+        }
+
+        // 儲存待辦事項到 localStorage
+        function saveTodos() {
+            saveUserTodos();
+        }
+
+        // HTML 轉義
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 支援 Enter 鍵新增
+        document.getElementById('newTodoInput')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTodo();
+            }
+        });
+
+        // 初始化
+        init();
+    </script>
+</body>
+</html>

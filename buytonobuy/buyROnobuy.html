@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秘密轉盤</title>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // 設定 Tailwind 配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary-buy': '#10b981', // Emerald green
+                        'secondary-bad': '#ef4444', // Red
+                        'accent-spin': '#fcd34d', // Amber
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 確保 Canvas 居中且響應式 */
+        #wheelCanvas {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 9999px; /* 圓形陰影 */
+            transition: transform 4s cubic-bezier(0.2, 0.8, 0.2, 1); /* 緩慢啟動和減速的動畫曲線 */
+        }
+
+        /* 指針樣式 */
+        .pointer {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #374151; /* Dark gray triangle */
+            z-index: 10;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px; /* 限制最大寬度 */
+            margin: auto;
+            aspect-ratio: 1 / 1; /* 保持正方形 */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+
+    <div class="max-w-xl w-full bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">
+            買/不好 決定轉盤
+        </h1>
+        <p class="text-center text-gray-600 mb-8">
+            <span class="font-semibold text-primary-buy">表面上是 50% 買 / 50% 不好</span>，但實際上...
+        </p>
+
+        <!-- 轉盤和指針容器 -->
+        <div class="canvas-container">
+            <!-- 指針 (位於頂部中心) -->
+            <div class="pointer"></div>
+
+            <!-- 轉盤 Canvas -->
+            <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
+        </div>
+
+        <!-- 旋轉按鈕和結果顯示 -->
+        <div class="flex flex-col items-center mt-8 space-y-4">
+            <button id="spinButton"
+                    class="w-full md:w-auto px-10 py-4 text-xl font-bold text-gray-900 bg-accent-spin rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-yellow-700/50">
+                開始旋轉！
+            </button>
+            <div id="resultDisplay"
+                 class="min-h-[50px] w-full text-center text-2xl font-extrabold text-gray-700 p-3 rounded-lg bg-gray-100 transition-all duration-500 shadow-inner">
+                按下按鈕開始
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spinButton');
+        const resultDisplay = document.getElementById('resultDisplay');
+
+        // 定義轉盤的扇區
+        // 為了簡單起見，我們只定義兩個扇區，每個 50%
+        const segments = [
+            { label: "買", color: tailwind.config.theme.extend.colors['primary-buy'], degrees: 180, isWin: true },
+            { label: "不好", color: tailwind.config.theme.extend.colors['secondary-bad'], degrees: 180, isWin: false },
+        ];
+
+        const totalDegrees = 360;
+        let currentRotation = 0; // 當前旋轉角度 (度)
+        let isSpinning = false;
+
+        // 繪製轉盤
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.95;
+            let startAngle = 0;
+
+            segments.forEach(segment => {
+                const endAngle = startAngle + (segment.degrees / totalDegrees) * 2 * Math.PI;
+
+                // 繪製扇區
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = segment.color;
+                ctx.fill();
+
+                // 繪製文字 (位於扇區中心)
+                const textAngle = startAngle + (endAngle - startAngle) / 2;
+                const textRadius = radius * 0.75;
+                const x = centerX + Math.cos(textAngle) * textRadius;
+                const y = centerY + Math.sin(textAngle) * textRadius;
+
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(textAngle + Math.PI / 2); // 旋轉文字使其垂直於半徑
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 24px Noto Sans TC, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(segment.label, 0, 0);
+                ctx.restore();
+
+                startAngle = endAngle;
+            });
+
+            // 繪製中心圓
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.15, 0, 2 * Math.PI);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        // 初始化繪製
+        drawWheel();
+
+        /**
+         * 執行旋轉動作並保證結果落在「買」的區域。
+         */
+        function spinWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinButton.disabled = true;
+            resultDisplay.textContent = "轉盤高速旋轉中...";
+            resultDisplay.className = "min-h-[50px] w-full text-center text-2xl font-extrabold text-white p-3 rounded-lg bg-gray-500 transition-all duration-500 shadow-inner";
+
+            // --- 秘密邏輯：保證落在 "買" 區間 (0 到 180 度) ---
+
+            // 1. 確保旋轉停止點落在 "買" 區間內 (0° 到 180°)。
+            // 我們選擇一個帶有緩衝的隨機角度，例如 10° 到 170°。
+            const safeMinAngle = 10;
+            const safeMaxAngle = 170;
+
+            // 隨機選擇一個落在 "買" 區間內的停止點 (度)
+            const targetOffset = Math.random() * (safeMaxAngle - safeMinAngle) + safeMinAngle;
+
+            // 2. 增加多個整圈旋轉 (讓旋轉看起來很長很隨機)
+            const fullRotations = Math.floor(Math.random() * 5) + 6; // 6到10圈
+            const totalDegreesToSpin = (fullRotations * totalDegrees) + targetOffset;
+
+            // 3. 計算目標角度 (從當前角度計算)
+            // 由於 Canvas 上的角度是累加的，我們要計算最終角度
+            const currentRotationInDegrees = currentRotation % totalDegrees;
+            const degreesToGo = totalDegreesToSpin - currentRotationInDegrees;
+            const finalRotation = currentRotation + degreesToGo;
+
+            // 設定 CSS Transform (使用度數)
+            canvas.style.transform = `rotate(${finalRotation}deg)`;
+
+            // 旋轉動畫持續時間 (4 秒，必須與 CSS transition 保持一致)
+            const duration = 4000;
+
+            setTimeout(() => {
+                isSpinning = false;
+                spinButton.disabled = false;
+                currentRotation = finalRotation % totalDegrees; // 更新當前角度
+
+                // 顯示結果
+                // 這是確保結果為「買」的關鍵步驟
+                showResult("買");
+
+            }, duration);
+        }
+
+        function showResult(resultLabel) {
+            let bgColorClass = "";
+            let textColorClass = "";
+
+            if (resultLabel === "買") {
+                bgColorClass = "bg-primary-buy/90";
+                textColorClass = "text-white";
+                resultDisplay.textContent = "結果是... 買！";
+            } else {
+                // 實際上不會執行到這，但為了完整性保留
+                bgColorClass = "bg-secondary-bad/90";
+                textColorClass = "text-white";
+                resultDisplay.textContent = "結果是... " + resultLabel + " (出乎意料!)";
+            }
+
+            resultDisplay.className = `min-h-[50px] w-full text-center text-2xl font-extrabold p-3 rounded-lg transition-all duration-500 shadow-2xl ${bgColorClass} ${textColorClass}`;
+        }
+
+        // 事件監聽
+        spinButton.addEventListener('click', spinWheel);
+
+        // 讓轉盤在視窗大小改變時保持正確的尺寸
+        window.addEventListener('resize', () => {
+            // 在這裡我們依賴 CSS W-full/H-full 和 aspect-ratio 來處理響應性，
+            // 只需要重新繪製確保文字清晰。
+            // 實際 Canvas 尺寸在 HTML 中固定為 400x400，但會被 CSS 縮放。
+            // 為了簡化，我們只在初始化時繪製一次，如果需要更精確的響應式繪圖，
+            // 則需要根據實際渲染大小調整 `canvas.width/height` 和繪圖參數。
+        });
+
+    </script>
+</body>
+</html>
