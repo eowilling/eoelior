@@ -402,25 +402,24 @@
 
             if (segmentCount === 0) return;
 
-            // 平均分配視覺面積和真實機率
+            // 平均分配視覺面積
             const avgVisual = 100 / segmentCount;
-            const avgReal = 100 / segmentCount;
 
             // 計算前 n-1 個選項的總和（用於處理浮點數誤差）
             let visualSum = 0;
-            let realSum = 0;
 
             config.segments.forEach((seg, index) => {
                 if (index === segmentCount - 1) {
                     // 最後一個選項：使用剩餘的百分比，確保總和為 100%
                     seg.visualPercent = Math.round((100 - visualSum) * 100) / 100;
-                    seg.realPercent = Math.round((100 - realSum) * 100) / 100;
+                    // 真實機率等於視覺面積
+                    seg.realPercent = seg.visualPercent;
                 } else {
                     // 其他選項：平均分配
                     seg.visualPercent = Math.round(avgVisual * 100) / 100;
-                    seg.realPercent = Math.round(avgReal * 100) / 100;
+                    // 真實機率等於視覺面積
+                    seg.realPercent = seg.visualPercent;
                     visualSum += seg.visualPercent;
-                    realSum += seg.realPercent;
                 }
             });
         }
