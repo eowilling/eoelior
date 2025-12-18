@@ -602,28 +602,72 @@
                 // 使用 Base64 編碼（支持中文等 Unicode 字符）
                 // 方法：將字符串轉換為 UTF-8 字節數組，然後進行 Base64 編碼
                 function utf8ToBase64(str) {
-                    try {
-                        // 方法1：使用 TextEncoder（現代瀏覽器）
-                        const encoder = new TextEncoder();
-                        const bytes = encoder.encode(str);
-                        // 將字節數組轉換為字符串供 btoa 使用
-                        let binary = '';
-                        for (let i = 0; i < bytes.length; i++) {
-                            binary += String.fromCharCode(bytes[i]);
+                    // 方法1：使用 TextEncoder（現代瀏覽器）- 最可靠的方法
+                    if (typeof TextEncoder !== 'undefined') {
+                        try {
+                            const encoder = new TextEncoder();
+                            const bytes = encoder.encode(str);
+                            // 將字節數組轉換為字符串供 btoa 使用
+                            let binary = '';
+                            for (let i = 0; i < bytes.length; i++) {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+                            return btoa(binary);
+                        } catch (e) {
+                            console.warn('TextEncoder 方法失敗，使用降級方案:', e);
+                            // 繼續嘗試降級方案
                         }
-                        return btoa(binary);
+                    }
+
+                    // 方法2：降級方案 - 手動處理 UTF-8 編碼
+                    try {
+                        // 將字符串轉換為 UTF-8 編碼的字節數組
+                        const utf8Str = encodeURIComponent(str);
+                        // 將 %XX 格式轉換為實際字節
+                        let binaryStr = '';
+                        for (let i = 0; i < utf8Str.length; i++) {
+                            if (utf8Str[i] === '%') {
+                                const hex = utf8Str.substring(i + 1, i + 3);
+                                binaryStr += String.fromCharCode(parseInt(hex, 16));
+                                i += 2;
+                            } else {
+                                binaryStr += utf8Str[i];
+                            }
+                        }
+                        return btoa(binaryStr);
                     } catch (e) {
-                        // 方法2：降級方案 - 使用 encodeURIComponent
-                        return btoa(unescape(encodeURIComponent(str)));
+                        console.warn('手動 UTF-8 編碼失敗，使用最後降級方案:', e);
+                        // 方法3：最後的降級方案（不推薦，但作為後備）
+                        try {
+                            return btoa(unescape(encodeURIComponent(str)));
+                        } catch (e2) {
+                            throw new Error('無法編碼字符串為 Base64: ' + e2.message);
+                        }
                     }
                 }
 
                 let configBase64 = utf8ToBase64(configJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
                 // 生成分享連結
-                const currentUrl = window.location.origin + window.location.pathname;
-                const baseUrl = currentUrl.replace('admin.html', 'buyROnobuy.html');
-                const shareUrl = `${baseUrl}?c=${configBase64}`; // 使用 c 代替 config
+                let shareUrl;
+                try {
+                    // 方法1：使用 URL 對象處理路徑（更可靠）
+                    const currentUrlObj = new URL(window.location.href);
+                    // 獲取目錄路徑
+                    const pathParts = currentUrlObj.pathname.split('/');
+                    pathParts[pathParts.length - 1] = 'buyROnobuy.html'; // 替換最後一個文件名
+                    currentUrlObj.pathname = pathParts.join('/');
+                    // 清除現有的查詢參數，添加新的配置參數
+                    currentUrlObj.search = '';
+                    currentUrlObj.hash = '';
+                    shareUrl = `${currentUrlObj.toString()}?c=${configBase64}`;
+                } catch (e) {
+                    // 方法2：降級方案（兼容舊瀏覽器）
+                    const currentPath = window.location.pathname;
+                    const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+                    const baseUrl = window.location.origin + dirPath + 'buyROnobuy.html';
+                    shareUrl = `${baseUrl}?c=${configBase64}`;
+                }
 
                 return shareUrl;
             } catch (error) {
@@ -720,6 +764,29 @@
                     if (copySuccessMsg) copySuccessMsg.classList.add('hidden');
                     if (shorteningStatus) shorteningStatus.classList.add('hidden');
                     if (shortenUrlBtn) shortenUrlBtn.disabled = false;
+
+                    // 保存分享連結到 localStorage（方便之後查看）
+                    try {
+                        const savedLinks = JSON.parse(localStorage.getItem('wheelShareLinks') || '[]');
+                        const linkInfo = {
+                            url: shareUrl,
+                            title: config.title || '未命名轉盤',
+                            date: new Date().toISOString(),
+                            segments: config.segments.map(s => s.label).join(', ')
+                        };
+                        // 檢查是否已存在相同的連結，避免重複
+                        const exists = savedLinks.some(link => link.url === shareUrl);
+                        if (!exists) {
+                            savedLinks.unshift(linkInfo); // 添加到開頭
+                            // 只保留最近 10 個分享連結
+                            if (savedLinks.length > 10) {
+                                savedLinks.pop();
+                            }
+                            localStorage.setItem('wheelShareLinks', JSON.stringify(savedLinks));
+                        }
+                    } catch (e) {
+                        console.warn('保存分享連結失敗:', e);
+                    }
                 } catch (error) {
                     console.error('分享功能錯誤:', error);
                     alert('分享功能發生錯誤：' + error.message);
