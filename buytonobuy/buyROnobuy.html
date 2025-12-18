@@ -149,8 +149,50 @@
             ]
         };
 
+        // 從 URL 參數讀取配置
+        function loadConfigFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const configParam = urlParams.get('config');
+
+            if (configParam) {
+                try {
+                    // 解碼 Base64
+                    const configJson = decodeURIComponent(atob(configParam));
+                    const sharedConfig = JSON.parse(configJson);
+
+                    // 將視覺比例轉換為真實機率（分享時使用相同的比例）
+                    const config = {
+                        title: sharedConfig.title || defaultConfig.title,
+                        description: sharedConfig.description || defaultConfig.description,
+                        segments: sharedConfig.segments.map(seg => ({
+                            label: seg.label,
+                            color: seg.color,
+                            visualPercent: seg.visualPercent,
+                            realPercent: seg.visualPercent // 分享時使用視覺比例作為真實機率
+                        }))
+                    };
+
+                    // 保存到 localStorage（可選，讓用戶之後也能使用）
+                    saveConfig(config);
+
+                    return config;
+                } catch (e) {
+                    console.error('從 URL 載入配置失敗，使用預設值', e);
+                    return null;
+                }
+            }
+            return null;
+        }
+
         // 從 localStorage 載入配置
         function loadConfig() {
+            // 優先從 URL 參數讀取
+            const urlConfig = loadConfigFromUrl();
+            if (urlConfig) {
+                return urlConfig;
+            }
+
+            // 否則從 localStorage 讀取
             const saved = localStorage.getItem('wheelConfig');
             if (saved) {
                 try {
