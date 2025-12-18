@@ -159,26 +159,41 @@
                 try {
                     // 解碼 Base64（支援新舊兩種編碼格式）
                     let configJson;
-                    try {
-                        // 新格式：URL安全的Base64（- 和 _ 代替 + 和 /）
-                        const normalizedBase64 = configParam.replace(/-/g, '+').replace(/_/g, '/');
+
+                    // Base64 轉 UTF-8 的函數
+                    function base64ToUtf8(base64Str) {
+                        // 先標準化 URL 安全的 Base64 字符
+                        const normalized = base64Str.replace(/-/g, '+').replace(/_/g, '/');
                         // 補齊填充
-                        const paddedBase64 = normalizedBase64 + '='.repeat((4 - normalizedBase64.length % 4) % 4);
-                        const decodedBase64 = atob(paddedBase64);
-                        // 先嘗試 decodeURIComponent（新格式使用 encodeURIComponent 編碼）
+                        const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+
                         try {
-                            configJson = decodeURIComponent(decodedBase64);
+                            // 方法1：使用 TextDecoder（現代瀏覽器）
+                            const binaryString = atob(padded);
+                            const bytes = new Uint8Array(binaryString.length);
+                            for (let i = 0; i < binaryString.length; i++) {
+                                bytes[i] = binaryString.charCodeAt(i);
+                            }
+                            const decoder = new TextDecoder('utf-8');
+                            return decoder.decode(bytes);
                         } catch (e) {
-                            // 如果失敗，可能是舊格式，直接使用
-                            configJson = decodedBase64;
+                            // 方法2：降級方案
+                            try {
+                                return decodeURIComponent(escape(atob(padded)));
+                            } catch (e2) {
+                                // 最後嘗試：直接解碼（不處理 UTF-8）
+                                return atob(padded);
+                            }
                         }
+                    }
+
+                    try {
+                        // 使用 base64ToUtf8 解碼（內部會處理 URL 安全格式和填充）
+                        configJson = base64ToUtf8(configParam);
                     } catch (e) {
-                        // 舊格式：直接解碼
-                        try {
-                            configJson = decodeURIComponent(atob(configParam));
-                        } catch (e2) {
-                            configJson = atob(configParam);
-                        }
+                        // 如果所有方法都失敗，記錄錯誤
+                        console.error('解碼配置失敗:', e);
+                        throw e;
                     }
 
                     const sharedConfig = JSON.parse(configJson);
