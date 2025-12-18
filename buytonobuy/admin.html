@@ -599,8 +599,9 @@
                 // 將配置轉換為緊湊JSON（移除空格）
                 const configJson = JSON.stringify(shareConfig);
 
-                // 使用 Base64 編碼，並移除填充符號
-                let configBase64 = btoa(configJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                // 使用 Base64 編碼（先編碼 UTF-8 以支持中文），並移除填充符號
+                // encodeURIComponent 將 Unicode 字符轉換為 UTF-8 編碼的字符串
+                let configBase64 = btoa(encodeURIComponent(configJson)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
                 // 生成分享連結
                 const currentUrl = window.location.origin + window.location.pathname;
