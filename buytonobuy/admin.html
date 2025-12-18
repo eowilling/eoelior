@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轉盤後台管理</title>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .color-picker {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">轉盤表面設定</h1>
+            <div class="flex gap-4">
+                <a href="buyROnobuy.html" class="text-blue-600 hover:text-blue-800 underline">返回轉盤</a>
+            </div>
+        </div>
+
+        <div class="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded">
+            <p class="text-sm text-blue-800">
+                <strong>說明：</strong><br>
+                • <strong>視覺面積</strong>：轉盤上顯示的扇區大小比例（用戶看到的）<br>
+                • <strong>自動計算</strong>：調整任一選項的百分比時，其他選項會自動按比例調整，總和保持 100%<br>
+                • 此頁面只能設定轉盤的視覺外觀，無法設定真實機率
+            </p>
+        </div>
+
+        <div id="segmentsContainer" class="space-y-4 mb-6">
+            <!-- 選項將動態生成在這裡 -->
+        </div>
+
+        <div class="flex gap-4 mb-6">
+            <button id="addSegmentBtn"
+                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                + 新增選項
+            </button>
+            <button id="saveBtn"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                儲存設定
+            </button>
+            <button id="resetBtn"
+                    class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                重置為預設值
+            </button>
+        </div>
+
+        <div id="previewSection" class="mt-8 p-4 bg-gray-100 rounded-lg">
+            <h2 class="text-xl font-bold mb-4">預覽資訊</h2>
+            <div id="previewInfo" class="text-sm text-gray-700">
+                <!-- 預覽資訊將顯示在這裡 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 預設配置
+        const defaultConfig = {
+            segments: [
+                { label: "買", color: '#10b981', visualPercent: 50, realPercent: 80 },
+                { label: "不好", color: '#ef4444', visualPercent: 50, realPercent: 20 }
+            ]
+        };
+
+        // 預設顏色選項
+        const defaultColors = [
+            '#10b981', '#ef4444', '#fcd34d', '#3b82f6',
+            '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4'
+        ];
+
+        // 載入配置
+        function loadConfig() {
+            const saved = localStorage.getItem('wheelConfig');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('載入配置失敗', e);
+                }
+            }
+            return JSON.parse(JSON.stringify(defaultConfig)); // 深拷貝
+        }
+
+        // 儲存配置
+        function saveConfig(config) {
+            localStorage.setItem('wheelConfig', JSON.stringify(config));
+            updatePreview();
+            alert('設定已儲存！');
+        }
+
+        let config = loadConfig();
+        const segmentsContainer = document.getElementById('segmentsContainer');
+        const previewInfo = document.getElementById('previewInfo');
+
+        // 創建選項表單
+        function createSegmentForm(index, segment) {
+            const div = document.createElement('div');
+            div.className = 'p-4 border-2 border-gray-200 rounded-lg bg-white';
+            div.dataset.index = index;
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700">選項 ${index + 1}</h3>
+                    <button class="remove-segment-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition">
+                        刪除
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">選項名稱</label>
+                        <input type="text" class="segment-label w-full px-3 py-2 border border-gray-300 rounded"
+                               value="${segment.label}" placeholder="例如：買">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">顏色</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" class="segment-color" value="${segment.color}">
+                            <input type="text" class="segment-color-text w-24 px-2 py-2 border border-gray-300 rounded text-sm"
+                                   value="${segment.color}" placeholder="#10b981">
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            視覺面積 (%)
+                            <span class="text-xs text-gray-500">（轉盤顯示的比例）</span>
+                        </label>
+                        <input type="number" class="segment-visual w-full px-3 py-2 border border-gray-300 rounded"
+                               value="${segment.visualPercent}" min="1" max="100" step="1">
+                    </div>
+                </div>
+            `;
+
+            // 綁定事件
+            const removeBtn = div.querySelector('.remove-segment-btn');
+            removeBtn.addEventListener('click', () => {
+                if (config.segments.length <= 2) {
+                    alert('至少需要保留 2 個選項！');
+                    return;
+                }
+                div.remove();
+                // 刪除後重新分配百分比
+                updateConfigFromDOM();
+                redistributePercentages();
+                renderSegments();
+            });
+
+            // 顏色選擇器同步
+            const colorInput = div.querySelector('.segment-color');
+            const colorText = div.querySelector('.segment-color-text');
+            colorInput.addEventListener('input', (e) => {
+                colorText.value = e.target.value;
+                updateConfigFromDOM();
+                updatePreview();
+            });
+            colorText.addEventListener('input', (e) => {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    colorInput.value = e.target.value;
+                    updateConfigFromDOM();
+                    updatePreview();
+                }
+            });
+
+            // 選項名稱輸入
+            div.querySelector('.segment-label').addEventListener('input', () => {
+                updateConfigFromDOM();
+                updatePreview();
+            });
+
+            // 視覺面積輸入 - 自動按比例調整其他選項
+            div.querySelector('.segment-visual').addEventListener('input', (e) => {
+                const changedIndex = parseInt(div.dataset.index);
+                const newValue = parseFloat(e.target.value) || 0;
+                autoAdjustPercentages('visual', changedIndex, newValue);
+                updatePreview();
+            });
+
+            return div;
+        }
+
+        // 從 DOM 更新配置（只更新視覺面積，保留原有的真實機率）
+        function updateConfigFromDOM() {
+            const segments = [];
+            segmentsContainer.querySelectorAll('[data-index]').forEach((div, index) => {
+                const label = div.querySelector('.segment-label').value || `選項${index + 1}`;
+                const color = div.querySelector('.segment-color').value;
+                const visualPercent = parseFloat(div.querySelector('.segment-visual').value) || 0;
+
+                // 保留原有的真實機率（如果存在），否則使用預設值（平均分配）
+                const originalSegment = config.segments[index];
+                let realPercent = originalSegment ? originalSegment.realPercent : (100 / config.segments.length);
+
+                segments.push({
+                    label: label,
+                    color: color,
+                    visualPercent: visualPercent,
+                    realPercent: realPercent
+                });
+            });
+            config.segments = segments;
+        }
+
+        // 自動調整百分比，保持總和為 100%
+        function autoAdjustPercentages(type, changedIndex, newValue) {
+            updateConfigFromDOM();
+            const segments = config.segments;
+
+            if (segments.length < 2) return;
+
+            // 限制新值在合理範圍內
+            const minValue = 0;
+            const maxValue = 100;
+            const clampedValue = Math.max(minValue, Math.min(maxValue, newValue));
+
+            // 更新改變的選項
+            segments[changedIndex][type === 'visual' ? 'visualPercent' : 'realPercent'] = clampedValue;
+
+            // 計算其他選項的總和
+            const otherTotal = segments.reduce((sum, seg, idx) => {
+                if (idx !== changedIndex) {
+                    return sum + (type === 'visual' ? seg.visualPercent : seg.realPercent);
+                }
+                return sum;
+            }, 0);
+
+            // 計算剩餘需要分配的百分比
+            const remaining = 100 - clampedValue;
+
+            if (remaining <= 0) {
+                // 如果新值 >= 100，其他選項設為 0
+                segments.forEach((seg, idx) => {
+                    if (idx !== changedIndex) {
+                        seg[type === 'visual' ? 'visualPercent' : 'realPercent'] = 0;
+                    }
+                });
+            } else if (otherTotal > 0) {
+                // 按比例分配剩餘的百分比
+                segments.forEach((seg, idx) => {
+                    if (idx !== changedIndex) {
+                        const oldValue = type === 'visual' ? seg.visualPercent : seg.realPercent;
+                        const ratio = oldValue / otherTotal;
+                        const newValue = Math.round(remaining * ratio * 100) / 100; // 保留兩位小數
+                        seg[type === 'visual' ? 'visualPercent' : 'realPercent'] = Math.max(0, newValue);
+                    }
+                });
+
+                // 處理浮點數誤差，確保總和為 100%
+                const currentTotal = segments.reduce((sum, seg) => {
+                    return sum + (type === 'visual' ? seg.visualPercent : seg.realPercent);
+                }, 0);
+                const diff = 100 - currentTotal;
+
+                // 將誤差加到最後一個非改變的選項
+                if (Math.abs(diff) > 0.01) {
+                    for (let i = segments.length - 1; i >= 0; i--) {
+                        if (i !== changedIndex) {
+                            segments[i][type === 'visual' ? 'visualPercent' : 'realPercent'] += diff;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // 如果其他選項都是 0，平均分配
+                const avg = remaining / (segments.length - 1);
+                segments.forEach((seg, idx) => {
+                    if (idx !== changedIndex) {
+                        seg[type === 'visual' ? 'visualPercent' : 'realPercent'] = Math.round(avg * 100) / 100;
+                    }
+                });
+            }
+
+            // 更新 DOM 顯示（只更新視覺面積）
+            if (type === 'visual') {
+                segmentsContainer.querySelectorAll('[data-index]').forEach((div, index) => {
+                    const visualInput = div.querySelector('.segment-visual');
+                    if (index !== changedIndex) {
+                        visualInput.value = segments[index].visualPercent.toFixed(2);
+                    } else {
+                        visualInput.value = clampedValue.toFixed(2);
+                    }
+                });
+            }
+        }
+
+        // 渲染所有選項
+        function renderSegments() {
+            segmentsContainer.innerHTML = '';
+            config.segments.forEach((segment, index) => {
+                segmentsContainer.appendChild(createSegmentForm(index, segment));
+            });
+            updatePreview();
+        }
+
+        // 更新預覽資訊（只顯示視覺面積）
+        function updatePreview() {
+            updateConfigFromDOM();
+
+            const visualTotal = config.segments.reduce((sum, s) => sum + s.visualPercent, 0);
+
+            let html = '<div class="space-y-2">';
+            const visualStatus = Math.abs(visualTotal - 100) < 0.01 ?
+                '<span class="text-green-600">✓ 已自動調整為 100%</span>' :
+                `<span class="text-red-600">${visualTotal.toFixed(2)}%（建議調整為 100%）</span>`;
+
+            html += `<p><strong>視覺面積總和：</strong>${visualStatus}</p>`;
+            html += '<div class="mt-4"><strong>視覺顯示：</strong>';
+            config.segments.forEach(s => {
+                html += `<span class="inline-block px-3 py-1 rounded text-white mr-2" style="background-color: ${s.color}">${s.label} ${s.visualPercent.toFixed(2)}%</span>`;
+            });
+            html += '</div>';
+            html += '<p class="mt-2 text-xs text-gray-500">（真實機率設定需使用完整權限後台）</p>';
+            html += '</div>';
+
+            previewInfo.innerHTML = html;
+        }
+
+        // 重新分配所有選項的百分比，使總和為 100%（只調整視覺面積，保留真實機率）
+        function redistributePercentages() {
+            const segmentCount = config.segments.length;
+
+            if (segmentCount === 0) return;
+
+            // 平均分配視覺面積（真實機率保持不變）
+            const avgVisual = 100 / segmentCount;
+
+            // 計算前 n-1 個選項的總和（用於處理浮點數誤差）
+            let visualSum = 0;
+
+            config.segments.forEach((seg, index) => {
+                if (index === segmentCount - 1) {
+                    // 最後一個選項：使用剩餘的百分比，確保總和為 100%
+                    seg.visualPercent = Math.round((100 - visualSum) * 100) / 100;
+                    // 真實機率保持不變
+                } else {
+                    // 其他選項：平均分配視覺面積
+                    seg.visualPercent = Math.round(avgVisual * 100) / 100;
+                    visualSum += seg.visualPercent;
+                    // 真實機率保持不變
+                }
+            });
+        }
+
+        // 新增選項
+        document.getElementById('addSegmentBtn').addEventListener('click', () => {
+            // 先從 DOM 更新當前配置（確保讀取最新的值）
+            updateConfigFromDOM();
+
+            // 新增選項
+            const newSegment = {
+                label: `選項${config.segments.length + 1}`,
+                color: defaultColors[config.segments.length % defaultColors.length],
+                visualPercent: 0, // 將在重新分配時設置
+                realPercent: 0    // 將在重新分配時設置
+            };
+            config.segments.push(newSegment);
+
+            // 重新分配所有選項的百分比（包括新選項）
+            redistributePercentages();
+
+            // 重新渲染，顯示更新後的百分比
+            renderSegments();
+        });
+
+        // 儲存設定（只更新視覺面積，保留真實機率）
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            // 先載入現有配置，保留真實機率
+            const existingConfig = loadConfig();
+
+            updateConfigFromDOM();
+
+            // 驗證
+            if (config.segments.length < 2) {
+                alert('至少需要 2 個選項！');
+                return;
+            }
+
+            // 確保視覺面積總和為 100%（自動調整）
+            const visualTotal = config.segments.reduce((sum, s) => sum + s.visualPercent, 0);
+
+            if (Math.abs(visualTotal - 100) > 0.01) {
+                // 按比例調整視覺面積
+                const ratio = 100 / visualTotal;
+                config.segments.forEach(seg => {
+                    seg.visualPercent = Math.round(seg.visualPercent * ratio * 100) / 100;
+                });
+            }
+
+            // 保留原有的真實機率（如果選項數量相同，對應保留；否則平均分配）
+            if (existingConfig.segments.length === config.segments.length) {
+                config.segments.forEach((seg, index) => {
+                    if (existingConfig.segments[index]) {
+                        seg.realPercent = existingConfig.segments[index].realPercent;
+                    }
+                });
+            } else {
+                // 選項數量改變，平均分配真實機率
+                const avgReal = 100 / config.segments.length;
+                config.segments.forEach(seg => {
+                    seg.realPercent = Math.round(avgReal * 100) / 100;
+                });
+            }
+
+            // 重新渲染以顯示調整後的值
+            renderSegments();
+            saveConfig(config);
+        });
+
+        // 重置為預設值
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('確定要重置為預設值嗎？這將清除所有自訂設定。')) {
+                config = JSON.parse(JSON.stringify(defaultConfig));
+                renderSegments();
+            }
+        });
+
+        // 初始化
+        renderSegments();
+    </script>
+</body>
+</html>
+
