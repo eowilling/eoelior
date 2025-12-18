@@ -34,6 +34,23 @@
             </p>
         </div>
 
+        <!-- 標題和說明設定 -->
+        <div class="mb-6 p-4 border-2 border-gray-200 rounded-lg bg-white">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">轉盤標題與說明</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">轉盤標題</label>
+                    <input type="text" id="wheelTitle" class="w-full px-3 py-2 border border-gray-300 rounded"
+                           placeholder="例如：命運輪盤">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">轉盤說明（選填）</label>
+                    <textarea id="wheelDescription" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded"
+                              placeholder="例如：轉動輪盤，看看你的運氣如何..."></textarea>
+                </div>
+            </div>
+        </div>
+
         <div id="segmentsContainer" class="space-y-4 mb-6">
             <!-- 選項將動態生成在這裡 -->
         </div>
@@ -64,6 +81,8 @@
     <script>
         // 預設配置
         const defaultConfig = {
+            title: "命運輪盤",
+            description: "",
             segments: [
                 { label: "買", color: '#10b981', visualPercent: 50, realPercent: 80 },
                 { label: "不好", color: '#ef4444', visualPercent: 50, realPercent: 20 }
@@ -99,6 +118,30 @@
         let config = loadConfig();
         const segmentsContainer = document.getElementById('segmentsContainer');
         const previewInfo = document.getElementById('previewInfo');
+        const wheelTitleInput = document.getElementById('wheelTitle');
+        const wheelDescriptionInput = document.getElementById('wheelDescription');
+
+        // 載入標題和說明到輸入框
+        function loadTitleAndDescription() {
+            wheelTitleInput.value = config.title || defaultConfig.title;
+            wheelDescriptionInput.value = config.description || defaultConfig.description;
+        }
+
+        // 更新標題和說明到配置
+        function updateTitleAndDescription() {
+            config.title = wheelTitleInput.value.trim() || defaultConfig.title;
+            config.description = wheelDescriptionInput.value.trim();
+        }
+
+        // 標題和說明輸入框事件
+        wheelTitleInput.addEventListener('input', () => {
+            updateTitleAndDescription();
+            updatePreview();
+        });
+        wheelDescriptionInput.addEventListener('input', () => {
+            updateTitleAndDescription();
+            updatePreview();
+        });
 
         // 創建選項表單
         function createSegmentForm(index, segment) {
@@ -190,6 +233,7 @@
 
         // 從 DOM 更新配置（只更新視覺面積，保留原有的真實機率）
         function updateConfigFromDOM() {
+            updateTitleAndDescription();
             const segments = [];
             segmentsContainer.querySelectorAll('[data-index]').forEach((div, index) => {
                 const label = div.querySelector('.segment-label').value || `選項${index + 1}`;
@@ -423,6 +467,7 @@
         });
 
         // 初始化
+        loadTitleAndDescription();
         renderSegments();
     </script>
 </body>

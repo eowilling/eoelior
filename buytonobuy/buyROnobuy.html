@@ -28,7 +28,7 @@
         #wheelCanvas {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border-radius: 9999px; /* 圓形陰影 */
-            transition: transform 4s cubic-bezier(0.2, 0.8, 0.2, 1); /* 緩慢啟動和減速的動畫曲線 */
+            transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99); /* 更自然的減速曲線 */
         }
 
         /* 指針樣式 */
@@ -52,39 +52,83 @@
             margin: auto;
             aspect-ratio: 1 / 1; /* 保持正方形 */
         }
+
+        /* 禁用按鈕樣式 */
+        .delete-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #9ca3af !important;
+        }
+
     </style>
 </head>
-<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
-
-    <div class="max-w-xl w-full bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+<body class="bg-gray-50 min-h-screen p-4 font-sans">
+    <div class="max-w-7xl mx-auto">
         <div class="flex justify-between items-center mb-4">
-            <h1 class="text-3xl font-bold text-gray-800">
-                買/不好 決定轉盤
+            <h1 class="text-3xl font-bold text-gray-800" id="wheelTitle">
+                命運輪盤
             </h1>
             <a href="admin.html" class="text-sm text-gray-500 hover:text-gray-700 underline">後台管理</a>
         </div>
-        <p class="text-center text-gray-600 mb-8">
-            <span class="font-semibold text-primary-buy" id="visualInfo">表面上是 50% 買 / 50% 不好</span>，但實際上...
+        <p id="wheelDescription" class="text-center text-gray-600 mb-8" style="display: none;">
+            <!-- 說明將動態顯示在這裡 -->
         </p>
 
-        <!-- 轉盤和指針容器 -->
-        <div class="canvas-container">
-            <!-- 指針 (位於頂部中心) -->
-            <div class="pointer"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左側：轉盤區域 -->
+            <div class="lg:col-span-2 bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+                <!-- 轉盤和指針容器 -->
+                <div class="canvas-container">
+                    <!-- 指針 (位於頂部中心) -->
+                    <div class="pointer"></div>
 
-            <!-- 轉盤 Canvas -->
-            <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
-        </div>
+                    <!-- 轉盤 Canvas -->
+                    <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
+                </div>
 
-        <!-- 旋轉按鈕和結果顯示 -->
-        <div class="flex flex-col items-center mt-8 space-y-4">
-            <button id="spinButton"
-                    class="w-full md:w-auto px-10 py-4 text-xl font-bold text-gray-900 bg-accent-spin rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-yellow-700/50">
-                開始旋轉！
-            </button>
-            <div id="resultDisplay"
-                 class="min-h-[50px] w-full text-center text-2xl font-extrabold text-gray-700 p-3 rounded-lg bg-gray-100 transition-all duration-500 shadow-inner">
-                按下按鈕開始
+                <!-- 旋轉按鈕和結果顯示 -->
+                <div class="flex flex-col items-center mt-8 space-y-4">
+                    <button id="spinButton"
+                            class="w-full md:w-auto px-10 py-4 text-xl font-bold text-gray-900 bg-accent-spin rounded-full shadow-lg transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border-b-4 border-yellow-700/50">
+                        開始旋轉！
+                    </button>
+                    <div id="resultDisplay"
+                         class="min-h-[50px] w-full text-center text-2xl font-extrabold text-gray-700 p-3 rounded-lg bg-gray-100 transition-all duration-500 shadow-inner">
+                        按下按鈕開始
+                    </div>
+                </div>
+
+                <!-- 中獎機率表格 -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4 text-center">中獎機率</h3>
+                    <div class="overflow-x-auto">
+                        <table id="optionsDisplay" class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border border-gray-300 px-4 py-2 text-left">選項</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-center">中獎機率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 選項將動態顯示在這裡 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：記錄明細 -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">轉盤記錄</h2>
+                    <button id="resetHistoryBtn"
+                            class="px-4 py-2 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition">
+                        重置
+                    </button>
+                </div>
+                <div id="historyDisplay" class="space-y-2 max-h-[600px] overflow-y-auto">
+                    <p class="text-gray-500 text-sm text-center py-4">尚無記錄</p>
+                </div>
             </div>
         </div>
     </div>
@@ -94,10 +138,11 @@
         const ctx = canvas.getContext('2d');
         const spinButton = document.getElementById('spinButton');
         const resultDisplay = document.getElementById('resultDisplay');
-        const visualInfo = document.getElementById('visualInfo');
 
         // 預設配置
         const defaultConfig = {
+            title: "命運輪盤",
+            description: "",
             segments: [
                 { label: "買", color: '#10b981', visualPercent: 50, realPercent: 80 },
                 { label: "不好", color: '#ef4444', visualPercent: 50, realPercent: 20 }
@@ -125,12 +170,8 @@
         // 載入配置
         let config = loadConfig();
         let segments = [];
+        const optionsDisplay = document.getElementById('optionsDisplay');
 
-        // 更新視覺資訊顯示
-        function updateVisualInfo() {
-            const info = config.segments.map(s => `${s.label} ${s.visualPercent}%`).join(' / ');
-            visualInfo.textContent = `表面上是 ${info}`;
-        }
 
         // 初始化轉盤數據
         function initSegments() {
@@ -155,7 +196,190 @@
                 currentAngle = seg.endAngleDeg;
             });
 
-            updateVisualInfo();
+            updateOptionsDisplay();
+            updateTitleAndDescription();
+        }
+
+        // 更新標題和說明顯示
+        function updateTitleAndDescription() {
+            const titleElement = document.getElementById('wheelTitle');
+            const descriptionElement = document.getElementById('wheelDescription');
+
+            if (titleElement) {
+                titleElement.textContent = config.title || defaultConfig.title;
+            }
+
+            if (descriptionElement) {
+                if (config.description && config.description.trim()) {
+                    descriptionElement.textContent = config.description;
+                    descriptionElement.style.display = 'block';
+                } else {
+                    descriptionElement.style.display = 'none';
+                }
+            }
+        }
+
+        // 更新選項顯示（表格格式）
+        function updateOptionsDisplay() {
+            let html = '';
+            config.segments.forEach(segment => {
+                html += `
+                    <tr>
+                        <td class="border border-gray-300 px-4 py-2">
+                            <span class="inline-block px-3 py-1 rounded text-white font-semibold" style="background-color: ${segment.color};">
+                                ${segment.label}
+                            </span>
+                        </td>
+                        <td class="border border-gray-300 px-4 py-2 text-center font-semibold">
+                            ${segment.visualPercent.toFixed(1)}%
+                        </td>
+                    </tr>
+                `;
+            });
+            const tbody = optionsDisplay.querySelector('tbody');
+            if (tbody) {
+                tbody.innerHTML = html;
+            }
+        }
+
+        // 載入歷史記錄
+        function loadHistory() {
+            const saved = localStorage.getItem('wheelHistory');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('載入歷史記錄失敗', e);
+                }
+            }
+            return [];
+        }
+
+        // 儲存歷史記錄
+        function saveHistory(history) {
+            localStorage.setItem('wheelHistory', JSON.stringify(history));
+        }
+
+        // 添加記錄
+        function addHistoryRecord(label, color) {
+            const history = loadHistory();
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            const dateStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+
+            history.unshift({
+                label: label,
+                color: color,
+                time: timeStr,
+                date: dateStr,
+                timestamp: now.getTime(),
+                protected: false // 預設不受保護
+            });
+
+            // 最多保留 100 筆記錄（不包括受保護的）
+            if (history.length > 100) {
+                // 只刪除不受保護的記錄
+                for (let i = history.length - 1; i >= 0; i--) {
+                    if (!history[i].protected) {
+                        history.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+
+            saveHistory(history);
+            renderHistory();
+        }
+
+        // 渲染歷史記錄
+        function renderHistory() {
+            const history = loadHistory();
+            const historyDisplay = document.getElementById('historyDisplay');
+
+            if (history.length === 0) {
+                historyDisplay.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">尚無記錄</p>';
+                return;
+            }
+
+            let html = '';
+            history.forEach((record, index) => {
+                const protectedClass = record.protected ? 'bg-yellow-50 border-yellow-300' : '';
+                const protectIcon = record.protected ? '✓' : '○';
+                const protectColor = record.protected ? 'text-green-600' : 'text-gray-400';
+
+                html += `
+                    <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition ${protectedClass}" data-index="${index}">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-block px-3 py-1 rounded text-white font-semibold text-sm" style="background-color: ${record.color};">
+                                ${record.label}
+                            </span>
+                            <span class="text-xs text-gray-500">${record.date} ${record.time}</span>
+                        </div>
+                        <div class="flex items-center justify-end gap-2 mt-2">
+                            <button class="protect-btn px-2 py-1 text-sm rounded transition ${protectColor} hover:bg-gray-100"
+                                    data-index="${index}"
+                                    title="${record.protected ? '取消保護' : '保護此記錄'}">
+                                ${protectIcon}
+                            </button>
+                            <button class="delete-btn px-2 py-1 text-sm text-red-500 rounded hover:text-red-700 hover:bg-red-50 transition"
+                                    data-index="${index}"
+                                    ${record.protected ? 'disabled title="受保護的記錄無法刪除"' : 'title="刪除此記錄"'}>
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            historyDisplay.innerHTML = html;
+
+            // 綁定事件
+            historyDisplay.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    deleteHistoryRecord(index);
+                });
+            });
+
+            historyDisplay.querySelectorAll('.protect-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    toggleProtectRecord(index);
+                });
+            });
+        }
+
+        // 刪除單筆記錄
+        function deleteHistoryRecord(index) {
+            const history = loadHistory();
+            if (index >= 0 && index < history.length) {
+                if (history[index].protected) {
+                    alert('此記錄已受保護，無法刪除！');
+                    return;
+                }
+                if (confirm('確定要刪除此記錄嗎？')) {
+                    history.splice(index, 1);
+                    saveHistory(history);
+                    renderHistory();
+                }
+            }
+        }
+
+        // 切換保護狀態
+        function toggleProtectRecord(index) {
+            const history = loadHistory();
+            if (index >= 0 && index < history.length) {
+                history[index].protected = !history[index].protected;
+                saveHistory(history);
+                renderHistory();
+            }
+        }
+
+        // 重置歷史記錄（包括受保護的記錄）
+        function resetHistory() {
+            if (confirm('確定要清除所有轉盤記錄嗎？\n（包括受保護的記錄也會被清除）')) {
+                localStorage.removeItem('wheelHistory');
+                renderHistory();
+            }
         }
 
         const totalDegrees = 360;
@@ -282,8 +506,8 @@
             const randomOffset = (Math.random() - 0.5) * segmentRange * 0.6; // 在扇區60%範圍內隨機
             const targetAngle = baseTargetAngle + randomOffset;
 
-            // 4. 增加多個整圈旋轉 (讓旋轉看起來很長很隨機)
-            const fullRotations = Math.floor(Math.random() * 5) + 6; // 6到10圈
+            // 4. 增加多個整圈旋轉 (讓旋轉看起來很長很隨機，至少轉8-12圈)
+            const fullRotations = Math.floor(Math.random() * 5) + 8; // 8到12圈
             const totalDegreesToSpin = (fullRotations * totalDegrees) + targetAngle;
 
             // 5. 計算最終旋轉角度（從當前角度計算）
@@ -294,16 +518,17 @@
             // 6. 設定 CSS Transform
             canvas.style.transform = `rotate(${finalRotation}deg)`;
 
-            // 7. 旋轉動畫持續時間 (4 秒，必須與 CSS transition 保持一致)
-            const duration = 4000;
+            // 7. 旋轉動畫持續時間 (5 秒，必須與 CSS transition 保持一致)
+            const duration = 5000;
 
             setTimeout(() => {
                 isSpinning = false;
                 spinButton.disabled = false;
                 currentRotation = finalRotation % totalDegrees; // 更新當前角度
 
-                // 8. 顯示結果
+                // 8. 顯示結果並記錄
                 showResult(selectedSegment.label, selectedSegment.color);
+                addHistoryRecord(selectedSegment.label, selectedSegment.color);
 
             }, duration);
         }
@@ -326,6 +551,8 @@
                 config = loadConfig();
                 initSegments();
                 drawWheel();
+                updateOptionsDisplay();
+                updateTitleAndDescription();
             }
         });
 
@@ -336,11 +563,17 @@
                 config = newConfig;
                 initSegments();
                 drawWheel();
+                updateOptionsDisplay();
+                updateTitleAndDescription();
             }
         }, 500);
 
         // 事件監聽
         spinButton.addEventListener('click', spinWheel);
+        document.getElementById('resetHistoryBtn').addEventListener('click', resetHistory);
+
+        // 初始化歷史記錄顯示
+        renderHistory();
 
         // 讓轉盤在視窗大小改變時保持正確的尺寸
         window.addEventListener('resize', () => {
