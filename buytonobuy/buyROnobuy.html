@@ -386,8 +386,19 @@
         let currentRotation = 0; // 當前旋轉角度 (度)
         let isSpinning = false;
 
+        // 重置轉盤為初始狀態
+        function resetWheel() {
+            currentRotation = 0;
+            canvas.style.transform = 'rotate(0deg)';
+            resultDisplay.textContent = '按下按鈕開始';
+            resultDisplay.className = 'min-h-[50px] w-full text-center text-2xl font-extrabold text-gray-700 p-3 rounded-lg bg-gray-100 transition-all duration-500 shadow-inner';
+            isSpinning = false;
+            spinButton.disabled = false;
+        }
+
         // 初始化
         initSegments();
+        resetWheel(); // 確保每次開啟都是新的輪盤
 
         // 繪製轉盤
         function drawWheel() {
@@ -553,6 +564,7 @@
                 drawWheel();
                 updateOptionsDisplay();
                 updateTitleAndDescription();
+                resetWheel(); // 配置更新時重置轉盤
             }
         });
 
@@ -565,6 +577,7 @@
                 drawWheel();
                 updateOptionsDisplay();
                 updateTitleAndDescription();
+                resetWheel(); // 配置更新時重置轉盤
             }
         }, 500);
 
