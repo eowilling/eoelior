@@ -577,31 +577,41 @@
 
         // 分享功能
         function generateShareUrl() {
-            updateConfigFromDOM();
+            try {
+                updateConfigFromDOM();
 
-            // 準備要分享的配置（使用緊湊格式減少URL長度）
-            const shareConfig = {
-                t: config.title, // 縮寫 title -> t
-                d: config.description, // 縮寫 description -> d
-                s: config.segments.map(seg => ({
-                    l: seg.label, // 縮寫 label -> l
-                    c: seg.color, // 縮寫 color -> c
-                    v: Math.round(seg.visualPercent * 10) / 10 // 縮寫 visualPercent -> v，保留1位小數
-                }))
-            };
+                // 確保配置有效
+                if (!config || !config.segments || config.segments.length === 0) {
+                    throw new Error('配置無效，無法生成分享連結');
+                }
 
-            // 將配置轉換為緊湊JSON（移除空格）
-            const configJson = JSON.stringify(shareConfig);
+                // 準備要分享的配置（使用緊湊格式減少URL長度）
+                const shareConfig = {
+                    t: config.title || '', // 縮寫 title -> t
+                    d: config.description || '', // 縮寫 description -> d
+                    s: config.segments.map(seg => ({
+                        l: seg.label || '選項', // 縮寫 label -> l
+                        c: seg.color || '#10b981', // 縮寫 color -> c
+                        v: Math.round((seg.visualPercent || 0) * 10) / 10 // 縮寫 visualPercent -> v，保留1位小數
+                    }))
+                };
 
-            // 使用 Base64 編碼，並移除填充符號
-            let configBase64 = btoa(configJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                // 將配置轉換為緊湊JSON（移除空格）
+                const configJson = JSON.stringify(shareConfig);
 
-            // 生成分享連結
-            const currentUrl = window.location.origin + window.location.pathname;
-            const baseUrl = currentUrl.replace('admin.html', 'buyROnobuy.html');
-            const shareUrl = `${baseUrl}?c=${configBase64}`; // 使用 c 代替 config
+                // 使用 Base64 編碼，並移除填充符號
+                let configBase64 = btoa(configJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-            return shareUrl;
+                // 生成分享連結
+                const currentUrl = window.location.origin + window.location.pathname;
+                const baseUrl = currentUrl.replace('admin.html', 'buyROnobuy.html');
+                const shareUrl = `${baseUrl}?c=${configBase64}`; // 使用 c 代替 config
+
+                return shareUrl;
+            } catch (error) {
+                console.error('生成分享連結錯誤:', error);
+                throw error;
+            }
         }
 
         // 短縮URL功能（使用 JSONP 方式，避免跨域問題）
@@ -661,29 +671,43 @@
         }
 
         // 顯示分享彈窗
-        document.getElementById('shareBtn').addEventListener('click', () => {
-            updateConfigFromDOM();
+        const shareBtn = document.getElementById('shareBtn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => {
+                try {
+                    updateConfigFromDOM();
 
-            // 驗證配置
-            if (config.segments.length < 2) {
-                alert('至少需要 2 個選項才能分享！');
-                return;
-            }
+                    // 驗證配置
+                    if (!config.segments || config.segments.length < 2) {
+                        alert('至少需要 2 個選項才能分享！');
+                        return;
+                    }
 
-            const visualTotal = config.segments.reduce((sum, s) => sum + s.visualPercent, 0);
-            if (Math.abs(visualTotal - 100) > 0.01) {
-                if (!confirm('視覺面積總和不是 100%，是否仍要分享？\n（建議先調整為 100%）')) {
-                    return;
+                    const visualTotal = config.segments.reduce((sum, s) => sum + (s.visualPercent || 0), 0);
+                    if (Math.abs(visualTotal - 100) > 0.01) {
+                        if (!confirm('視覺面積總和不是 100%，是否仍要分享？\n（建議先調整為 100%）')) {
+                            return;
+                        }
+                    }
+
+                    const shareUrl = generateShareUrl();
+                    const shareUrlInput = document.getElementById('shareUrl');
+                    const shareModal = document.getElementById('shareModal');
+                    const copySuccessMsg = document.getElementById('copySuccessMsg');
+                    const shorteningStatus = document.getElementById('shorteningStatus');
+                    const shortenUrlBtn = document.getElementById('shortenUrlBtn');
+
+                    if (shareUrlInput) shareUrlInput.value = shareUrl;
+                    if (shareModal) shareModal.classList.remove('hidden');
+                    if (copySuccessMsg) copySuccessMsg.classList.add('hidden');
+                    if (shorteningStatus) shorteningStatus.classList.add('hidden');
+                    if (shortenUrlBtn) shortenUrlBtn.disabled = false;
+                } catch (error) {
+                    console.error('分享功能錯誤:', error);
+                    alert('分享功能發生錯誤：' + error.message);
                 }
-            }
-
-            const shareUrl = generateShareUrl();
-            document.getElementById('shareUrl').value = shareUrl;
-            document.getElementById('shareModal').classList.remove('hidden');
-            document.getElementById('copySuccessMsg').classList.add('hidden');
-            document.getElementById('shorteningStatus').classList.add('hidden');
-            document.getElementById('shortenUrlBtn').disabled = false;
-        });
+            });
+        }
 
         // 短縮連結按鈕
         document.getElementById('shortenUrlBtn').addEventListener('click', async () => {
