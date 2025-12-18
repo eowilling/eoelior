@@ -194,10 +194,21 @@
                         const normalizedBase64 = configParam.replace(/-/g, '+').replace(/_/g, '/');
                         // 補齊填充
                         const paddedBase64 = normalizedBase64 + '='.repeat((4 - normalizedBase64.length % 4) % 4);
-                        configJson = atob(paddedBase64);
+                        const decodedBase64 = atob(paddedBase64);
+                        // 先嘗試 decodeURIComponent（新格式使用 encodeURIComponent 編碼）
+                        try {
+                            configJson = decodeURIComponent(decodedBase64);
+                        } catch (e) {
+                            // 如果失敗，可能是舊格式，直接使用
+                            configJson = decodedBase64;
+                        }
                     } catch (e) {
                         // 舊格式：直接解碼
-                        configJson = decodeURIComponent(atob(configParam));
+                        try {
+                            configJson = decodeURIComponent(atob(configParam));
+                        } catch (e2) {
+                            configJson = atob(configParam);
+                        }
                     }
 
                     const sharedConfig = JSON.parse(configJson);
