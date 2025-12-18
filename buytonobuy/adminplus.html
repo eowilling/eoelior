@@ -57,7 +57,7 @@
             <!-- 選項將動態生成在這裡 -->
         </div>
 
-        <div class="flex gap-4 mb-6">
+        <div class="flex gap-4 mb-6 flex-wrap">
             <button id="addSegmentBtn"
                     class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                 + 新增選項
@@ -66,10 +66,49 @@
                     class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 儲存設定
             </button>
+            <button id="shareBtn"
+                    class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                📤 分享轉盤
+            </button>
             <button id="resetBtn"
                     class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
                 重置為預設值
             </button>
+        </div>
+
+        <!-- 分享彈窗 -->
+        <div id="shareModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-6 md:p-8 max-w-md w-full mx-4 shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800">分享轉盤</h2>
+                    <button id="closeShareModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                <p class="text-gray-600 mb-4">複製以下連結分享給其他人，他們打開後會看到相同的轉盤設定：</p>
+                <div class="mb-4">
+                    <input type="text" id="shareUrl" readonly
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm mb-2">
+                    <div class="flex items-center gap-2">
+                        <button id="shortenUrlBtn"
+                                class="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600 transition">
+                            🔗 縮短連結
+                        </button>
+                        <span id="shorteningStatus" class="text-xs text-gray-500 hidden">正在縮短連結...</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="copyShareUrlBtn"
+                            class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        📋 複製連結
+                    </button>
+                    <button id="openShareUrlBtn"
+                            class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        🔗 開啟連結
+                    </button>
+                </div>
+                <div id="copySuccessMsg" class="mt-3 text-green-600 text-sm hidden">
+                    ✓ 連結已複製到剪貼簿！
+                </div>
+            </div>
         </div>
 
         <div id="previewSection" class="mt-8 p-4 bg-gray-100 rounded-lg">
@@ -111,9 +150,27 @@
         }
 
         // 儲存配置
-        function saveConfig(config) {
-            localStorage.setItem('wheelConfig', JSON.stringify(config));
+        function saveConfig(configToSave) {
+            // 暫時標記為儲存中，避免觸發同步檢查
+            isEditing = true;
+
+            localStorage.setItem('wheelConfig', JSON.stringify(configToSave));
+            config = configToSave; // 更新當前配置
+
+            // 觸發自定義事件以在同一頁面內同步（但不重新渲染）
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'wheelConfig',
+                newValue: JSON.stringify(configToSave),
+                storageArea: localStorage
+            }));
+
             updatePreview();
+
+            // 0.5秒後恢復編輯狀態檢查
+            setTimeout(() => {
+                isEditing = false;
+            }, 500);
+
             alert('設定已儲存！');
         }
 
@@ -122,6 +179,19 @@
         const previewInfo = document.getElementById('previewInfo');
         const wheelTitleInput = document.getElementById('wheelTitle');
         const wheelDescriptionInput = document.getElementById('wheelDescription');
+
+        // 追蹤用戶是否正在編輯
+        let isEditing = false;
+        let editingTimer = null;
+
+        // 標記正在編輯
+        function markEditing() {
+            isEditing = true;
+            if (editingTimer) clearTimeout(editingTimer);
+            editingTimer = setTimeout(() => {
+                isEditing = false;
+            }, 1500); // 1.5秒沒有輸入操作後認為編輯完成
+        }
 
         // 載入標題和說明到輸入框
         function loadTitleAndDescription() {
@@ -137,10 +207,12 @@
 
         // 標題和說明輸入框事件
         wheelTitleInput.addEventListener('input', () => {
+            markEditing(); // 標記為正在編輯
             updateTitleAndDescription();
             updatePreview();
         });
         wheelDescriptionInput.addEventListener('input', () => {
+            markEditing(); // 標記為正在編輯
             updateTitleAndDescription();
             updatePreview();
         });
@@ -202,23 +274,41 @@
                     alert('至少需要保留 2 個選項！');
                     return;
                 }
-                div.remove();
-                // 刪除後重新分配百分比
-                updateConfigFromDOM();
+
+                // 標記為正在編輯，避免配置同步干擾
+                isEditing = true;
+
+                // 從配置中刪除該項目
+                const indexToRemove = parseInt(div.dataset.index);
+                config.segments.splice(indexToRemove, 1);
+
+                // 重新分配百分比
                 redistributePercentages();
+
+                // 立即保存配置到 localStorage，防止被同步機制還原
+                localStorage.setItem('wheelConfig', JSON.stringify(config));
+
+                // 重新渲染
                 renderSegments();
+
+                // 1秒後恢復編輯狀態檢查
+                setTimeout(() => {
+                    isEditing = false;
+                }, 1000);
             });
 
             // 顏色選擇器同步
             const colorInput = div.querySelector('.segment-color');
             const colorText = div.querySelector('.segment-color-text');
             colorInput.addEventListener('input', (e) => {
+                markEditing(); // 標記為正在編輯
                 colorText.value = e.target.value;
                 updateConfigFromDOM();
                 updatePreview();
             });
             colorText.addEventListener('input', (e) => {
                 if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    markEditing(); // 標記為正在編輯
                     colorInput.value = e.target.value;
                     updateConfigFromDOM();
                     updatePreview();
@@ -227,12 +317,14 @@
 
             // 選項名稱輸入
             div.querySelector('.segment-label').addEventListener('input', () => {
+                markEditing(); // 標記為正在編輯
                 updateConfigFromDOM();
                 updatePreview();
             });
 
             // 視覺面積輸入 - 自動按比例調整其他選項
             div.querySelector('.segment-visual').addEventListener('input', (e) => {
+                markEditing(); // 標記為正在編輯
                 const changedIndex = parseInt(div.dataset.index);
                 const newValue = parseFloat(e.target.value) || 0;
                 autoAdjustPercentages('visual', changedIndex, newValue);
@@ -241,6 +333,7 @@
 
             // 真實機率輸入 - 自動按比例調整其他選項
             div.querySelector('.segment-real').addEventListener('input', (e) => {
+                markEditing(); // 標記為正在編輯
                 const changedIndex = parseInt(div.dataset.index);
                 const newValue = parseFloat(e.target.value) || 0;
                 autoAdjustPercentages('real', changedIndex, newValue);
@@ -426,6 +519,9 @@
 
         // 新增選項
         document.getElementById('addSegmentBtn').addEventListener('click', () => {
+            // 標記為正在編輯，避免配置同步干擾
+            isEditing = true;
+
             // 先從 DOM 更新當前配置（確保讀取最新的值）
             updateConfigFromDOM();
 
@@ -441,8 +537,16 @@
             // 重新分配所有選項的百分比（包括新選項）
             redistributePercentages();
 
+            // 立即保存配置到 localStorage
+            localStorage.setItem('wheelConfig', JSON.stringify(config));
+
             // 重新渲染，顯示更新後的百分比
             renderSegments();
+
+            // 1秒後恢復編輯狀態檢查
+            setTimeout(() => {
+                isEditing = false;
+            }, 1000);
         });
 
         // 儲存設定
@@ -475,9 +579,10 @@
                 });
             }
 
+            // 儲存配置（會觸發更新預覽）
+            saveConfig(config);
             // 重新渲染以顯示調整後的值
             renderSegments();
-            saveConfig(config);
         });
 
         // 重置為預設值
@@ -487,6 +592,216 @@
                 renderSegments();
             }
         });
+
+        // 分享功能
+        function generateShareUrl() {
+            updateConfigFromDOM();
+
+            // 準備要分享的配置（只包含必要的視覺設定，不包含真實機率）
+            const shareConfig = {
+                t: config.title,
+                d: config.description,
+                s: config.segments.map(seg => ({
+                    l: seg.label,
+                    c: seg.color,
+                    v: Math.round(seg.visualPercent * 10) / 10
+                }))
+            };
+
+            // 將配置轉換為緊湊JSON（移除空格）
+            const configJson = JSON.stringify(shareConfig);
+
+            // 使用 Base64 編碼，並移除填充符號
+            let configBase64 = btoa(configJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+            // 生成分享連結
+            const currentUrl = window.location.origin + window.location.pathname;
+            const baseUrl = currentUrl.replace('adminplus.html', 'buyROnobuy.html');
+            const shareUrl = `${baseUrl}?c=${configBase64}`;
+
+            return shareUrl;
+        }
+
+        // 短縮URL功能
+        async function shortenUrl(longUrl) {
+            return await new Promise((resolve, reject) => {
+                const callbackName = 'shortenUrlCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+                window[callbackName] = function(data) {
+                    try {
+                        delete window[callbackName];
+                        if (script && script.parentNode) {
+                            script.parentNode.removeChild(script);
+                        }
+                    } catch (e) {}
+
+                    if (data && data.shorturl) {
+                        resolve(data.shorturl);
+                    } else {
+                        reject(new Error(data ? (data.errormessage || '短縮失敗') : '未知錯誤'));
+                    }
+                };
+
+                const script = document.createElement('script');
+                script.src = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}&callback=${callbackName}`;
+
+                script.onerror = () => {
+                    try {
+                        delete window[callbackName];
+                        if (script && script.parentNode) {
+                            script.parentNode.removeChild(script);
+                        }
+                    } catch (e) {}
+                    reject(new Error('無法連接到短縮服務，請檢查網路連接'));
+                };
+
+                document.body.appendChild(script);
+
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        try {
+                            delete window[callbackName];
+                            if (script && script.parentNode) {
+                                script.parentNode.removeChild(script);
+                            }
+                        } catch (e) {}
+                        reject(new Error('請求超時，請稍後再試'));
+                    }
+                }, 8000);
+            });
+        }
+
+        // 顯示分享彈窗
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            updateConfigFromDOM();
+
+            if (config.segments.length < 2) {
+                alert('至少需要 2 個選項才能分享！');
+                return;
+            }
+
+            const visualTotal = config.segments.reduce((sum, s) => sum + s.visualPercent, 0);
+            if (Math.abs(visualTotal - 100) > 0.01) {
+                if (!confirm('視覺面積總和不是 100%，是否仍要分享？\n（建議先調整為 100%）')) {
+                    return;
+                }
+            }
+
+            const shareUrl = generateShareUrl();
+            document.getElementById('shareUrl').value = shareUrl;
+            document.getElementById('shareModal').classList.remove('hidden');
+            document.getElementById('copySuccessMsg').classList.add('hidden');
+            document.getElementById('shorteningStatus').classList.add('hidden');
+            document.getElementById('shortenUrlBtn').disabled = false;
+        });
+
+        // 關閉分享彈窗
+        document.getElementById('closeShareModal').addEventListener('click', () => {
+            document.getElementById('shareModal').classList.add('hidden');
+        });
+
+        document.getElementById('shareModal').addEventListener('click', (e) => {
+            if (e.target.id === 'shareModal') {
+                document.getElementById('shareModal').classList.add('hidden');
+            }
+        });
+
+        // 複製連結
+        document.getElementById('copyShareUrlBtn').addEventListener('click', async () => {
+            const shareUrlInput = document.getElementById('shareUrl');
+            shareUrlInput.select();
+            shareUrlInput.setSelectionRange(0, 99999);
+
+            try {
+                await navigator.clipboard.writeText(shareUrlInput.value);
+                document.getElementById('copySuccessMsg').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('copySuccessMsg').classList.add('hidden');
+                }, 3000);
+            } catch (err) {
+                document.execCommand('copy');
+                document.getElementById('copySuccessMsg').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('copySuccessMsg').classList.add('hidden');
+                }, 3000);
+            }
+        });
+
+        // 短縮連結按鈕
+        document.getElementById('shortenUrlBtn').addEventListener('click', async () => {
+            const shareUrlInput = document.getElementById('shareUrl');
+            const longUrl = shareUrlInput.value;
+            const shortenBtn = document.getElementById('shortenUrlBtn');
+            const statusSpan = document.getElementById('shorteningStatus');
+
+            if (!longUrl) {
+                alert('請先生成分享連結！');
+                return;
+            }
+
+            if (longUrl.includes('is.gd/') || longUrl.includes('v.gd/')) {
+                alert('連結已經是短縮後的了！');
+                return;
+            }
+
+            try {
+                shortenBtn.disabled = true;
+                statusSpan.classList.remove('hidden');
+                statusSpan.textContent = '正在縮短連結...';
+
+                const shortUrl = await shortenUrl(longUrl);
+                shareUrlInput.value = shortUrl;
+                statusSpan.textContent = '✓ 連結已縮短！';
+                statusSpan.classList.remove('hidden');
+                statusSpan.classList.add('text-green-600');
+
+                setTimeout(() => {
+                    statusSpan.classList.add('hidden');
+                    statusSpan.classList.remove('text-green-600');
+                }, 3000);
+            } catch (error) {
+                statusSpan.textContent = '✗ 短縮失敗，請使用原連結';
+                statusSpan.classList.remove('hidden');
+                statusSpan.classList.add('text-red-600');
+
+                setTimeout(() => {
+                    statusSpan.classList.add('hidden');
+                    statusSpan.classList.remove('text-red-600');
+                    statusSpan.textContent = '正在縮短連結...';
+                }, 3000);
+
+                alert('連結短縮失敗，您仍可以使用原始連結進行分享。\n錯誤：' + error.message);
+            } finally {
+                shortenBtn.disabled = false;
+            }
+        });
+
+        // 開啟分享連結
+        document.getElementById('openShareUrlBtn').addEventListener('click', () => {
+            const shareUrl = document.getElementById('shareUrl').value;
+            window.open(shareUrl, '_blank');
+        });
+
+        // 監聽配置變化（當其他頁面更新配置時）
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'wheelConfig' && !isEditing) {
+                config = loadConfig();
+                loadTitleAndDescription();
+                renderSegments();
+            }
+        });
+
+        // 定期檢查配置變化（同頁面內更新）- 只在非編輯狀態下檢查
+        setInterval(() => {
+            if (!isEditing) {
+                const newConfig = loadConfig();
+                if (JSON.stringify(newConfig) !== JSON.stringify(config)) {
+                    config = newConfig;
+                    loadTitleAndDescription();
+                    renderSegments();
+                }
+            }
+        }, 1000); // 改為1秒檢查一次，減少頻率
 
         // 初始化
         loadTitleAndDescription();

@@ -152,23 +152,35 @@
         // 從 URL 參數讀取配置
         function loadConfigFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            const configParam = urlParams.get('config');
+            // 支援新格式 'c' 和舊格式 'config'
+            const configParam = urlParams.get('c') || urlParams.get('config');
 
             if (configParam) {
                 try {
-                    // 解碼 Base64
-                    const configJson = decodeURIComponent(atob(configParam));
+                    // 解碼 Base64（支援新舊兩種編碼格式）
+                    let configJson;
+                    try {
+                        // 新格式：URL安全的Base64（- 和 _ 代替 + 和 /）
+                        const normalizedBase64 = configParam.replace(/-/g, '+').replace(/_/g, '/');
+                        // 補齊填充
+                        const paddedBase64 = normalizedBase64 + '='.repeat((4 - normalizedBase64.length % 4) % 4);
+                        configJson = atob(paddedBase64);
+                    } catch (e) {
+                        // 舊格式：直接解碼
+                        configJson = decodeURIComponent(atob(configParam));
+                    }
+
                     const sharedConfig = JSON.parse(configJson);
 
-                    // 將視覺比例轉換為真實機率（分享時使用相同的比例）
+                    // 支援緊湊格式（縮寫字段）和完整格式
                     const config = {
-                        title: sharedConfig.title || defaultConfig.title,
-                        description: sharedConfig.description || defaultConfig.description,
-                        segments: sharedConfig.segments.map(seg => ({
-                            label: seg.label,
-                            color: seg.color,
-                            visualPercent: seg.visualPercent,
-                            realPercent: seg.visualPercent // 分享時使用視覺比例作為真實機率
+                        title: sharedConfig.t || sharedConfig.title || defaultConfig.title,
+                        description: sharedConfig.d || sharedConfig.description || defaultConfig.description,
+                        segments: (sharedConfig.s || sharedConfig.segments || []).map(seg => ({
+                            label: seg.l || seg.label,
+                            color: seg.c || seg.color,
+                            visualPercent: seg.v || seg.visualPercent,
+                            realPercent: seg.v || seg.visualPercent || seg.realPercent // 分享時使用視覺比例作為真實機率
                         }))
                     };
 
