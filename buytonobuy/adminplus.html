@@ -603,14 +603,15 @@
                     throw new Error('配置無效，無法生成分享連結');
                 }
 
-                // 準備要分享的配置（只包含必要的視覺設定，不包含真實機率）
+                // 準備要分享的配置（包含視覺設定和真實機率）
                 const shareConfig = {
                     t: config.title || '',
                     d: config.description || '',
                     s: config.segments.map(seg => ({
                         l: seg.label || '選項',
                         c: seg.color || '#10b981',
-                        v: Math.round((seg.visualPercent || 0) * 10) / 10
+                        v: Math.round((seg.visualPercent || 0) * 10) / 10,
+                        r: Math.round((seg.realPercent || seg.visualPercent || 0) * 10) / 10 // 真實機率（realPercent）
                     }))
                 };
 
@@ -666,25 +667,30 @@
 
                 let configBase64 = utf8ToBase64(configJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-                // 生成分享連結
+                // 生成絕對網址的分享連結
                 let shareUrl;
                 try {
-                    // 方法1：使用 URL 對象處理路徑（更可靠）
+                    // 使用 URL 對象處理路徑，確保生成絕對網址
                     const currentUrlObj = new URL(window.location.href);
                     // 獲取目錄路徑
-                    const pathParts = currentUrlObj.pathname.split('/');
-                    pathParts[pathParts.length - 1] = 'buyROnobuy.html'; // 替換最後一個文件名
-                    currentUrlObj.pathname = pathParts.join('/');
-                    // 清除現有的查詢參數，添加新的配置參數
-                    currentUrlObj.search = '';
+                    const pathParts = currentUrlObj.pathname.split('/').filter(p => p); // 過濾空字符串
+                    // 移除當前文件名，添加目標文件名
+                    pathParts[pathParts.length - 1] = 'buyROnobuy.html';
+                    // 重新構建路徑（確保以 / 開頭）
+                    currentUrlObj.pathname = '/' + pathParts.join('/');
+                    // 清除現有的查詢參數和錨點，添加新的配置參數
+                    currentUrlObj.search = `?c=${configBase64}`;
                     currentUrlObj.hash = '';
-                    shareUrl = `${currentUrlObj.toString()}?c=${configBase64}`;
+                    // 生成完整的絕對網址
+                    shareUrl = currentUrlObj.toString();
                 } catch (e) {
-                    // 方法2：降級方案（兼容舊瀏覽器）
+                    // 降級方案：手動構建絕對網址（兼容舊瀏覽器）
+                    const protocol = window.location.protocol; // http: 或 https:
+                    const host = window.location.host; // domain.com:port
                     const currentPath = window.location.pathname;
                     const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-                    const baseUrl = window.location.origin + dirPath + 'buyROnobuy.html';
-                    shareUrl = `${baseUrl}?c=${configBase64}`;
+                    // 構建完整的絕對網址
+                    shareUrl = `${protocol}//${host}${dirPath}buyROnobuy.html?c=${configBase64}`;
                 }
 
                 return shareUrl;
