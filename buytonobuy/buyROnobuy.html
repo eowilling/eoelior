@@ -134,6 +134,25 @@
     </div>
 
     <script>
+        // 模式定義
+        const MODES = {
+            buy: {
+                display: [50, 50],
+                real: [80, 20]
+            },
+            fair: {
+                display: [50, 50],
+                real: [50, 50]
+            }
+        };
+
+        const params = new URLSearchParams(location.search);
+        const mode = params.get("mode");
+
+        if (mode && MODES[mode]) {
+            window.WHEEL_MODE = MODES[mode];
+        }
+
         const canvas = document.getElementById('wheelCanvas');
         const ctx = canvas.getContext('2d');
         const spinButton = document.getElementById('spinButton');
@@ -206,7 +225,8 @@
                             label: seg.l || seg.label,
                             color: seg.c || seg.color,
                             visualPercent: seg.v || seg.visualPercent,
-                            realPercent: seg.v || seg.visualPercent || seg.realPercent // 分享時使用視覺比例作為真實機率
+                            // 優先使用分享配置中的真實機率（r），否則使用視覺比例
+                            realPercent: seg.r !== undefined ? seg.r : (seg.v || seg.visualPercent || seg.realPercent || 50)
                         }))
                     };
 
@@ -533,11 +553,18 @@
          * 根據真實機率選擇結果
          */
         function selectResultByRealProbability() {
+            // 使用模式定義的權重，如果沒有則使用配置中的真實機率
+            const weights = window.WHEEL_MODE
+                ? window.WHEEL_MODE.real
+                : config.segments.map(seg => seg.realPercent || 50); // 預設或從配置讀取
+
             const random = Math.random() * 100; // 0-100
             let cumulative = 0;
 
             for (let i = 0; i < config.segments.length; i++) {
-                cumulative += config.segments[i].realPercent;
+                // 使用權重數組（如果可用），否則使用配置的真實機率
+                const weight = weights[i] !== undefined ? weights[i] : (config.segments[i].realPercent || 0);
+                cumulative += weight;
                 if (random <= cumulative) {
                     return i; // 返回選中的索引
                 }
