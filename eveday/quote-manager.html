@@ -130,7 +130,34 @@
                     try {
                         const quotesWindow = iframe.contentWindow;
                         if (quotesWindow && quotesWindow.DAILY_QUOTES_LIST) {
-                            quotesData = quotesWindow.DAILY_QUOTES_LIST;
+                            let loadedQuotes = quotesWindow.DAILY_QUOTES_LIST;
+
+                            // 驗證數據格式：確保是數組
+                            if (!Array.isArray(loadedQuotes)) {
+                                console.error('錯誤：載入的語錄不是數組格式！', loadedQuotes);
+                                alert('❌ 語錄文件格式錯誤！\n\n語錄必須是數組格式，但載入的不是數組。\n\n請檢查 quotes-data.html 文件。');
+                                quotesData = [];
+                                quotesDataLoaded = true;
+                                document.body.removeChild(iframe);
+                                resolve(quotesData);
+                                return;
+                            }
+
+                            // 檢查是否有單一超長字符串問題（所有語錄被合併成一個）
+                            if (loadedQuotes.length === 1 && typeof loadedQuotes[0] === 'string' && loadedQuotes[0].length > 500) {
+                                console.warn('警告：檢測到可能的語錄合併問題，嘗試自動修復...');
+                                // 嘗試按雙換行符拆分
+                                const splitQuotes = loadedQuotes[0].split(/\n\n+/).map(q => q.trim()).filter(q => q.length > 0);
+                                if (splitQuotes.length > 1) {
+                                    console.log(`已自動拆分：從 1 條合併語錄拆分為 ${splitQuotes.length} 條獨立語錄`);
+                                    loadedQuotes = splitQuotes;
+                                    // 自動保存修復後的數據（只更新內存，不自動下載）
+                                    quotesData = loadedQuotes;
+                                    alert(`✅ 檢測到語錄格式問題並已自動修復！\n\n已將合併的語錄拆分為 ${splitQuotes.length} 條獨立語錄。\n\n請點擊「保存語錄文件」按鈕下載修復後的文件。`);
+                                }
+                            }
+
+                            quotesData = loadedQuotes;
                             quotesDataLoaded = true;
                             document.body.removeChild(iframe);
                             resolve(quotesData);
@@ -205,13 +232,37 @@
 
         // 生成 quotes-data.html 的 HTML 內容
         function generateQuotesDataHTML(quotes) {
-            const quotesString = quotes.map(q => {
+            // 驗證輸入：確保 quotes 是數組
+            if (!Array.isArray(quotes)) {
+                console.error('錯誤：quotes 必須是數組！', quotes);
+                throw new Error('quotes 必須是數組格式');
+            }
+
+            // 過濾掉空值和非字符串
+            const validQuotes = quotes.filter(q => q && typeof q === 'string' && q.trim().length > 0);
+
+            if (validQuotes.length === 0) {
+                console.warn('警告：沒有有效的語錄');
+            }
+
+            // 確保每條語錄都是獨立的數組元素（重要：每條語錄一行）
+            const quotesString = validQuotes.map(q => {
                 // 轉義特殊字符並處理換行
                 const escaped = q.replace(/\\/g, '\\\\')
                                  .replace(/"/g, '\\"')
                                  .replace(/\n/g, '\\n');
                 return `            "${escaped}"`;
             }).join(',\n');
+
+            // 驗證生成的格式：確保每行只有一條語錄
+            const lines = quotesString.split(',\n');
+            if (lines.length !== validQuotes.length) {
+                console.error('錯誤：生成的語錄行數不匹配！', {
+                    expected: validQuotes.length,
+                    actual: lines.length
+                });
+                throw new Error('生成的語錄格式不正確：行數不匹配');
+            }
 
             return `<!DOCTYPE html>
 <html lang="zh-TW">
@@ -225,6 +276,7 @@
         // 語錄數據庫
         // 您可以在此文件中直接編輯、新增或刪除語錄
         // 每條語錄用引號包裹，用逗號分隔，支援換行符 \\n
+        // ⚠️ 注意：必須確保每條語錄都是數組中的獨立元素，不能把所有語錄合併成一個字符串
 
         window.DAILY_QUOTES_LIST = [
 ${quotesString}
@@ -351,6 +403,37 @@ ${quotesString}
         // 保存到文件按鈕
         async function saveToFile() {
             const quotes = await getDailyQuotes();
+
+            // 驗證數據格式
+            if (!Array.isArray(quotes)) {
+                alert('❌ 錯誤：語錄數據格式不正確！\n\n語錄必須是數組格式。請重新載入頁面或檢查數據。');
+                console.error('quotes 不是數組:', quotes);
+                return;
+            }
+
+            // 檢查是否有單一超長字符串（可能的所有語錄合併問題）
+            if (quotes.length === 1 && typeof quotes[0] === 'string' && quotes[0].length > 500) {
+                const confirmFix = confirm(
+                    '⚠️ 警告：檢測到可能的所有語錄合併問題！\n\n' +
+                    '目前只有 1 條語錄，但內容很長。\n\n' +
+                    '這可能是因為所有語錄被合併成了一個字符串。\n\n' +
+                    '是否要嘗試自動拆分？'
+                );
+
+                if (confirmFix) {
+                    // 嘗試按雙換行符拆分
+                    const splitQuotes = quotes[0].split(/\n\n+/).map(q => q.trim()).filter(q => q.length > 0);
+                    if (splitQuotes.length > 1) {
+                        quotes.length = 0;
+                        quotes.push(...splitQuotes);
+                        quotesData = quotes;
+                        await renderQuotes();
+                        alert(`✅ 已自動拆分為 ${splitQuotes.length} 條獨立語錄！\n\n請再次點擊「保存語錄文件」按鈕。`);
+                        return;
+                    }
+                }
+            }
+
             saveDailyQuotesList(quotes);
         }
 
