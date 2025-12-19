@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語錄管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">語錄管理</h1>
+                <a href="index.html" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition">
+                    ← 返回日曆
+                </a>
+            </div>
+
+            <!-- 導入/導出區域 -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                <h2 class="text-xl font-semibold text-blue-800 mb-4">導入/導出語錄</h2>
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <button
+                            onclick="exportQuotes()"
+                            class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+                        >
+                            📥 導出語錄清單（JSON）
+                        </button>
+                        <p class="text-xs text-gray-600 mt-2">導出所有語錄為 JSON 格式</p>
+                    </div>
+                    <div>
+                        <button
+                            onclick="exportQuotesText()"
+                            class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+                        >
+                            📋 導出語錄清單（文字）
+                        </button>
+                        <p class="text-xs text-gray-600 mt-2">導出所有語錄為純文字格式</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <label class="block text-sm font-medium text-gray-700">導入語錄清單（JSON 或文字，每行一條）</label>
+                    <textarea
+                        id="importInput"
+                        placeholder="貼上語錄清單...（JSON 格式或每行一條語錄）"
+                        rows="5"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none font-mono text-sm"
+                    ></textarea>
+                    <button
+                        onclick="importQuotes()"
+                        class="w-full px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition"
+                    >
+                        📤 導入語錄
+                    </button>
+                </div>
+            </div>
+
+            <!-- 新增語錄表單 -->
+            <div class="mb-6 p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+                <h2 class="text-xl font-semibold text-purple-800 mb-4">新增語錄</h2>
+                <div class="space-y-3">
+                    <textarea
+                        id="newQuoteInput"
+                        placeholder="輸入語錄內容...（支援換行）"
+                        rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                    ></textarea>
+                    <button
+                        onclick="addQuote()"
+                        class="w-full px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition"
+                    >
+                        ➕ 新增語錄
+                    </button>
+                </div>
+            </div>
+
+            <!-- 語錄列表 -->
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">語錄列表</h2>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-500" id="quoteCount">共 0 條語錄</span>
+                        <button
+                            onclick="saveToFile()"
+                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition text-sm"
+                            title="下載更新後的 quotes-data.html 文件"
+                        >
+                            💾 保存語錄文件
+                        </button>
+                    </div>
+                </div>
+
+                <div id="quotesList" class="space-y-3">
+                    <!-- 語錄項目將由 JavaScript 生成 -->
+                </div>
+
+                <div id="emptyState" class="text-center py-12 text-gray-400 hidden">
+                    <p class="text-lg">目前沒有語錄</p>
+                    <p class="text-sm mt-2">請在上方新增語錄</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 從 quotes-data.html 載入語錄
+        let quotesDataLoaded = false;
+        let quotesData = [];
+
+        function loadQuotesFromFile() {
+            return new Promise((resolve, reject) => {
+                if (quotesDataLoaded) {
+                    resolve(quotesData);
+                    return;
+                }
+
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = 'quotes-data.html';
+
+                iframe.onload = function() {
+                    try {
+                        const quotesWindow = iframe.contentWindow;
+                        if (quotesWindow && quotesWindow.DAILY_QUOTES_LIST) {
+                            quotesData = quotesWindow.DAILY_QUOTES_LIST;
+                            quotesDataLoaded = true;
+                            document.body.removeChild(iframe);
+                            resolve(quotesData);
+                        } else {
+                            quotesData = [];
+                            quotesDataLoaded = true;
+                            document.body.removeChild(iframe);
+                            resolve(quotesData);
+                        }
+                    } catch (e) {
+                        console.error('載入語錄失敗:', e);
+                        quotesData = [];
+                        quotesDataLoaded = true;
+                        if (iframe.parentNode) {
+                            document.body.removeChild(iframe);
+                        }
+                        resolve(quotesData);
+                    }
+                };
+
+                iframe.onerror = function() {
+                    quotesData = [];
+                    quotesDataLoaded = true;
+                    if (iframe.parentNode) {
+                        document.body.removeChild(iframe);
+                    }
+                    resolve(quotesData);
+                };
+
+                document.body.appendChild(iframe);
+
+                setTimeout(() => {
+                    if (!quotesDataLoaded) {
+                        quotesData = [];
+                        quotesDataLoaded = true;
+                        if (iframe.parentNode) {
+                            document.body.removeChild(iframe);
+                        }
+                        resolve(quotesData);
+                    }
+                }, 3000);
+            });
+        }
+
+        // 獲取語錄列表（從 quotes-data.html）
+        async function getDailyQuotes() {
+            if (!quotesDataLoaded) {
+                await loadQuotesFromFile();
+            }
+            return quotesData;
+        }
+
+        // 保存語錄列表到 quotes-data.html（通過下載更新的文件）
+        function saveDailyQuotesList(quotes) {
+            quotesData = quotes;
+            // 生成新的 quotes-data.html 內容
+            const htmlContent = generateQuotesDataHTML(quotes);
+
+            // 創建下載連結
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'quotes-data.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('✅ 語錄文件已下載！\n\n📁 請將下載的 quotes-data.html 檔案替換原本的檔案（在 eveday 資料夾中）。\n\n然後重新整理 index.html 頁面即可使用新的語錄。');
+        }
+
+        // 生成 quotes-data.html 的 HTML 內容
+        function generateQuotesDataHTML(quotes) {
+            const quotesString = quotes.map(q => {
+                // 轉義特殊字符並處理換行
+                const escaped = q.replace(/\\/g, '\\\\')
+                                 .replace(/"/g, '\\"')
+                                 .replace(/\n/g, '\\n');
+                return `            "${escaped}"`;
+            }).join(',\n');
+
+            return `<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>語錄數據</title>
+</head>
+<body>
+    <script>
+        // 語錄數據庫
+        // 您可以在此文件中直接編輯、新增或刪除語錄
+        // 每條語錄用引號包裹，用逗號分隔，支援換行符 \\n
+
+        window.DAILY_QUOTES_LIST = [
+${quotesString}
+        ];
+    <\/script>
+</body>
+</html>`;
+        }
+
+        // 渲染語錄列表
+        async function renderQuotes() {
+            const quotes = await getDailyQuotes();
+            const quotesList = document.getElementById('quotesList');
+            const emptyState = document.getElementById('emptyState');
+            const quoteCount = document.getElementById('quoteCount');
+
+            quoteCount.textContent = `共 ${quotes.length} 條語錄`;
+
+            if (quotes.length === 0) {
+                quotesList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            quotesList.innerHTML = quotes.map((quote, index) => {
+                const escapedQuote = escapeHtml(quote);
+                const displayQuote = quote.replace(/\n/g, '<br>');
+                return `
+                    <div class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-purple-300 transition" data-index="${index}">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="text-gray-700 leading-relaxed whitespace-pre-line">${displayQuote}</div>
+                                <div class="mt-2 text-xs text-gray-400">第 ${index + 1} 條</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button
+                                    onclick="editQuote(${index})"
+                                    class="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition text-sm font-semibold"
+                                    title="編輯"
+                                >
+                                    ✏️ 編輯
+                                </button>
+                                <button
+                                    onclick="deleteQuote(${index})"
+                                    class="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition text-sm font-semibold"
+                                    title="刪除"
+                                >
+                                    🗑️ 刪除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 新增語錄
+        async function addQuote() {
+            const input = document.getElementById('newQuoteInput');
+            const quote = input.value.trim();
+
+            if (!quote) {
+                alert('請輸入語錄內容');
+                return;
+            }
+
+            const quotes = await getDailyQuotes();
+            // 檢查是否已存在
+            if (quotes.includes(quote)) {
+                alert('此語錄已存在');
+                return;
+            }
+
+            quotes.push(quote);
+            quotesData = quotes; // 更新內存中的數據
+            input.value = '';
+            await renderQuotes();
+            // 不自動下載，讓用戶主動點擊保存按鈕
+        }
+
+        // 編輯語錄
+        async function editQuote(index) {
+            const quotes = await getDailyQuotes();
+            if (index < 0 || index >= quotes.length) return;
+
+            const currentQuote = quotes[index];
+            const newQuote = prompt('編輯語錄：', currentQuote);
+
+            if (newQuote === null) return; // 用戶取消了
+
+            const trimmedQuote = newQuote.trim();
+            if (!trimmedQuote) {
+                alert('語錄內容不能為空');
+                return;
+            }
+
+            // 檢查是否與其他語錄重複（排除自己）
+            const otherQuotes = quotes.filter((q, i) => i !== index);
+            if (otherQuotes.includes(trimmedQuote)) {
+                alert('此語錄已存在');
+                return;
+            }
+
+            quotes[index] = trimmedQuote;
+            quotesData = quotes; // 更新內存中的數據
+            await renderQuotes();
+            // 不自動下載，讓用戶主動點擊保存按鈕
+        }
+
+        // 刪除語錄
+        async function deleteQuote(index) {
+            if (!confirm('確定要刪除此語錄嗎？')) return;
+
+            const quotes = await getDailyQuotes();
+            if (index < 0 || index >= quotes.length) return;
+
+            quotes.splice(index, 1);
+            quotesData = quotes; // 更新內存中的數據
+            await renderQuotes();
+            // 不自動下載，讓用戶主動點擊保存按鈕
+        }
+
+        // 保存到文件按鈕
+        async function saveToFile() {
+            const quotes = await getDailyQuotes();
+            saveDailyQuotesList(quotes);
+        }
+
+        // 導出語錄為 JSON 格式
+        async function exportQuotes() {
+            const quotes = await getDailyQuotes();
+            const json = JSON.stringify(quotes, null, 2);
+
+            // 創建下載連結
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `語錄清單_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('語錄已導出！');
+        }
+
+        // 導出語錄為純文字格式
+        async function exportQuotesText() {
+            const quotes = await getDailyQuotes();
+            const text = quotes.join('\n\n---\n\n');
+
+            // 創建下載連結
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `語錄清單_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('語錄已導出為文字格式！');
+        }
+
+        // 導入語錄
+        async function importQuotes() {
+            const input = document.getElementById('importInput');
+            const content = input.value.trim();
+
+            if (!content) {
+                alert('請輸入要導入的語錄內容');
+                return;
+            }
+
+            let newQuotes = [];
+
+            try {
+                // 嘗試解析為 JSON
+                const parsed = JSON.parse(content);
+                if (Array.isArray(parsed)) {
+                    newQuotes = parsed;
+                } else {
+                    throw new Error('不是有效的 JSON 數組');
+                }
+            } catch (e) {
+                // 如果不是 JSON，則按行分割
+                newQuotes = content.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0);
+            }
+
+            if (newQuotes.length === 0) {
+                alert('沒有找到有效的語錄');
+                return;
+            }
+
+            const currentQuotes = await getDailyQuotes();
+            let addedCount = 0;
+            let duplicateCount = 0;
+
+            // 合併語錄（避免重複）
+            newQuotes.forEach(quote => {
+                if (quote && !currentQuotes.includes(quote)) {
+                    currentQuotes.push(quote);
+                    addedCount++;
+                } else {
+                    duplicateCount++;
+                }
+            });
+
+            quotesData = currentQuotes; // 更新內存中的數據
+            input.value = '';
+            await renderQuotes();
+
+            alert(`導入完成！\n新增：${addedCount} 條\n重複（已跳過）：${duplicateCount} 條\n\n請記得點擊「保存語錄文件」按鈕下載更新後的文件！`);
+        }
+
+        // HTML 轉義
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 支援 Enter 鍵新增（Ctrl+Enter 或 Shift+Enter）
+        document.getElementById('newQuoteInput')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (e.ctrlKey || e.shiftKey)) {
+                e.preventDefault();
+                addQuote();
+            }
+        });
+
+        // 初始化
+        (async function() {
+            await renderQuotes();
+        })();
+    </script>
+</body>
+</html>
+
