@@ -27,6 +27,7 @@
 			<button class="tool-btn" onclick="loadTool('debt')">債權工具</button>
 			<button class="tool-btn" onclick="loadTool('thsr')" style="background:#ff6b35;border-color:#ff6b35;color:#fff;">🚄 高鐵搶票</button>
 			<button class="tool-btn" onclick="loadTool('wheel')" style="background:#fcd34d;border-color:#fcd34d;color:#000;">🎡 轉盤遊戲</button>
+			<button class="tool-btn" onclick="loadTool('calendar')" style="background:#a78bfa;border-color:#a78bfa;color:#fff;">📅 每日打卡日曆</button>
 		</div>
 	</header>
 	<main>
@@ -51,6 +52,8 @@
 				container.innerHTML = `<iframe src='IRS/THSR_BookingTool.html' style='width:100%;height:900px;border:none;border-radius:8px;'></iframe>`;
 			} else if (tool === 'wheel') {
 				container.innerHTML = `<iframe src='buytonobuy/index.html' style='width:100%;height:900px;border:none;border-radius:8px;'></iframe>`;
+			} else if (tool === 'calendar') {
+				container.innerHTML = `<iframe src='eveday/index.html' style='width:100%;height:1000px;border:none;border-radius:8px;'></iframe>`;
 			} else {
 				container.innerHTML = `<div style='text-align:center;color:#888;'>尚未實作此工具。</div>`;
 			}
