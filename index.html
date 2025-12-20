@@ -53,7 +53,20 @@
 			} else if (tool === 'wheel') {
 				container.innerHTML = `<iframe src='buytonobuy/index.html' style='width:100%;height:900px;border:none;border-radius:8px;'></iframe>`;
 			} else if (tool === 'calendar') {
-				container.innerHTML = `<iframe src='eveday/index.html' style='width:100%;height:1000px;border:none;border-radius:8px;'></iframe>`;
+				// 讓 eveday 以「獨立頁面」開啟，避免被入口頁 iframe 框架綁定
+				const targetUrl = 'eveday/index.html';
+				const opened = window.open(targetUrl, '_blank', 'noopener');
+				container.innerHTML = `
+					<div style="text-align:center;line-height:1.8;">
+						<div style="font-size:1.1rem;font-weight:700;color:#111;margin-bottom:0.5rem;">📅 每日打卡日曆</div>
+						<div style="color:#555;margin-bottom:1rem;">已改為獨立頁面開啟（不再內嵌在入口頁）。</div>
+						<a href="${targetUrl}" target="_blank" rel="noopener"
+							style="display:inline-block;background:#a78bfa;color:#fff;padding:0.7rem 1.2rem;border-radius:10px;text-decoration:none;font-weight:700;">
+							開啟 eveday
+						</a>
+						${opened ? '' : `<div style="margin-top:1rem;color:#b45309;">若瀏覽器阻擋彈出視窗，請點上方按鈕開啟。</div>`}
+					</div>
+				`;
 			} else {
 				container.innerHTML = `<div style='text-align:center;color:#888;'>尚未實作此工具。</div>`;
 			}

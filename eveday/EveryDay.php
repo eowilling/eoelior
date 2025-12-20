@@ -91,7 +91,7 @@ if (empty($geminiApiKey)) {
 </head>
 
 <body>
-
+    <div id="evedayNav"></div>
     <div id="app" class="min-h-screen p-4 md:p-8">
         <div class="max-w-4xl mx-auto">
             <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">每日打卡語錄日曆</h1>
@@ -104,8 +104,8 @@ if (empty($geminiApiKey)) {
             <!-- 日期輸入區域 -->
             <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
                 <h2 class="text-xl font-semibold text-gray-700 mb-4">快速生成語錄</h2>
-                <div class="flex gap-3 items-end">
-                    <div class="flex-1">
+                <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                    <div class="flex-1 w-full">
                         <label class="block text-sm font-medium text-gray-700 mb-2">輸入日期 (格式：MMDD，例如：1217)</label>
                         <input type="text" id="dateInput" placeholder="例如：1217" maxlength="4"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg font-mono"
@@ -113,7 +113,7 @@ if (empty($geminiApiKey)) {
                         <p class="text-xs text-gray-500 mt-1">輸入 4 位數字，例如：1217 代表 12 月 17 日</p>
                     </div>
                     <button onclick="window.handleDateInput()"
-                        class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition duration-200 whitespace-nowrap">
+                        class="w-full sm:w-auto px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition duration-200 whitespace-nowrap">
                         生成語錄
                     </button>
                 </div>
@@ -633,7 +633,7 @@ if (empty($geminiApiKey)) {
                     `${lunarInfo.lunarMonth}月${lunarInfo.lunarDay}` :
                     '';
 
-                let dayClasses = 'min-h-[120px] flex flex-col rounded-lg transition duration-150 relative border-2 p-2';
+                let dayClasses = 'min-h-[92px] sm:min-h-[120px] flex flex-col rounded-lg transition duration-150 relative border-2 p-1 sm:p-2';
                 let content = '';
                 let clickHandler = '';
 
@@ -704,7 +704,7 @@ if (empty($geminiApiKey)) {
             `;
 
             calendarContent.innerHTML = header + `
-                <div id="calendarDays" class="grid grid-cols-7 gap-2">
+                <div id="calendarDays" class="grid grid-cols-7 gap-1 sm:gap-2">
                     ${calendarDaysHTML}
                 </div>
             `;
@@ -881,5 +881,5 @@ if (empty($geminiApiKey)) {
     </script>
 
 </body>
-
 </html>
+<script src="shared-nav.js" defer></script>
