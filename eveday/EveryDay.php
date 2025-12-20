@@ -108,6 +108,15 @@ if (empty($geminiApiKey)) {
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+
+        /* 手機版整體縮小 20%（僅在「手機視覺模式」下；桌機視覺模式另有 viewport 縮放） */
+        @media (max-width: 900px) {
+            html:not(.eveday-force-desktop) #app {
+                transform: scale(0.8);
+                transform-origin: top left;
+                width: 125%;
+            }
+        }
     </style>
 </head>
 
