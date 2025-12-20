@@ -3,6 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // 視覺桌機模式：在手機上用「桌機寬度」渲染（可切換）
+        (function () {
+            try {
+                const KEY = 'eveday_force_desktop';
+                const TARGET_WIDTH = 1280;
+                const meta = document.querySelector('meta[name="viewport"]');
+                if (!meta) return;
+
+                const hasPref = localStorage.getItem(KEY) !== null;
+                let enabled = localStorage.getItem(KEY) === 'true';
+                const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+                if (!hasPref && isSmallScreen) enabled = true;
+
+                if (!enabled) return;
+                const scale = Math.max(0.25, Math.min(1, window.innerWidth / TARGET_WIDTH));
+                meta.setAttribute('content', `width=${TARGET_WIDTH}, initial-scale=${scale}, viewport-fit=cover`);
+                document.documentElement.classList.add('eveday-force-desktop');
+            } catch (_) {}
+        })();
+    </script>
     <title>語錄管理</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -552,4 +573,27 @@ ${quotesString}
 </body>
 </html>
 <script src="shared-nav.js" defer></script>
+<script>
+    // 小螢幕浮動切換按鈕：桌機/手機視覺模式
+    (function () {
+        const KEY = 'eveday_force_desktop';
+        try {
+            const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+            if (!isSmallScreen) return;
+
+            const getEnabled = () => localStorage.getItem(KEY) === 'true';
+            const setEnabled = (v) => localStorage.setItem(KEY, v ? 'true' : 'false');
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'fixed bottom-4 right-4 z-50 px-3 py-2 rounded-full shadow-lg bg-gray-900 text-white text-xs font-semibold opacity-90 hover:opacity-100';
+            btn.textContent = getEnabled() ? '切回手機版' : '切到桌機版';
+            btn.onclick = () => {
+                setEnabled(!getEnabled());
+                window.location.reload();
+            };
+            document.body.appendChild(btn);
+        } catch (_) {}
+    })();
+</script>
 
