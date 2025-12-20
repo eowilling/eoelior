@@ -45,38 +45,43 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <div id="evedayNav"></div>
     <div class="min-h-screen p-4 md:p-8">
         <div class="max-w-7xl mx-auto">
         <!-- Header -->
             <header class="mb-8">
-                <div class="flex justify-between items-start mb-4">
+                <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start mb-4">
                     <div>
-                        <h1 class="text-4xl font-bold text-gray-800 mb-2 cursor-pointer select-none" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 待辦事項日曆</h1>
+                        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2 cursor-pointer select-none" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 待辦事項日曆</h1>
                         <p class="text-gray-600">管理您的每日待辦事項<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2">[開發者模式]</span></p>
                     </div>
                     <!-- 使用者選擇區域 -->
-                    <div class="flex items-center gap-3">
+                    <div class="w-full lg:w-auto">
                         <div class="bg-white rounded-lg shadow-md p-3">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm text-gray-600">使用者：</span>
-                                <input type="text" id="currentUserNameInput" value=""
-                                       class="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold text-gray-800 min-w-[120px]"
-                                       placeholder="輸入使用者名稱">
-                                <button onclick="saveCurrentUserName()"
-                                        class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold"
-                                        title="保存使用者名稱">
-                                    💾 保存
-                                </button>
-                                <button onclick="exportUserData()"
-                                        class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-semibold"
-                                        title="匯出日曆資料">
-                                    📥 匯出資料
-                                </button>
-                                <button id="resetButton" onclick="openResetModal()"
-                                        class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold hidden"
-                                        title="重置所有數據（開發者模式）">
-                                    🔄 重置
-                                </button>
+                            <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    <span class="text-sm text-gray-600 shrink-0">使用者：</span>
+                                    <input type="text" id="currentUserNameInput" value=""
+                                           class="w-full sm:w-auto px-3 py-2 sm:py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold text-gray-800 min-w-0 sm:min-w-[180px]"
+                                           placeholder="輸入使用者名稱">
+                                </div>
+                                <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
+                                    <button onclick="saveCurrentUserName()"
+                                            class="px-3 py-2 sm:py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold"
+                                            title="保存使用者名稱">
+                                        💾 保存
+                                    </button>
+                                    <button onclick="exportUserData()"
+                                            class="px-3 py-2 sm:py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-semibold"
+                                            title="匯出日曆資料">
+                                        📥 匯出資料
+                                    </button>
+                                    <button id="resetButton" onclick="openResetModal()"
+                                            class="px-3 py-2 sm:py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold hidden col-span-2 sm:col-auto"
+                                            title="重置所有數據（開發者模式）">
+                                        🔄 重置
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -86,9 +91,9 @@
             <div class="grid lg:grid-cols-3 gap-6">
                 <!-- 左側：月曆 -->
                 <div class="lg:col-span-2">
-                    <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <!-- 月曆控制 -->
-                        <div class="flex justify-between items-center mb-6">
+                        <div class="flex justify-between items-center mb-4 sm:mb-6">
                             <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-gray-100 transition">
                                 <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -103,18 +108,18 @@
                     </div>
 
                         <!-- 星期標題 -->
-                        <div class="grid grid-cols-7 gap-2 mb-2">
-                            <div class="text-center font-semibold text-gray-600 py-2">日</div>
-                            <div class="text-center font-semibold text-gray-600 py-2">一</div>
-                            <div class="text-center font-semibold text-gray-600 py-2">二</div>
-                            <div class="text-center font-semibold text-gray-600 py-2">三</div>
-                            <div class="text-center font-semibold text-gray-600 py-2">四</div>
-                            <div class="text-center font-semibold text-gray-600 py-2">五</div>
-                            <div class="text-center font-semibold text-gray-600 py-2">六</div>
+                        <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-xs sm:text-sm">
+                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">日</div>
+                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">一</div>
+                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">二</div>
+                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">三</div>
+                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">四</div>
+                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">五</div>
+                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">六</div>
                     </div>
 
                         <!-- 月曆網格 -->
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2">
                             <!-- 月曆內容將由 JavaScript 生成 -->
                         </div>
                     </div>
@@ -123,7 +128,7 @@
                 <!-- 右側：選中日期的待辦事項 -->
                 <div class="lg:col-span-1 space-y-6">
                     <!-- 選中日期的待辦事項區塊（整合語錄顯示） -->
-                    <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <div class="mb-4">
                             <div class="mb-1">
                                 <h3 class="text-xl font-bold text-gray-800" id="selectedDateTitle">
@@ -160,7 +165,7 @@
             </div>
 
                     <!-- 所有待辦事項日期列表區塊（獨立區塊） -->
-                    <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <h4 class="font-semibold text-gray-700 mb-4 flex items-center text-lg">
                             <span class="mr-2">📋</span> 所有待辦事項
                         </h4>
@@ -3240,5 +3245,6 @@
         init();
     </script>
 </body>
+<script src="shared-nav.js" defer></script>
 </html>
 
