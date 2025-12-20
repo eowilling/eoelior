@@ -944,6 +944,10 @@
             developerMode = !developerMode;
             localStorage.setItem('developerMode', developerMode.toString());
             updateDeveloperModeIndicator();
+            // 同步更新最上方「工具集」導覽列（僅開發者模式顯示）
+            if (typeof window.__evedayRefreshNav === 'function') {
+                window.__evedayRefreshNav();
+            }
             // 更新重置按鈕顯示狀態
             updateResetButtonVisibility();
             // 重新渲染月曆以顯示/隱藏快速打卡按鈕
