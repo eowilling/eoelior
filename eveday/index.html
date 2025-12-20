@@ -2605,7 +2605,7 @@
                 // 今天的標籤（與數字同一行）
                 if (isToday(date)) {
                     const todayLabel = document.createElement('div');
-                    todayLabel.className = 'text-xs bg-blue-500 text-white rounded-full px-2 py-0.5 inline-block font-semibold';
+                    todayLabel.className = 'text-[10px] sm:text-xs bg-blue-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 inline-block font-semibold whitespace-nowrap leading-none';
                     todayLabel.textContent = 'Today';
                     dayNumberContainer.appendChild(todayLabel);
                 }
@@ -2684,7 +2684,7 @@
                     const dayIndex = unlockedDates.indexOf(dateKey);
                     if (dayIndex !== -1) {
                         const dayCountLabel = document.createElement('div');
-                        dayCountLabel.className = 'inline-flex items-center justify-center px-2 py-1 mt-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold shadow-md transform transition-transform hover:scale-105';
+                        dayCountLabel.className = 'inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 mt-1 sm:mt-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] sm:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none';
                         dayCountLabel.textContent = `第${dayIndex + 1}天`;
                         dayElement.appendChild(dayCountLabel);
                     }
