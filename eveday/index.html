@@ -2571,6 +2571,9 @@
 
                 let classes = 'calendar-day rounded-lg p-2 cursor-pointer border-2 border-transparent';
 
+                const todayKey = getTodayKey();
+                const isUnlocked = checkDateUnlocked(dateKey);
+
                 // 檢查是否為今天
                 if (isToday(date)) {
                     classes += ' today';
@@ -2595,17 +2598,36 @@
 
                 // 日期數字和 Today 標籤容器（同一行）
                 const dayNumberContainer = document.createElement('div');
-                dayNumberContainer.className = 'flex items-center gap-1 mb-1';
+                // 手機：讓 Today 強制換到下一行（用 flex-wrap + Today 標籤 w-full）
+                dayNumberContainer.className = 'flex flex-wrap items-center gap-1 mb-1';
 
                 const dayNumber = document.createElement('div');
                 dayNumber.className = 'font-semibold text-gray-800';
                 dayNumber.textContent = day;
                 dayNumberContainer.appendChild(dayNumber);
 
-                // 今天的標籤（與數字同一行）
+                // 普通模式：鎖圖標（只有當天且未解鎖時才顯示）
+                // 需求：手機版「日期旁邊放鎖」
+                if (!developerMode && dateKey === todayKey && !isUnlocked) {
+                    const lockButton = document.createElement('button');
+                    lockButton.className = 'inline-flex items-center justify-center text-gray-400 hover:text-gray-600 transition p-0.5 rounded ml-0.5';
+                    lockButton.innerHTML = `
+                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                        </svg>
+                    `;
+                    lockButton.onclick = (e) => {
+                        e.stopPropagation(); // 阻止觸發日期選擇
+                        openUnlockModal(dateKey, date);
+                    };
+                    dayNumberContainer.appendChild(lockButton);
+                }
+
+                // 今天的標籤
+                // 手機：移到下一行（w-full）；sm 以上維持同一行
                 if (isToday(date)) {
                     const todayLabel = document.createElement('div');
-                    todayLabel.className = 'text-[10px] sm:text-xs bg-blue-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 inline-block font-semibold whitespace-nowrap leading-none';
+                    todayLabel.className = 'w-full sm:w-auto text-[10px] sm:text-xs bg-blue-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 inline-block font-semibold whitespace-nowrap leading-none';
                     todayLabel.textContent = 'Today';
                     dayNumberContainer.appendChild(todayLabel);
                 }
@@ -2654,29 +2676,9 @@
                         dayElement.style.position = 'relative';
                         dayElement.appendChild(devCheckinBtn);
                     }
-                } else {
-                    // 普通模式：鎖圖標（只有當天且未解鎖時才顯示）
-                const todayKey = getTodayKey();
-                const isUnlocked = checkDateUnlocked(dateKey);
-                if (dateKey === todayKey && !isUnlocked) {
-                    const lockButton = document.createElement('button');
-                    lockButton.className = 'absolute top-1 right-1 p-1 text-gray-400 hover:text-gray-600 transition';
-                    lockButton.innerHTML = `
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                        </svg>
-                    `;
-                    lockButton.onclick = (e) => {
-                        e.stopPropagation(); // 阻止觸發日期選擇
-                        openUnlockModal(dateKey, date);
-                    };
-                    dayElement.style.position = 'relative';
-                    dayElement.appendChild(lockButton);
-                    }
                 }
 
                 // 如果已解鎖，顯示打卡天數
-                const isUnlocked = checkDateUnlocked(dateKey);
                 if (isUnlocked) {
                     // 計算這是第幾天打卡（統計所有已解鎖的日期中，這個日期是第幾個）
                     const unlockedDates = loadUnlockedDates();
