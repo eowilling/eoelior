@@ -2569,7 +2569,8 @@
                 const dateKey = formatDateKey(date);
                 const dayElement = document.createElement('div');
 
-                let classes = 'calendar-day rounded-lg p-2 cursor-pointer border-2 border-transparent';
+                // 避免徽章/文字溢出月曆格子
+                let classes = 'calendar-day relative overflow-hidden rounded-lg p-2 cursor-pointer border-2 border-transparent';
 
                 const todayKey = getTodayKey();
                 const isUnlocked = checkDateUnlocked(dateKey);
@@ -2645,7 +2646,8 @@
                 }).length;
                 if (uncompletedCount > 0) {
                     const todoCount = document.createElement('div');
-                    todoCount.className = 'text-xs bg-yellow-400 text-yellow-900 rounded-full px-2 py-0.5 inline-block font-semibold';
+                    // 固定在格子右下角，避免擠壓內容/溢出
+                    todoCount.className = 'absolute bottom-1 right-1 z-10 text-[10px] sm:text-xs bg-yellow-400 text-yellow-900 rounded-full px-1.5 sm:px-2 py-0.5 font-semibold whitespace-nowrap leading-none';
                     todoCount.textContent = uncompletedCount;
                     dayElement.appendChild(todoCount);
                 }
@@ -2686,7 +2688,8 @@
                     const dayIndex = unlockedDates.indexOf(dateKey);
                     if (dayIndex !== -1) {
                         const dayCountLabel = document.createElement('div');
-                        dayCountLabel.className = 'inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 mt-1 sm:mt-1.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] sm:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none';
+                        // 固定在格子左下角，避免把格子高度撐開/溢出
+                        dayCountLabel.className = 'absolute bottom-1 left-1 z-10 inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] sm:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none';
                         dayCountLabel.textContent = `第${dayIndex + 1}天`;
                         dayElement.appendChild(dayCountLabel);
                     }
