@@ -113,9 +113,11 @@
             </div>
         </header>
 
-            <div class="grid lg:grid-cols-3 gap-6">
+            <!-- 版面反轉：手機左右並排（可滑動），桌機一頁式（上下） -->
+            <div class="-mx-4 md:mx-0 overflow-x-auto lg:overflow-visible">
+                <div class="flex flex-row lg:flex-col gap-6 min-w-[980px] lg:min-w-0 px-4 md:px-0">
                 <!-- 左側：月曆 -->
-                <div class="lg:col-span-2">
+                <div class="w-[680px] lg:w-full shrink-0">
                     <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <!-- 月曆控制 -->
                         <div class="flex justify-between items-center mb-4 sm:mb-6">
@@ -151,7 +153,7 @@
                 </div>
 
                 <!-- 右側：選中日期的待辦事項 -->
-                <div class="lg:col-span-1 space-y-6">
+                <div class="w-[360px] lg:w-full shrink-0 space-y-6">
                     <!-- 選中日期的待辦事項區塊（整合語錄顯示） -->
                     <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <div class="mb-4">
@@ -200,6 +202,8 @@
                     </div>
                     </div>
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
 
