@@ -10,6 +10,7 @@
   const current = pathname.split('/').pop() || 'index.html';
 
   const items = [
+    { href: '../index.html', label: '回入口' },
     { href: 'index.html', label: '待辦日曆' },
     { href: 'EveryDay.php', label: '語錄打卡（PHP）' },
     { href: 'quote-manager.html', label: '語錄管理' },
@@ -17,6 +18,7 @@
 
   function isActive(href) {
     // `EveryDay.php` 有時會被導到目錄預設頁，這裡用包含判斷更穩
+    if (href === '../index.html') return current.toLowerCase() === 'index.html' && pathname.split('/').slice(-2, -1)[0] !== 'eveday';
     if (href === 'EveryDay.php') return current.toLowerCase() === 'everyday.php';
     return current.toLowerCase() === href.toLowerCase();
   }
