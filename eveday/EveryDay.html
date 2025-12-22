@@ -3,6 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // 自動檢測設備類型並設定 viewport
+        (function () {
+            try {
+                const meta = document.querySelector('meta[name="viewport"]');
+                if (!meta) return;
+
+                // 檢測是否為移動設備（結合 User Agent 和螢幕寬度）
+                function isMobileDevice() {
+                    // 檢測 User Agent
+                    const ua = navigator.userAgent.toLowerCase();
+                    const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+
+                    // 檢測觸控支持
+                    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+                    // 檢測螢幕寬度
+                    const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+
+                    // 如果是小螢幕且（有移動 UA 或支援觸控），則視為移動設備
+                    return isSmallScreen && (mobileUA || hasTouch);
+                }
+
+                const isMobile = isMobileDevice();
+
+                // 移動設備使用預設響應式 viewport
+                // 桌面設備也使用預設響應式 viewport（不需要強制寬度）
+                // 保持預設設定，讓 CSS 響應式設計自動處理
+                if (isMobile) {
+                    // 移動設備：使用標準響應式 viewport
+                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+                    document.documentElement.classList.add('is-mobile');
+                } else {
+                    // 桌面設備：使用標準響應式 viewport
+                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                    document.documentElement.classList.add('is-desktop');
+                }
+            } catch (_) {
+                // ignore errors
+            }
+        })();
+    </script>
     <title>每日語錄日曆</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
