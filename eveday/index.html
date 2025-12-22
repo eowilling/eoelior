@@ -85,13 +85,8 @@
             background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
         }
 
-        /* 手機版整體縮小 20%（僅在「手機視覺模式」下；桌機視覺模式另有 viewport 縮放） */
+        /* 手機版保持正常大小 */
         @media (max-width: 900px) {
-            html:not(.eveday-force-desktop) #evedayAppRoot {
-                transform: scale(0.9);
-                transform-origin: top center;
-                width: 100%;
-            }
             html:not(.eveday-force-desktop) body {
                 overflow-x: hidden;
             }
