@@ -78,7 +78,7 @@
 </head>
 <body class="bg-gray-50">
     <div id="evedayAppRoot" class="min-h-screen p-4 md:p-8">
-        <div class="max-w-7xl mx-auto">
+        <div class="w-full mx-auto">
         <!-- Header -->
             <header class="mb-8">
                 <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start mb-4">
@@ -122,7 +122,7 @@
             <!-- 版面：手機一頁式（垂直），桌面左右式 -->
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- 左側/上方：月曆 -->
-                <div class="w-full lg:w-[560px] shrink-0">
+                <div class="w-full lg:flex-[2] lg:min-w-0">
                     <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <!-- 月曆控制 -->
                         <div class="flex justify-between items-center mb-4 sm:mb-6">
@@ -158,7 +158,7 @@
                 </div>
 
                 <!-- 右側/下方：選中日期的待辦事項 -->
-                <div class="w-full lg:w-[400px] shrink-0 space-y-6">
+                <div class="w-full lg:flex-[1] lg:min-w-0 space-y-6">
                     <!-- 選中日期的待辦事項區塊（整合語錄顯示） -->
                     <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <div class="mb-4">
@@ -1038,6 +1038,13 @@
             document.getElementById('unlockDateModal').classList.add('hidden');
             unlockModalDateKey = null;
             unlockModalDate = null;
+        }
+
+        // 手機模式：打開今天的解鎖彈窗
+        function openUnlockModalForToday() {
+            const todayKey = getTodayKey();
+            const today = new Date();
+            openUnlockModal(todayKey, today);
         }
 
         // 確認解鎖日期
@@ -2510,12 +2517,13 @@
             } else if (isToday && !isUnlocked && !developerMode) {
                 // 今天未解鎖：手機模式下顯示打卡按鈕，桌面模式顯示提示文字
                 if (isMobile()) {
-                    // 手機模式：顯示打卡按鈕
+                    // 手機模式：顯示打卡按鈕（會打開解鎖日期 Modal）
+                    const todayDateObj = parseDateKey(targetDateKey);
                     card.innerHTML = `
                         <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 shadow-md border-l-4 border-purple-500 mb-4">
                             <div class="text-center py-2">
                                 <p class="text-gray-600 mb-3 text-sm">今日還沒打卡</p>
-                                <button onclick="claimDailyQuoteWithImage()"
+                                <button onclick="openUnlockModalForToday()"
                                         class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
                                     📅 立即打卡
                                 </button>
