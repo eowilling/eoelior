@@ -18,58 +18,29 @@
 <body>
 	<header>
 		<h1>eoelior 小工具入口</h1>
-		<div class="intro">歡迎使用 eoelior！請選擇下方小工具，點擊後會在頁面下方載入。</div>
+		<div class="intro">歡迎使用 eoelior！所有小工具將在新分頁開啟。</div>
 		<div class="tools-bar">
-			<button class="tool-btn" onclick="loadTool('flowchat')">流程圖工具</button>
-			<button class="tool-btn" onclick="loadTool('h2pj')">HEIC 轉 PNG/JPG</button>
-			<button class="tool-btn" onclick="loadTool('qrcode')">QRcode 產生器</button>
-			<button class="tool-btn" onclick="loadTool('sop')">SOP 編寫工具</button>
-			<button class="tool-btn" onclick="loadTool('debt')">債權工具</button>
-			<button class="tool-btn" onclick="loadTool('thsr')" style="background:#ff6b35;border-color:#ff6b35;color:#fff;">🚄 高鐵搶票</button>
-			<button class="tool-btn" onclick="loadTool('wheel')" style="background:#fcd34d;border-color:#fcd34d;color:#000;">🎡 轉盤遊戲</button>
-			<button class="tool-btn" onclick="loadTool('calendar')" style="background:#a78bfa;border-color:#a78bfa;color:#fff;">📅 每日打卡日曆</button>
+			<button class="tool-btn" onclick="openTool('FlowChart/FlowChat.html')">流程圖工具</button>
+			<button class="tool-btn" onclick="openTool('HeicPngJpg/H2PJ.html')">HEIC 轉 PNG/JPG</button>
+			<button class="tool-btn" onclick="openTool('QRcode/qr-generate-standalone.html')">QRcode 產生器</button>
+			<button class="tool-btn" onclick="openTool('SOPlist/SopList.html')">SOP 編寫工具</button>
+			<button class="tool-btn" onclick="openTool('flower/債權.html')">債權工具</button>
+			<button class="tool-btn" onclick="openTool('IRS/THSR_BookingTool.html')" style="background:#ff6b35;border-color:#ff6b35;color:#fff;">🚄 高鐵搶票</button>
+			<button class="tool-btn" onclick="openTool('buytonobuy/index.html')" style="background:#fcd34d;border-color:#fcd34d;color:#000;">🎡 轉盤遊戲</button>
+			<button class="tool-btn" onclick="openTool('eveday/index.html')" style="background:#a78bfa;border-color:#a78bfa;color:#fff;">📅 每日打卡日曆</button>
 		</div>
 	</header>
 	<main>
 		<div id="tool-container">
-			<div style="text-align:center;color:#888;">請選擇上方工具，這裡會顯示工具內容。</div>
+			<div style="text-align:center;color:#888;padding:3rem 2rem;">
+				<div style="font-size:1.2rem;color:#555;margin-bottom:1rem;">點擊上方按鈕開啟小工具</div>
+				<div style="font-size:0.95rem;color:#888;">所有工具將在新分頁開啟，方便您同時使用多個工具</div>
+			</div>
 		</div>
 	</main>
 	<script>
-		function loadTool(tool) {
-			const container = document.getElementById('tool-container');
-			if (tool === 'flowchat') {
-				container.innerHTML = `<iframe src='FlowChart/FlowChat.html' style='width:100%;height:650px;border:none;border-radius:8px;'></iframe>`;
-			} else if (tool === 'h2pj') {
-				container.innerHTML = `<iframe src='HeicPngJpg/H2PJ.html' style='width:100%;height:750px;border:none;border-radius:8px;'></iframe>`;
-			} else if (tool === 'qrcode') {
-				container.innerHTML = `<iframe src='QRcode/qr-generate-standalone.html' style='width:100%;height:650px;border:none;border-radius:8px;'></iframe>`;
-			} else if (tool === 'sop') {
-				container.innerHTML = `<iframe src='SOPlist/SopList.html' style='width:100%;height:800px;border:none;border-radius:8px;'></iframe>`;
-			} else if (tool === 'debt') {
-				container.innerHTML = `<iframe src='flower/債權.html' style='width:100%;height:800px;border:none;border-radius:8px;'></iframe>`;
-			} else if (tool === 'thsr') {
-				container.innerHTML = `<iframe src='IRS/THSR_BookingTool.html' style='width:100%;height:900px;border:none;border-radius:8px;'></iframe>`;
-			} else if (tool === 'wheel') {
-				container.innerHTML = `<iframe src='buytonobuy/index.html' style='width:100%;height:900px;border:none;border-radius:8px;'></iframe>`;
-			} else if (tool === 'calendar') {
-				// 讓 eveday 以「獨立頁面」開啟，避免被入口頁 iframe 框架綁定
-				const targetUrl = 'eveday/index.html';
-				const opened = window.open(targetUrl, '_blank', 'noopener');
-				container.innerHTML = `
-					<div style="text-align:center;line-height:1.8;">
-						<div style="font-size:1.1rem;font-weight:700;color:#111;margin-bottom:0.5rem;">📅 每日打卡日曆</div>
-						<div style="color:#555;margin-bottom:1rem;">已改為獨立頁面開啟（不再內嵌在入口頁）。</div>
-						<a href="${targetUrl}" target="_blank" rel="noopener"
-							style="display:inline-block;background:#a78bfa;color:#fff;padding:0.7rem 1.2rem;border-radius:10px;text-decoration:none;font-weight:700;">
-							開啟 eveday
-						</a>
-						${opened ? '' : `<div style="margin-top:1rem;color:#b45309;">若瀏覽器阻擋彈出視窗，請點上方按鈕開啟。</div>`}
-					</div>
-				`;
-			} else {
-				container.innerHTML = `<div style='text-align:center;color:#888;'>尚未實作此工具。</div>`;
-			}
+		function openTool(url) {
+			window.open(url, '_blank', 'noopener');
 		}
 	</script>
 </body>
