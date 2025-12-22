@@ -12,31 +12,26 @@
                 const meta = document.querySelector('meta[name="viewport"]');
                 if (!meta) return;
 
-                // 檢測是否為移動設備
+                // 檢測是否為移動設備（結合 User Agent 和觸控支援）
                 function isMobileDevice() {
                     const ua = navigator.userAgent.toLowerCase();
                     const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
                     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                     const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+                    // 移動設備：小螢幕且（有移動 UA 或支援觸控）
                     return isSmallScreen && (mobileUA || hasTouch);
                 }
 
                 const isMobile = isMobileDevice();
-                const hasPref = localStorage.getItem(KEY) !== null;
                 const userForceDesktop = localStorage.getItem(KEY) === 'true';
 
-                // 如果用戶手動設定過，優先使用用戶設定
-                if (hasPref && userForceDesktop) {
-                    // 用戶強制使用桌機模式
+                // 如果用戶手動選擇桌機模式，使用桌機視覺
+                if (userForceDesktop) {
                     const scale = Math.max(0.25, Math.min(1, window.innerWidth / TARGET_WIDTH));
                     meta.setAttribute('content', `width=${TARGET_WIDTH}, initial-scale=${scale}, viewport-fit=cover`);
                     document.documentElement.classList.add('eveday-force-desktop');
-                } else if (hasPref && !userForceDesktop) {
-                    // 用戶明確選擇不使用桌機模式
-                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
-                    document.documentElement.classList.add('is-mobile');
                 } else {
-                    // 自動判斷：移動設備使用標準 viewport，桌面設備也使用標準 viewport
+                    // 自動判斷：根據設備類型使用對應的 viewport
                     if (isMobile) {
                         meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
                         document.documentElement.classList.add('is-mobile');
