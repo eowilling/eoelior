@@ -2686,7 +2686,7 @@
                 // 手機：移到下一行（w-full）；sm 以上維持同一行
                 if (isToday(date)) {
                     const todayLabel = document.createElement('div');
-                    todayLabel.className = 'w-full sm:w-auto text-[10px] sm:text-xs bg-blue-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 inline-block font-semibold whitespace-nowrap leading-none';
+                    todayLabel.className = 'w-full sm:w-auto text-xs sm:text-xs bg-blue-500 text-white rounded-full px-2 sm:px-2 py-0.5 block sm:inline-block font-semibold whitespace-nowrap leading-none text-center sm:text-left';
                     todayLabel.textContent = 'Today';
                     dayNumberContainer.appendChild(todayLabel);
                 }
