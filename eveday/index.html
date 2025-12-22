@@ -4,41 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-        // 自動檢測設備類型並設定 viewport
+        // 根據螢幕解析度自動判斷設備類型
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
         (function () {
             try {
-                const KEY = 'eveday_force_desktop';
-                const TARGET_WIDTH = 1280;
                 const meta = document.querySelector('meta[name="viewport"]');
                 if (!meta) return;
 
-                // 檢測是否為移動設備（結合 User Agent 和觸控支援）
-                function isMobileDevice() {
-                    const ua = navigator.userAgent.toLowerCase();
-                    const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
-                    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-                    const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-                    // 移動設備：小螢幕且（有移動 UA 或支援觸控）
-                    return isSmallScreen && (mobileUA || hasTouch);
-                }
-
-                const isMobile = isMobileDevice();
-                const userForceDesktop = localStorage.getItem(KEY) === 'true';
-
-                // 如果用戶手動選擇桌機模式，使用桌機視覺
-                if (userForceDesktop) {
-                    const scale = Math.max(0.25, Math.min(1, window.innerWidth / TARGET_WIDTH));
-                    meta.setAttribute('content', `width=${TARGET_WIDTH}, initial-scale=${scale}, viewport-fit=cover`);
-                    document.documentElement.classList.add('eveday-force-desktop');
+                if (isMobile()) {
+                    // 手機解析度模式
+                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+                    document.documentElement.classList.add('is-mobile');
                 } else {
-                    // 自動判斷：根據設備類型使用對應的 viewport
-                    if (isMobile) {
-                        meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
-                        document.documentElement.classList.add('is-mobile');
-                    } else {
-                        meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-                        document.documentElement.classList.add('is-desktop');
-                    }
+                    // 桌面解析度模式
+                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                    document.documentElement.classList.add('is-desktop');
                 }
             } catch (_) {
                 // ignore errors
@@ -85,16 +68,15 @@
             background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
         }
 
-        /* 手機版保持正常大小 */
-        @media (max-width: 900px) {
-            html:not(.eveday-force-desktop) body {
+        /* 手機解析度模式 */
+        @media (max-width: 768px) {
+            html.is-mobile body {
                 overflow-x: hidden;
             }
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <div id="evedayNav"></div>
     <div id="evedayAppRoot" class="min-h-screen p-4 md:p-8">
         <div class="max-w-7xl mx-auto">
         <!-- Header -->
@@ -137,11 +119,10 @@
             </div>
         </header>
 
-            <!-- 版面反轉：手機左右並排（可滑動），桌機一頁式（上下） -->
-            <div class="-mx-4 md:mx-0 overflow-x-auto lg:overflow-visible">
-                <div class="flex flex-row lg:flex-col gap-6 min-w-[860px] lg:min-w-0 px-4 md:px-0">
-                <!-- 左側：月曆 -->
-                <div class="w-[560px] lg:w-full shrink-0">
+            <!-- 版面：手機一頁式（垂直），桌面左右式 -->
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- 左側/上方：月曆 -->
+                <div class="w-full lg:w-[560px] shrink-0">
                     <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <!-- 月曆控制 -->
                         <div class="flex justify-between items-center mb-4 sm:mb-6">
@@ -176,8 +157,8 @@
                     </div>
                 </div>
 
-                <!-- 右側：選中日期的待辦事項 -->
-                <div class="w-[280px] lg:w-full shrink-0 space-y-6">
+                <!-- 右側/下方：選中日期的待辦事項 -->
+                <div class="w-full lg:w-[400px] shrink-0 space-y-6">
                     <!-- 選中日期的待辦事項區塊（整合語錄顯示） -->
                     <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
                         <div class="mb-4">
@@ -215,8 +196,8 @@
                 </div>
             </div>
 
-                    <!-- 所有待辦事項日期列表區塊（獨立區塊） -->
-                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
+                    <!-- 所有待辦事項日期列表區塊（獨立區塊，只在桌面模式顯示） -->
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6 hidden lg:block">
                         <h4 class="font-semibold text-gray-700 mb-4 flex items-center text-lg">
                             <span class="mr-2">📋</span> 所有待辦事項
                         </h4>
@@ -225,9 +206,6 @@
                     </div>
                     </div>
                     </div>
-                    </div>
-                </div>
-            </div>
                 </div>
             </div>
 
@@ -997,10 +975,6 @@
             developerMode = !developerMode;
             localStorage.setItem('developerMode', developerMode.toString());
             updateDeveloperModeIndicator();
-            // 同步更新最上方「工具集」導覽列（僅開發者模式顯示）
-            if (typeof window.__evedayRefreshNav === 'function') {
-                window.__evedayRefreshNav();
-            }
             // 更新重置按鈕顯示狀態
             updateResetButtonVisibility();
             // 重新渲染月曆以顯示/隱藏快速打卡按鈕
@@ -2534,14 +2508,30 @@
                     </div>
                 `;
             } else if (isToday && !isUnlocked && !developerMode) {
-                // 今天未解鎖（開發者模式下不顯示此提示）
-                card.innerHTML = `
-                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 shadow-md border-l-4 border-purple-500 mb-4">
-                        <div class="text-center py-2">
-                            <p class="text-gray-600 mb-2 text-sm">今日還沒打卡</p>
+                // 今天未解鎖：手機模式下顯示打卡按鈕，桌面模式顯示提示文字
+                if (isMobile()) {
+                    // 手機模式：顯示打卡按鈕
+                    card.innerHTML = `
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 shadow-md border-l-4 border-purple-500 mb-4">
+                            <div class="text-center py-2">
+                                <p class="text-gray-600 mb-3 text-sm">今日還沒打卡</p>
+                                <button onclick="claimDailyQuoteWithImage()"
+                                        class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold">
+                                    📅 立即打卡
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    // 桌面模式：顯示提示文字
+                    card.innerHTML = `
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 shadow-md border-l-4 border-purple-500 mb-4">
+                            <div class="text-center py-2">
+                                <p class="text-gray-600 mb-2 text-sm">今日還沒打卡</p>
+                            </div>
+                        </div>
+                    `;
+                }
             } else {
                 // 沒有語錄時不顯示任何內容
                 card.innerHTML = '';
@@ -2580,7 +2570,15 @@
             renderCalendar();
             updateMonthYear();
             renderAllTodosList(); // 初始化時顯示所有待辦事項列表
-            renderDailyQuote().catch(err => console.error('渲染語錄失敗:', err)); // 初始化每日語錄
+
+            // 手機模式下自動選擇今天，桌面模式等待用戶選擇
+            if (isMobile()) {
+                const today = new Date();
+                selectDate(today);
+            } else {
+                renderDailyQuote().catch(err => console.error('渲染語錄失敗:', err)); // 桌面模式不自動選擇
+            }
+
             // 同步所有已解鎖的語錄到待辦事項
             syncAllQuotesToTodos().then(() => {
                 renderCalendar();
@@ -2660,9 +2658,8 @@
                 dayNumber.textContent = day;
                 dayNumberContainer.appendChild(dayNumber);
 
-                // 普通模式：鎖圖標（只有當天且未解鎖時才顯示）
-                // 需求：手機版「日期旁邊放鎖」
-                if (!developerMode && dateKey === todayKey && !isUnlocked) {
+                // 普通模式：鎖圖標（只有當天且未解鎖時才顯示，但手機模式下不顯示）
+                if (!developerMode && dateKey === todayKey && !isUnlocked && !isMobile()) {
                     const lockButton = document.createElement('button');
                     lockButton.className = 'inline-flex items-center justify-center text-gray-400 hover:text-gray-600 transition p-0.5 rounded ml-0.5';
                     lockButton.innerHTML = `
@@ -3307,50 +3304,5 @@
         init();
     </script>
 </body>
-<script src="shared-nav.js" defer></script>
-<script>
-    // 手動切換按鈕（可覆蓋自動判斷）：桌機/手機視覺模式
-    (function () {
-        const KEY = 'eveday_force_desktop';
-        const TARGET_WIDTH = 1280;
-
-        try {
-            // 只在移動設備上顯示切換按鈕
-            const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
-            const ua = navigator.userAgent.toLowerCase();
-            const mobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
-            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            const isMobile = isSmallScreen && (mobileUA || hasTouch);
-
-            if (!isMobile) return; // 桌面設備不顯示切換按鈕
-
-            const meta = document.querySelector('meta[name="viewport"]');
-            if (!meta) return;
-
-            const getEnabled = () => localStorage.getItem(KEY) === 'true';
-            const setEnabled = (v) => localStorage.setItem(KEY, v ? 'true' : 'false');
-
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'fixed bottom-4 right-4 z-50 px-3 py-2 rounded-full shadow-lg bg-gray-900 text-white text-xs font-semibold opacity-90 hover:opacity-100';
-
-            function refreshLabel() {
-                btn.textContent = getEnabled() ? '切回手機版' : '切到桌機版';
-            }
-
-            btn.onclick = () => {
-                const next = !getEnabled();
-                setEnabled(next);
-                // 重新載入讓 viewport 早期生效、版型更穩
-                window.location.reload();
-            };
-
-            refreshLabel();
-            document.body.appendChild(btn);
-        } catch (_) {
-            // ignore
-        }
-    })();
-</script>
 </html>
 
