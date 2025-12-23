@@ -1,1033 +1,521 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>設計目錄產生器</title>
-    <!-- 載入 Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 載入 Noto Sans TC 字體 -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
-    <!-- 載入 html2canvas 用於圖片匯出 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <style>
-        /* 確保字體設定為 Noto Sans TC */
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f7f9fc;
-        }
-
-        /* 讓預覽區塊的文字使用等寬字體，以確保點點對齊 */
-        #toc-preview-content {
-            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-            white-space: pre-wrap; /* 保留空白和換行 */
-        }
-
-        /* 針對不同層級的樣式 */
-        .level-major {
-            font-weight: 700;
-            font-size: 1.125rem; /* lg */
-            margin-bottom: 0.5rem;
-            margin-top: 1rem;
-        }
-        .level-minor {
-            font-weight: 400;
-            font-size: 1rem; /* base */
-            padding-left: 1rem;
-            margin-bottom: 0.25rem;
-        }
-        .level-detail {
-            font-weight: 300;
-            font-size: 0.875rem; /* sm */
-            padding-left: 2rem;
-            margin-bottom: 0.125rem;
-        }
-
-        /* 滾動條樣式 */
-        .custom-scroll::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-        .custom-scroll::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SOP 目錄頁碼小工具</title>
+  <style>
+    :root{
+      --bg:#0b0f19; --card:#111827; --muted:#94a3b8; --text:#e5e7eb;
+      --line:#1f2937; --accent:#60a5fa; --danger:#fb7185;
+      --input:#0f172a;
+    }
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC",sans-serif;}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px;}
+    .top{
+      display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      background:linear-gradient(180deg, rgba(96,165,250,.12), rgba(0,0,0,0));
+      border:1px solid var(--line); border-radius:16px; padding:16px;
+    }
+    .title{display:flex;flex-direction:column;gap:4px}
+    .title h1{margin:0;font-size:18px;letter-spacing:.2px}
+    .title small{color:var(--muted)}
+    .btns{display:flex;gap:8px;flex-wrap:wrap}
+    button{
+      background:transparent;color:var(--text);border:1px solid var(--line);
+      padding:9px 12px;border-radius:10px;cursor:pointer;font-size:13px;
+    }
+    button:hover{border-color:rgba(96,165,250,.65)}
+    .primary{border-color:rgba(96,165,250,.7); box-shadow:0 0 0 3px rgba(96,165,250,.12) inset;}
+    .danger{border-color:rgba(251,113,133,.7)}
+    .rowbar{
+      margin-top:14px; background:var(--card); border:1px solid var(--line);
+      border-radius:16px; padding:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .rowbar .group{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    select, input[type="number"], input[type="text"]{
+      background:var(--input); color:var(--text); border:1px solid var(--line);
+      border-radius:10px; padding:9px 10px; font-size:13px; outline:none;
+    }
+    input[type="file"]{display:none}
+    label.filebtn{
+      display:inline-block; padding:9px 12px; border-radius:10px; cursor:pointer;
+      border:1px solid var(--line);
+    }
+    label.filebtn:hover{border-color:rgba(96,165,250,.65)}
+    .table{
+      margin-top:14px; background:var(--card); border:1px solid var(--line);
+      border-radius:16px; overflow:hidden;
+    }
+    .thead, .trow{
+      display:grid;
+      grid-template-columns: 90px 1fr 110px 220px;
+      gap:0;
+      align-items:center;
+    }
+    .thead{
+      padding:10px 12px; background:rgba(255,255,255,.03);
+      border-bottom:1px solid var(--line);
+      font-size:12px;color:var(--muted);
+    }
+    .trow{
+      padding:10px 12px;
+      border-bottom:1px solid rgba(31,41,55,.75);
+    }
+    .trow:last-child{border-bottom:none}
+    .num{font-variant-numeric:tabular-nums;color:rgba(96,165,250,.95)}
+    .name{
+      display:flex; align-items:center; gap:8px; min-width:0;
+    }
+    .indent{display:inline-block; width:0;}
+    .name input{
+      width:100%;
+      background:transparent;
+      border:1px solid rgba(31,41,55,.75);
+    }
+    .name input:focus{border-color:rgba(96,165,250,.65)}
+    .page input{
+      width:100%;
+      text-align:center;
+    }
+    .actions{
+      display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap;
+    }
+    .mini{
+      padding:7px 10px; font-size:12px; border-radius:10px;
+    }
+    .muted{color:var(--muted)}
+    .footer{
+      margin-top:14px; color:var(--muted); font-size:12px; line-height:1.6;
+    }
+    .pill{display:inline-block; padding:2px 8px; border:1px solid var(--line); border-radius:999px; margin-right:6px;}
+    .exportbox{
+      margin-top:14px; background:#060a12; border:1px dashed rgba(148,163,184,.35);
+      border-radius:16px; padding:12px;
+    }
+    textarea{
+      width:100%; height:220px; resize:vertical;
+      background:transparent; color:var(--text); border:none; outline:none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px; line-height:1.6;
+    }
+    .hint{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+  </style>
 </head>
-<body class="p-4 md:p-8 min-h-screen">
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="title">
+      <h1>SOP 目錄頁碼小工具（離線版）</h1>
+      <small>自動編號 / 點線對齊 / 匯出可貼 Word / 儲存與備份</small>
+    </div>
+    <div class="btns">
+      <button class="primary" id="addRowBtn">＋ 新增一行</button>
+      <button id="exportBtn">匯出（生成文字）</button>
+      <button id="copyBtn">複製匯出結果</button>
+      <button id="saveBtn">儲存</button>
+      <button id="loadBtn">載入</button>
+      <button class="danger" id="clearBtn">清空</button>
+    </div>
+  </div>
 
-    <div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">設計目錄產生器</h1>
-        <p id="user-id-display" class="text-xs text-gray-500 mb-2"></p>
-        <p id="status-message" class="text-sm text-blue-600 mb-4">正在連線至資料庫...</p>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- 左側：新增與管理條目 -->
-            <div class="lg:col-span-1">
-                <div class="bg-gray-50 p-6 rounded-lg shadow-inner mb-6">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-700">新增目錄條目</h2>
-                    <form id="add-entry-form" class="space-y-4">
-
-                        <div>
-                            <label for="entry-text" class="block text-sm font-medium text-gray-700">標題文字 <span class="text-red-500">*</span></label>
-                            <!-- 變更背景色為 bg-gray-50 -->
-                            <input type="text" id="entry-text" name="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-gray-50" required placeholder="例如：第一章 專案簡介 或 1.1 設計理念">
-                        </div>
-
-                        <div class="flex space-x-4">
-                            <div class="flex-1">
-                                <label for="entry-page" class="block text-sm font-medium text-gray-700">頁碼 (可選)</label>
-                                <!-- 變更背景色為 bg-gray-50 -->
-                                <input type="number" id="entry-page" name="page" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-gray-50" placeholder="例如：5 (可選)">
-                            </div>
-                            <div class="flex-1">
-                                <label for="entry-level" class="block text-sm font-medium text-gray-700">層級 <span class="text-red-500">*</span></label>
-                                <!-- 變更背景色為 bg-gray-50 -->
-                                <select id="entry-level" name="level" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-gray-50" required>
-                                    <option value="major">大標題</option>
-                                    <option value="minor">小標題</option>
-                                    <option value="detail">細項</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
-                            新增條目
-                        </button>
-                    </form>
-                </div>
-
-                <!-- 條目列表 -->
-                <h2 class="text-xl font-semibold mb-3 text-gray-700">已新增條目</h2>
-                <div id="toc-list" class="space-y-2 max-h-96 overflow-y-auto custom-scroll">
-                    <p class="text-gray-500 text-sm p-2" id="empty-list-message">目前沒有條目。</p>
-                </div>
-            </div>
-
-            <!-- 右側：目錄預覽與操作 -->
-            <div class="lg:col-span-2">
-                <div class="mb-6">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-700">目錄預覽 (TOC Preview)</h2>
-                    <div id="toc-preview-container" class="bg-white p-6 md:p-8 border-2 border-dashed border-gray-300 rounded-lg shadow-lg relative min-h-[400px]">
-                        <!-- 預覽文字區塊 (用來匯出圖片) -->
-                        <div id="toc-preview-content" class="text-gray-900 leading-relaxed">
-                            <p class="text-center text-gray-400 mt-16">請在左側新增目錄條目，結果將即時顯示於此。</p>
-                        </div>
-                        <!-- 圖片匯出時的浮水印 -->
-                        <div class="absolute bottom-4 right-4 text-xs text-gray-300 opacity-80" id="watermark">
-                            設計目錄產生器
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 操作按鈕 -->
-                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                    <button onclick="copyToClipboard()" class="flex-1 py-2 px-4 rounded-md text-white bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-offset-2 focus:ring-green-400 transition duration-150">
-                        📋 複製目錄文字
-                    </button>
-                    <button onclick="exportAsImage()" class="flex-1 py-2 px-4 rounded-md text-white bg-indigo-500 hover:bg-indigo-600 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 transition duration-150">
-                        🖼️ 匯出為圖片 (PNG)
-                    </button>
-                </div>
-
-                <!-- 訊息/調整輸入框 -->
-                <div id="message-box" class="mt-4 p-3 rounded-md hidden"></div>
-            </div>
-        </div>
-
+  <div class="rowbar">
+    <div class="group">
+      <span class="pill">樣式</span>
+      <select id="styleSel">
+        <option value="p">右側顯示 P.頁碼（例：P.5）</option>
+        <option value="plain">只顯示頁碼（例：5）</option>
+      </select>
     </div>
 
-    <!-- 腳本 1: 全域 UI/渲染函數 -->
-    <script>
-        // 渲染列表的顏色和樣式
-        const levelStyles = {
-            'major': { label: '大標題', text: 'text-lg font-bold text-gray-800' },
-            'minor': { label: '小標題', text: 'text-base font-medium text-gray-700' },
-            'detail': { label: '細項', text: 'text-sm text-gray-600' }
-        };
-
-        // 全域變數
-        const tocItems = []; // 用於在渲染和調整函數之間共享資料
-        window.isOfflineMode = false; // 離線模式標記
-
-        function clearMessageBox() {
-             const msgBox = document.getElementById('message-box');
-             msgBox.style.display = 'none';
-             msgBox.innerHTML = '';
-             msgBox.className = 'mt-4 p-3 rounded-md hidden';
-        }
-
-        // 訊息提示框
-        function showMessage(text, className = 'bg-green-100 text-green-800') {
-            const msgBox = document.getElementById('message-box');
-            // 先清除自訂輸入框
-            clearMessageBox();
-
-            msgBox.textContent = text;
-            msgBox.className = `mt-4 p-3 rounded-md ${className} block`;
-
-            // 由於調整頁碼的 success/error 流程會再次呼叫 showMessage，
-            // 這裡確保只有在簡單的 showMessage 提示下才設置自動消失
-            if (className.includes('green') || className.includes('red')) {
-                setTimeout(() => {
-                    clearMessageBox();
-                }, 3000);
-            }
-        }
-
-        // 渲染已新增的條目列表 (左側)
-        window.renderTOCList = (items) => {
-            const listContainer = document.getElementById('toc-list');
-            listContainer.innerHTML = '';
-
-            if (items.length === 0) {
-                listContainer.innerHTML = '<p class="text-gray-500 text-sm p-2" id="empty-list-message">目前沒有條目。</p>';
-                return;
-            }
-
-            items.forEach(item => {
-                const style = levelStyles[item.level];
-                const itemEl = document.createElement('div');
-                itemEl.className = `flex items-center p-3 rounded-lg bg-white shadow-sm border border-l-4 border-indigo-400 group`;
-                itemEl.setAttribute('data-id', item.id);
-
-                itemEl.innerHTML = `
-                    <div class="flex-1 truncate">
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">${style.label}</span>
-                        <span class="ml-2 ${style.text} truncate">${item.text}</span>
-                    </div>
-
-                    <span class="text-lg font-mono text-gray-500 ml-4 w-10 text-right flex-shrink-0">${item.page || '-'}</span>
-
-                    <!-- 編輯按鈕 -->
-                    <button class="ml-2 p-1 text-xs rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100 action-btn-edit"
-                            title="編輯此條目"
-                            data-id="${item.id.replace(/"/g, '&quot;')}">
-                        ✏️
-                    </button>
-
-                    <!-- 插入按鈕 -->
-                    <button class="ml-2 p-1 text-xs rounded-md bg-cyan-100 text-cyan-700 hover:bg-cyan-200 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100 action-btn-insert"
-                            title="在此條目後插入新項目"
-                            data-id="${item.id.replace(/"/g, '&quot;')}">
-                        ➕
-                    </button>
-
-                    <!-- 刪除按鈕 -->
-                    <button class="ml-2 p-1 text-xs rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100 action-btn-delete"
-                            title="刪除此條目"
-                            data-id="${item.id.replace(/"/g, '&quot;')}">
-                        x
-                    </button>
-                `;
-
-                listContainer.appendChild(itemEl);
-            });
-        };
-
-        // 渲染目錄文字預覽 (右側)
-        window.renderTOCPreview = (items) => {
-            const previewContent = document.getElementById('toc-preview-content');
-            let tocText = '';
-            previewContent.innerHTML = '';
-
-            if (items.length === 0) {
-                previewContent.innerHTML = '<p class="text-center text-gray-400 mt-16">請在左側新增目錄條目，結果將即時顯示於此。</p>';
-                return;
-            }
-
-            // 最大行長度 (用於計算點點數)
-            const MAX_LINE_WIDTH = 80;
-            // 頁碼寬度預留
-            const PAGE_WIDTH = 4;
-            // 基礎縮進
-            const INDENT = {
-                'major': 0,
-                'minor': 4, // 4 個空格
-                'detail': 8  // 8 個空格
-            };
-            const INDENT_CHAR = '\u00A0'; // 不換行空格
-
-            items.forEach(item => {
-                const indent = INDENT_CHAR.repeat(INDENT[item.level]);
-                const text = item.text;
-                const page = item.page;
-
-                // 為了確保 HTML 顯示的點點能對齊，我們使用 flex 佈局來模擬
-                const lineDiv = document.createElement('div');
-                lineDiv.className = `flex justify-between ${item.level === 'major' ? 'level-major' : (item.level === 'minor' ? 'level-minor' : 'level-detail')}`;
-
-                // 左側內容 (文字)
-                const textSpan = document.createElement('span');
-                textSpan.className = 'whitespace-pre-wrap truncate';
-                textSpan.textContent = indent + text;
-
-                // 中間點點 (使用 flex-grow 填滿空間)
-                const dotsSpan = document.createElement('span');
-                if (page.length > 0) {
-                    dotsSpan.className = 'flex-grow border-b border-dotted border-gray-400 mx-1 mb-1';
-                } else {
-                    dotsSpan.className = 'flex-grow mx-1 mb-1';
-                }
-
-                // 右側頁碼
-                const pageSpan = document.createElement('span');
-                pageSpan.className = 'flex-shrink-0 ml-1 font-bold';
-                pageSpan.textContent = page;
-
-                // 組裝行元素
-                lineDiv.appendChild(textSpan);
-                lineDiv.appendChild(dotsSpan);
-                lineDiv.appendChild(pageSpan);
-
-                previewContent.appendChild(lineDiv);
-
-                // 準備純文字格式（用於複製到剪貼簿）
-                const isPagePresent = page.length > 0;
-                const pageReserveWidth = isPagePresent ? PAGE_WIDTH : 0;
-                const textLength = indent.length + text.length;
-                const dotCount = Math.max(1, MAX_LINE_WIDTH - textLength - pageReserveWidth);
-                const padding = '.'.repeat(dotCount); // <-- 修正後的語法
-
-                tocText += `${indent}${text}${padding}${page}\n`;
-            });
-
-            // 將純文字內容儲存起來供複製使用
-            window.rawTocText = tocText.trim();
-        };
-
-        // 執行刪除操作 (判斷模式自動選擇實現)
-        window.performDelete = (id) => {
-            if (window.isOfflineMode) {
-                window.deleteTOCEntryLocal(id);
-            } else {
-                window.deleteTOCEntry(id);
-            }
-        };
-
-        // 執行編輯操作
-        window.performEdit = (id) => {
-            window.editTOCEntry(id);
-        };
-
-        // 在指定條目後執行插入操作
-        window.performInsert = (afterId) => {
-            window.insertTOCEntry(afterId);
-        };
-
-        // 編輯條目
-        window.editTOCEntry = (id) => {
-            const item = window.tocItems.find(i => i.id === id);
-            if (!item) {
-                showMessage('❌ 找不到要編輯的條目。', 'bg-red-100 text-red-800');
-                return;
-            }
-
-            clearMessageBox();
-            const msgBox = document.getElementById('message-box');
-            msgBox.className = 'mt-4 p-3 rounded-md bg-purple-100 text-purple-800 block';
-            msgBox.innerHTML = `
-                <div class="font-bold mb-3">編輯條目</div>
-                <div class="space-y-2 mb-3">
-                    <div>
-                        <label class="block text-sm font-medium text-purple-700 mb-1">標題文字</label>
-                        <input type="text" id="edit-text-input" value="${item.text}" placeholder="輸入標題" class="p-2 border rounded-md text-sm text-gray-800 w-full focus:border-purple-500 focus:ring-purple-500 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-purple-700 mb-1">頁碼</label>
-                        <input type="number" id="edit-page-input" value="${item.page}" placeholder="頁碼 (可選)" min="1" class="p-2 border rounded-md text-sm text-gray-800 w-full focus:border-purple-500 focus:ring-purple-500 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-purple-700 mb-1">層級</label>
-                        <select id="edit-level-input" class="p-2 border rounded-md text-sm text-gray-800 w-full focus:border-purple-500 focus:ring-purple-500 bg-white">
-                            <option value="major" ${item.level === 'major' ? 'selected' : ''}>大標題</option>
-                            <option value="minor" ${item.level === 'minor' ? 'selected' : ''}>小標題</option>
-                            <option value="detail" ${item.level === 'detail' ? 'selected' : ''}>細項</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex space-x-2">
-                    <button onclick="window.saveEditTOCEntry('${id}')" class="flex-1 p-2 text-sm rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors">
-                        ✅ 保存
-                    </button>
-                    <button onclick="clearMessageBox()" class="flex-1 p-2 text-sm rounded-md bg-gray-300 text-gray-800 hover:bg-gray-400 transition-colors">
-                        ❌ 取消
-                    </button>
-                </div>
-            `;
-        };
-
-        // 保存編輯
-        window.saveEditTOCEntry = (id) => {
-            const newText = document.getElementById('edit-text-input').value.trim();
-            const newPage = document.getElementById('edit-page-input').value.trim();
-            const newLevel = document.getElementById('edit-level-input').value;
-
-            if (!newText) {
-                showMessage('❌ 標題文字不能為空。', 'bg-red-100 text-red-800');
-                return;
-            }
-
-            // 先清除編輯框
-            clearMessageBox();
-
-            console.log('保存編輯 - isOfflineMode:', window.isOfflineMode, 'updateTOCEntry exists:', typeof window.updateTOCEntry);
-
-            if (window.isOfflineMode) {
-                window.updateTOCEntryLocal(id, newText, newPage, newLevel);
-            } else if (typeof window.updateTOCEntry === 'function') {
-                window.updateTOCEntry(id, newText, newPage, newLevel);
-            } else {
-                // 如果資料庫功能未載入，嘗試使用離線模式
-                console.warn('資料庫功能未載入，嘗試使用離線模式');
-                if (typeof window.updateTOCEntryLocal === 'function') {
-                    window.updateTOCEntryLocal(id, newText, newPage, newLevel);
-                } else {
-                    showMessage('❌ 資料庫功能尚未載入，且離線模式不可用。', 'bg-red-100 text-red-800');
-            }
-            }
-        };
-
-        // 在指定條目後插入新條目
-        window.insertTOCEntry = (afterId) => {
-            clearMessageBox();
-            const msgBox = document.getElementById('message-box');
-            msgBox.className = 'mt-4 p-3 rounded-md bg-cyan-100 text-cyan-800 block';
-            msgBox.innerHTML = `
-                <div class="font-bold mb-3">在此條目後插入新項目</div>
-                <div class="space-y-2 mb-3">
-                    <div>
-                        <label class="block text-sm font-medium text-cyan-700 mb-1">標題文字</label>
-                        <input type="text" id="insert-text-input" placeholder="輸入標題" class="p-2 border rounded-md text-sm text-gray-800 w-full focus:border-cyan-500 focus:ring-cyan-500 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-cyan-700 mb-1">頁碼</label>
-                        <input type="number" id="insert-page-input" placeholder="頁碼 (可選)" min="1" class="p-2 border rounded-md text-sm text-gray-800 w-full focus:border-cyan-500 focus:ring-cyan-500 bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-cyan-700 mb-1">層級</label>
-                        <select id="insert-level-input" class="p-2 border rounded-md text-sm text-gray-800 w-full focus:border-cyan-500 focus:ring-cyan-500 bg-white">
-                            <option value="major">大標題</option>
-                            <option value="minor" selected>小標題</option>
-                            <option value="detail">細項</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex space-x-2">
-                    <button onclick="window.confirmInsertTOCEntry('${afterId}')" class="flex-1 p-2 text-sm rounded-md bg-cyan-600 text-white hover:bg-cyan-700 transition-colors">
-                        ✅ 插入
-                    </button>
-                    <button onclick="clearMessageBox()" class="flex-1 p-2 text-sm rounded-md bg-gray-300 text-gray-800 hover:bg-gray-400 transition-colors">
-                        ❌ 取消
-                    </button>
-                </div>
-            `;
-        };
-
-        // 確認插入
-        window.confirmInsertTOCEntry = (afterId) => {
-            const text = document.getElementById('insert-text-input').value.trim();
-            const page = document.getElementById('insert-page-input').value.trim();
-            const level = document.getElementById('insert-level-input').value;
-
-            if (!text) {
-                showMessage('❌ 標題文字不能為空。', 'bg-red-100 text-red-800');
-                return;
-            }
-
-            // 先清除插入框
-            clearMessageBox();
-
-            if (window.isOfflineMode) {
-                window.insertNewTOCEntryLocal(afterId, text, page, level);
-            } else if (typeof window.insertNewTOCEntry === 'function') {
-                window.insertNewTOCEntry(afterId, text, page, level);
-            } else {
-                showMessage('❌ 資料庫功能尚未載入。', 'bg-red-100 text-red-800');
-            }
-        };
-
-        // 操作函數：複製到剪貼簿
-        window.copyToClipboard = () => {
-            if (!window.rawTocText) {
-                showMessage('目錄內容為空，無法複製。', 'bg-red-100 text-red-800');
-                return;
-            }
-
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = window.rawTocText;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-
-            try {
-                document.execCommand('copy');
-                showMessage('✅ 目錄文字已成功複製到剪貼簿！', 'bg-green-100 text-green-800');
-            } catch (err) {
-                console.error('複製失敗: ', err);
-                showMessage('❌ 複製失敗，請手動選取文字。', 'bg-red-100 text-red-800');
-            } finally {
-                document.body.removeChild(tempTextArea);
-            }
-        };
-
-        // 操作函數：匯出為圖片
-        window.exportAsImage = () => {
-            const container = document.getElementById('toc-preview-container');
-            const watermark = document.getElementById('watermark');
-
-            if (container.querySelector('#toc-preview-content').children.length === 0) {
-                 showMessage('目錄內容為空，無法匯出圖片。', 'bg-red-100 text-red-800');
-                 return;
-            }
-
-            showMessage('⏳ 正在匯出圖片...', 'bg-yellow-100 text-yellow-800');
-            watermark.style.display = 'block';
-
-            container.style.border = 'none';
-            container.style.boxShadow = 'none';
-            container.style.backgroundColor = '#ffffff';
-
-            html2canvas(container, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-            }).then(canvas => {
-                container.style.border = '2px dashed #d1d5db';
-                container.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-
-                const link = document.createElement('a');
-                link.download = '設計目錄.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-
-                showMessage('🖼️ 圖片已成功匯出！', 'bg-green-100 text-green-800');
-            }).catch(error => {
-                console.error("圖片匯出失敗:", error);
-                showMessage('❌ 圖片匯出失敗。', 'bg-red-100 text-red-800');
-            }).finally(() => {
-                watermark.style.display = 'none';
-                container.style.backgroundColor = '#ffffff';
-            });
-        };
-
-        // 處理表單提交
-        window.initFormSubmission = () => {
-            const form = document.getElementById('add-entry-form');
-            if (!form) {
-                console.warn("表單元素未找到");
-                return;
-            }
-
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const text = document.getElementById('entry-text').value.trim();
-                const pageInput = document.getElementById('entry-page').value.trim();
-                const level = document.getElementById('entry-level').value;
-
-                let pageValue = '';
-                if (pageInput !== '') {
-                    const parsedPage = parseInt(pageInput);
-                    if (!isNaN(parsedPage) && parsedPage >= 1) {
-                        pageValue = String(parsedPage);
-                    } else {
-                        showMessage('⚠️ 頁碼輸入無效或小於 1，將儲存為空。', 'bg-red-100 text-red-800');
-                        pageValue = '';
-                    }
-                }
-
-                if (text) {
-                    if (window.isOfflineMode) {
-                        window.addTOCEntryLocal(text, pageValue, level);
-                    } else {
-                        window.addTOCEntry(text, pageValue, level);
-                    }
-
-                    document.getElementById('entry-text').value = '';
-                    document.getElementById('entry-page').value = '';
-                } else {
-                     showMessage('❌ 標題文字不能為空。', 'bg-red-100 text-red-800');
-                }
-            });
-        };
-
-        // 初始化事件委派（處理列表中的按鈕點擊）
-        window.initEventDelegation = () => {
-            const listContainer = document.getElementById('toc-list');
-            if (!listContainer) {
-                console.warn("列表容器未找到");
-                return;
-            }
-
-            // 使用事件委派處理按鈕點擊
-            listContainer.addEventListener('click', function(e) {
-                // 找到被點擊的按鈕（可能是按鈕本身或其子元素）
-                const button = e.target.closest('button.action-btn-edit, button.action-btn-insert, button.action-btn-delete');
-                if (!button) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                const id = button.getAttribute('data-id');
-                if (!id) {
-                    console.error('按鈕缺少 data-id 屬性', button);
-                    return;
-                }
-
-                console.log('按鈕點擊:', button.className, 'ID:', id);
-
-                if (button.classList.contains('action-btn-edit')) {
-                    console.log('執行編輯操作');
-                    window.performEdit(id);
-                } else if (button.classList.contains('action-btn-insert')) {
-                    console.log('執行插入操作');
-                    window.performInsert(id);
-                } else if (button.classList.contains('action-btn-delete')) {
-                    console.log('執行刪除操作');
-                    window.performDelete(id);
-                }
-            });
-        };
-
-        // 在 DOM 準備好後初始化表單和事件委派
-        const initAll = () => {
-            window.initFormSubmission();
-            window.initEventDelegation();
-        };
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initAll);
-        } else {
-            initAll();
-        }
-
-    </script>
-
-    <!-- 腳本 2: Firebase 相關邏輯 (使用 type="module") -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, setLogLevel, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // 設定 Firebase Debug Log
-        setLogLevel('debug');
-
-        // 全域變數檢查 (由 Canvas 環境提供)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'toc-generator-default';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // 宣告 Firebase 變數
-        let app = null;
-        let db = null;
-        let auth = null;
-
-        window.tocCollectionRef = null;
-
-        let userId = null;
-        let isAuthReady = false;
-
-        // 引用第一個腳本中的全域陣列
-        if (!window.tocItems) { window.tocItems = []; }
-
-        // 離線模式標記
-        let isOfflineMode = false;
-        const STORAGE_KEY = 'toc-entries-local';
-
-        // ===================================
-        // 本地存儲操作函數 (離線模式)
-        // ===================================
-
-        window.loadTOCEntriesLocal = () => {
-            try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                    window.tocItems = JSON.parse(stored);
-                } else {
-                    window.tocItems = [];
-                }
-                // 根據 timestamp 排序 (確保順序)
-                window.tocItems.sort((a, b) => a.timestamp - b.timestamp);
-
-                // 呼叫全域渲染函數
-                window.renderTOCList(window.tocItems);
-                window.renderTOCPreview(window.tocItems);
-            } catch (e) {
-                console.error("載入本地存儲錯誤:", e);
-                window.tocItems = [];
-            }
-        };
-
-        window.saveTOCEntriesLocal = () => {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(window.tocItems));
-            } catch (e) {
-                console.error("保存本地存儲錯誤:", e);
-            }
-        };
-
-        window.addTOCEntryLocal = (text, page, level) => {
-            const newEntry = {
-                id: 'local-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                text,
-                page: String(page || ''),
-                level,
-                timestamp: Date.now()
-            };
-            window.tocItems.push(newEntry);
-            window.tocItems.sort((a, b) => a.timestamp - b.timestamp);
-            window.saveTOCEntriesLocal();
-            window.renderTOCList(window.tocItems);
-            window.renderTOCPreview(window.tocItems);
-            console.log("本地條目新增成功。");
-        };
-
-        window.deleteTOCEntryLocal = (id) => {
-            const index = window.tocItems.findIndex(item => item.id === id);
-            if (index !== -1) {
-                window.tocItems.splice(index, 1);
-                window.saveTOCEntriesLocal();
-                window.renderTOCList(window.tocItems);
-                window.renderTOCPreview(window.tocItems);
-                console.log("本地條目刪除成功。ID:", id);
-            }
-        };
-
-        window.updateTOCEntryLocal = (id, text, page, level) => {
-            const item = window.tocItems.find(i => i.id === id);
-            if (item) {
-                item.text = text;
-                item.page = String(page || '');
-                item.level = level;
-                window.saveTOCEntriesLocal();
-                window.renderTOCList(window.tocItems);
-                window.renderTOCPreview(window.tocItems);
-                console.log("本地條目更新成功。ID:", id);
-                if (typeof showMessage === 'function') {
-                    showMessage('✅ 條目已成功編輯！', 'bg-green-100 text-green-800');
-                }
-            } else {
-                console.error("找不到要更新的條目。ID:", id);
-                if (typeof showMessage === 'function') {
-                    showMessage('❌ 找不到要編輯的條目。', 'bg-red-100 text-red-800');
-                }
-            }
-        };
-
-        window.insertNewTOCEntryLocal = (afterId, text, page, level) => {
-            const afterIndex = window.tocItems.findIndex(item => item.id === afterId);
-            if (afterIndex !== -1) {
-                const afterItem = window.tocItems[afterIndex];
-                const nextItem = afterIndex + 1 < window.tocItems.length ? window.tocItems[afterIndex + 1] : null;
-
-                let newTimestamp;
-                if (nextItem) {
-                    newTimestamp = Math.floor((afterItem.timestamp + nextItem.timestamp) / 2);
-                } else {
-                    newTimestamp = Date.now();
-                }
-
-                const newEntry = {
-                    id: 'local-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-                    text,
-                    page: String(page || ''),
-                    level,
-                    timestamp: newTimestamp
-                };
-
-                window.tocItems.push(newEntry);
-                window.tocItems.sort((a, b) => a.timestamp - b.timestamp);
-                window.saveTOCEntriesLocal();
-                window.renderTOCList(window.tocItems);
-                window.renderTOCPreview(window.tocItems);
-                console.log("本地新條目插入成功。");
-                if (typeof showMessage === 'function') {
-                    showMessage('✅ 新項目已成功插入！', 'bg-green-100 text-green-800');
-                }
-            }
-        };
-
-
-        // ===================================
-        // 資料庫操作函數 (需依賴在 module 區塊內)
-        // ===================================
-
-        window.loadTOCEntries = () => {
-            if (!window.tocCollectionRef || !db) {
-                console.warn("Firestore 集合未準備好或資料庫未初始化。無法載入資料。");
-                return;
-            }
-
-            // 使用 onSnapshot 監聽資料變化
-            const q = query(window.tocCollectionRef);
-
-            onSnapshot(q, (snapshot) => {
-                window.tocItems.length = 0; // 清空舊資料
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    window.tocItems.push({
-                        id: doc.id,
-                        level: data.level,
-                        text: data.text,
-                        page: String(data.page || ''),
-                        timestamp: data.timestamp
-                    });
-                });
-
-                // 根據 timestamp 排序 (確保順序)
-                window.tocItems.sort((a, b) => a.timestamp - b.timestamp);
-
-                // 呼叫全域渲染函數
-                window.renderTOCList(window.tocItems);
-                window.renderTOCPreview(window.tocItems);
-            }, (error) => {
-                console.error("監聽 Firestore 錯誤:", error);
-                document.getElementById('status-message').textContent = `資料載入錯誤: ${error.message}`;
-            });
-        };
-
-        window.addTOCEntry = async (text, page, level) => {
-            if (!window.tocCollectionRef) return;
-            try {
-                await addDoc(window.tocCollectionRef, {
-                    text,
-                    page: String(page || ''),
-                    level,
-                    timestamp: Date.now()
-                });
-                console.log("目錄條目新增成功。");
-            } catch (e) {
-                console.error("新增條目時發生錯誤: ", e);
-            }
-        };
-
-        window.deleteTOCEntry = async (id) => {
-            if (!window.tocCollectionRef) return;
-            try {
-                const docRef = doc(window.tocCollectionRef, id);
-                await deleteDoc(docRef);
-                console.log("目錄條目刪除成功。ID:", id);
-            } catch (e) {
-                console.error("刪除條目時發生錯誤: ", e);
-            }
-        };
-
-        // 更新條目
-        window.updateTOCEntry = async (id, text, page, level) => {
-            if (!window.tocCollectionRef) return;
-            try {
-                const docRef = doc(window.tocCollectionRef, id);
-                await updateDoc(docRef, {
-                    text,
-                    page: String(page || ''),
-                    level
-                });
-                console.log("目錄條目更新成功。ID:", id);
-                showMessage('✅ 條目已成功編輯！', 'bg-green-100 text-green-800');
-            } catch (e) {
-                console.error("編輯條目時發生錯誤: ", e);
-                showMessage('❌ 編輯條目失敗。', 'bg-red-100 text-red-800');
-            }
-        };
-
-        // 在指定條目後插入新條目
-        window.insertNewTOCEntry = async (afterId, text, page, level) => {
-            if (!window.tocCollectionRef) return;
-            try {
-                // 找到 afterId 條目的 timestamp
-                const afterItem = window.tocItems.find(item => item.id === afterId);
-                if (!afterItem) {
-                    showMessage('❌ 找不到參考條目。', 'bg-red-100 text-red-800');
-                    return;
-                }
-
-                // 新條目的 timestamp 介於 afterItem 和下一個條目之間
-                const afterIndex = window.tocItems.findIndex(item => item.id === afterId);
-                const nextItem = afterIndex + 1 < window.tocItems.length ? window.tocItems[afterIndex + 1] : null;
-
-                let newTimestamp;
-                if (nextItem) {
-                    // 介於兩者之間
-                    newTimestamp = Math.floor((afterItem.timestamp + nextItem.timestamp) / 2);
-                } else {
-                    // 在最後，使用當前時間
-                    newTimestamp = Date.now();
-                }
-
-                await addDoc(window.tocCollectionRef, {
-                    text,
-                    page: String(page || ''),
-                    level,
-                    timestamp: newTimestamp
-                });
-                console.log("新條目插入成功。");
-                showMessage('✅ 新項目已成功插入！', 'bg-green-100 text-green-800');
-            } catch (e) {
-                console.error("插入條目時發生錯誤: ", e);
-                showMessage('❌ 插入條目失敗。', 'bg-red-100 text-red-800');
-            }
-        };
-
-        // 整體頁碼調整函數 (從指定 ID 開始調整後續頁碼)
-        window.adjustPageNumbers = async (startId, newPageString) => {
-            if (!window.tocCollectionRef || !db) {
-                showMessage('❌ 資料庫未準備好。', 'bg-red-100 text-red-800');
-                return;
-            }
-
-            const newPage = parseInt(newPageString);
-            if (isNaN(newPage) || newPage < 1) {
-                showMessage('❌ 請輸入有效的起始頁碼 (>= 1)。', 'bg-red-100 text-red-800');
-                return;
-            }
-
-            // 1. 找到起始條目及其在排序列表中的位置
-            const startIndex = window.tocItems.findIndex(item => item.id === startId);
-            if (startIndex === -1) {
-                showMessage('❌ 找不到要調整的條目。', 'bg-red-100 text-red-800');
-                return;
-            }
-            const startItem = window.tocItems[startIndex];
-
-            const oldPageString = startItem.page;
-            const oldPage = oldPageString ? parseInt(oldPageString) : 0;
-
-            if (isNaN(oldPage) && oldPageString !== '') {
-                showMessage('❌ 起始條目的頁碼無效，請先手動修正或清空頁碼。', 'bg-red-100 text-red-800');
-                return;
-            }
-
-            // 計算頁碼差異 (Offset): 新頁碼 - (舊頁碼或 0 如果舊頁碼為空)
-            const offset = newPage - (oldPageString ? oldPage : 0);
-
-            if (offset === 0 && oldPageString === String(newPage)) {
-                showMessage('ℹ️ 頁碼無變化，無需調整。', 'bg-blue-100 text-blue-800');
-                return;
-            }
-
-            showMessage('⏳ 正在執行頁碼調整...', 'bg-yellow-100 text-yellow-800');
-            const batch = writeBatch(db);
-
-            let updatedCount = 0;
-
-            // 2. 迭代所有條目 (從起始條目開始)
-            for (let i = startIndex; i < window.tocItems.length; i++) {
-                const item = window.tocItems[i];
-                const docRef = doc(window.tocCollectionRef, item.id);
-
-                // 起始條目：直接設定為新頁碼
-                if (i === startIndex) {
-                    batch.update(docRef, { page: String(newPage) });
-                    updatedCount++;
-                    continue;
-                }
-
-                // 後續條目：計算新頁碼
-                const currentPageString = item.page;
-
-                // 只有當當前條目有有效頁碼時才進行偏移
-                if (currentPageString) {
-                    const currentPage = parseInt(currentPageString);
-                    if (!isNaN(currentPage)) {
-                        let newCalculatedPage = currentPage + offset;
-
-                        // 確保頁碼至少為 1
-                        if (newCalculatedPage < 1) {
-                            newCalculatedPage = 1;
-                        }
-
-                        // 批量更新 Firestore
-                        batch.update(docRef, { page: String(newCalculatedPage) });
-                        updatedCount++;
-                    }
-                }
-            }
-
-            // 3. 提交批量寫入
-            try {
-                await batch.commit();
-                showMessage(`✅ 頁碼調整成功！共更新 ${updatedCount} 個條目。`, 'bg-green-100 text-green-800');
-            } catch (e) {
-                console.error("批量更新頁碼時發生錯誤: ", e);
-                showMessage('❌ 批量更新頁碼失敗。', 'bg-red-100 text-red-800');
-            }
-        };
-
-
-        // ===================================
-        // 初始化邏輯
-        // ===================================
-
-        // 檢查 Firebase 配置並初始化
-        if (!firebaseConfig) {
-            console.error("Firebase 配置未定義。無法啟動資料庫功能。");
-            document.getElementById('status-message').textContent = '錯誤：Firebase 配置遺失，資料無法儲存。';
-        } else {
-            // 初始化 Firebase
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-        }
-
-        // 監聽認證狀態 (僅在 auth 存在時執行)
-        if (auth) {
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    userId = user.uid;
-                } else {
-                    // 如果沒有登入，嘗試使用初始 token 或匿名登入
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                            userId = auth.currentUser.uid;
-                        } else {
-                            await signInAnonymously(auth);
-                            userId = auth.currentUser.uid;
-                        }
-                    } catch (error) {
-                        console.error("認證失敗:", error);
-                        // 如果登入失敗，切換到離線模式
-                        window.isOfflineMode = true;
-                        userId = 'offline-' + crypto.randomUUID();
-                        isAuthReady = true;
-                        document.getElementById('user-id-display').textContent = `使用者 ID: ${userId} (離線模式 - 認證失敗)`;
-                        document.getElementById('status-message').textContent = '認證失敗，已切換到離線模式：數據保存在本地瀏覽器中';
-                        window.loadTOCEntriesLocal();
-                        return;
-                    }
-                }
-                isAuthReady = true;
-                console.log("Firebase 認證完成。User ID:", userId);
-                document.getElementById('user-id-display').textContent = `使用者 ID: ${userId}`;
-
-                // 設定 Firestore 集合路徑
-                window.tocCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/toc_entries`);
-
-                // 載入資料
-                window.loadTOCEntries();
-                document.getElementById('status-message').textContent = '資料庫已連線，準備就緒。';
-            });
-        } else {
-            // 無 Firebase/auth 時的 fallback 狀態 - 啟用離線模式
-            window.isOfflineMode = true;
-            isAuthReady = true;
-            userId = 'offline-' + crypto.randomUUID();
-            console.log("進入離線模式。使用本地存儲保存數據。User ID:", userId);
-            document.getElementById('user-id-display').textContent = `使用者 ID: ${userId} (離線模式 - 本地存儲)`;
-            document.getElementById('status-message').textContent = '離線模式：數據保存在本地瀏覽器中';
-
-            // 加載本地存儲的數據
-            window.loadTOCEntriesLocal();
-        }
-
-        // 在窗口載入後隱藏浮水印
-        window.addEventListener('load', function() {
-            document.getElementById('watermark').style.display = 'none';
-        });
-
-    </script>
+    <div class="group">
+      <span class="pill">點線寬度</span>
+      <input id="lineWidth" type="number" min="10" max="120" value="70" />
+      <span class="muted">（越大點越多）</span>
+    </div>
+
+    <div class="group">
+      <span class="pill">批次頁碼</span>
+      <span class="muted">從第</span>
+      <input id="batchFrom" type="number" min="1" value="1" style="width:70px" />
+      <span class="muted">行開始</span>
+      <input id="batchDelta" type="number" value="1" style="width:80px" />
+      <button class="mini" id="applyBatchBtn">套用 +/−</button>
+    </div>
+
+    <div class="group">
+      <span class="pill">備份</span>
+      <button class="mini" id="downloadJsonBtn">下載 JSON</button>
+      <label class="filebtn mini" for="jsonFile">匯入 JSON</label>
+      <input id="jsonFile" type="file" accept="application/json" />
+    </div>
+  </div>
+
+  <div class="table">
+    <div class="thead">
+      <div>編號</div>
+      <div>章節標題（可調層級）</div>
+      <div style="text-align:center;">頁碼</div>
+      <div style="text-align:right;">操作</div>
+    </div>
+    <div id="rows"></div>
+  </div>
+
+  <div class="exportbox">
+    <div class="hint">
+      <div class="muted">匯出結果（貼到 Word 可用；需要點線可直接貼上）</div>
+      <div class="muted">小技巧：Word 可用等寬字體檢視更整齊（如 Consolas）</div>
+    </div>
+    <textarea id="output" placeholder="按「匯出」生成內容..."></textarea>
+  </div>
+
+  <div class="footer">
+    <div><span class="pill">快捷操作</span> 層級：<b>→</b> 增加縮排、<b>←</b> 減少縮排（在標題欄位按鍵）</div>
+    <div><span class="pill">建議</span> 頁碼可留空；匯出會自動略過空白頁碼的 P. 前綴（仍會保留點線排版）</div>
+  </div>
+</div>
+
+<script>
+  const LS_KEY = "sop_toc_tool_v1";
+
+  /** Row model:
+   * { id, level: 1..3, title: string, page: string }
+   */
+  let data = [];
+
+  const $ = (id) => document.getElementById(id);
+  const rowsEl = $("rows");
+  const outputEl = $("output");
+
+  function uid() {
+    return Math.random().toString(36).slice(2, 10);
+  }
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function defaultData(){
+    return [
+      { id: uid(), level: 1, title: "目的", page: "1" },
+      { id: uid(), level: 1, title: "適用範圍", page: "2" },
+      { id: uid(), level: 1, title: "職責", page: "3" },
+      { id: uid(), level: 1, title: "作業流程", page: "5" },
+      { id: uid(), level: 2, title: "申請", page: "6" },
+      { id: uid(), level: 2, title: "審核", page: "8" },
+      { id: uid(), level: 2, title: "發放", page: "10" },
+    ];
+  }
+
+  function ensureData(){
+    if (!Array.isArray(data) || data.length === 0){
+      data = defaultData();
+    }
+  }
+
+  function computeNumbers(rows){
+    // levels 1..3 => counters[1], counters[2], counters[3]
+    const counters = [0,0,0,0];
+    return rows.map(r => {
+      const lv = clamp(Number(r.level)||1, 1, 3);
+      counters[lv] += 1;
+      // reset deeper levels
+      for (let i=lv+1;i<=3;i++) counters[i]=0;
+      // build number string
+      const parts = [];
+      for (let i=1;i<=lv;i++){
+        if (counters[i] > 0) parts.push(counters[i]);
+      }
+      return parts.join(".");
+    });
+  }
+
+  function moveRow(index, dir){
+    const j = index + dir;
+    if (j < 0 || j >= data.length) return;
+    const tmp = data[index];
+    data[index] = data[j];
+    data[j] = tmp;
+    render();
+  }
+
+  function deleteRow(index){
+    data.splice(index, 1);
+    render();
+  }
+
+  function setLevel(index, delta){
+    data[index].level = clamp((Number(data[index].level)||1) + delta, 1, 3);
+    render(false); // keep focus
+  }
+
+  function addRow(afterIndex = null){
+    const row = { id: uid(), level: 1, title: "", page: "" };
+    if (afterIndex === null || afterIndex === undefined){
+      data.push(row);
+    } else {
+      data.splice(afterIndex + 1, 0, row);
+    }
+    render(true, row.id);
+  }
+
+  function render(tryFocusNew=false, focusId=null){
+    ensureData();
+    const nums = computeNumbers(data);
+
+    rowsEl.innerHTML = "";
+    data.forEach((r, i) => {
+      const row = document.createElement("div");
+      row.className = "trow";
+
+      // number
+      const n = document.createElement("div");
+      n.className = "num";
+      n.textContent = nums[i];
+
+      // title
+      const name = document.createElement("div");
+      name.className = "name";
+      const indent = document.createElement("span");
+      indent.className = "indent";
+      indent.style.width = ((clamp(r.level,1,3)-1) * 20) + "px";
+      name.appendChild(indent);
+
+      const titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.value = r.title ?? "";
+      titleInput.placeholder = "輸入章節標題（在此按 ←/→ 可調層級）";
+      titleInput.addEventListener("input", (e)=>{
+        data[i].title = e.target.value;
+      });
+      titleInput.addEventListener("keydown", (e)=>{
+        if (e.key === "ArrowRight") { e.preventDefault(); setLevel(i, +1); }
+        if (e.key === "ArrowLeft")  { e.preventDefault(); setLevel(i, -1); }
+        if (e.key === "Enter") { e.preventDefault(); addRow(i); }
+      });
+      titleInput.dataset.rowId = r.id;
+      name.appendChild(titleInput);
+
+      // page
+      const page = document.createElement("div");
+      page.className = "page";
+      const pageInput = document.createElement("input");
+      pageInput.type = "text";
+      pageInput.value = r.page ?? "";
+      pageInput.placeholder = "例：5";
+      pageInput.addEventListener("input", (e)=>{
+        data[i].page = e.target.value;
+      });
+      page.appendChild(pageInput);
+
+      // actions
+      const act = document.createElement("div");
+      act.className = "actions";
+
+      const up = mkBtn("↑", ()=>moveRow(i, -1));
+      const down = mkBtn("↓", ()=>moveRow(i, +1));
+      const add = mkBtn("＋", ()=>addRow(i));
+      const del = mkBtn("刪", ()=>deleteRow(i), true);
+
+      const lvUp = mkBtn("→層", ()=>setLevel(i,+1));
+      const lvDown = mkBtn("←層", ()=>setLevel(i,-1));
+
+      act.append(up, down, lvDown, lvUp, add, del);
+
+      row.append(n, name, page, act);
+      rowsEl.appendChild(row);
+    });
+
+    if (tryFocusNew && focusId){
+      const input = rowsEl.querySelector(`input[data-row-id="${focusId}"]`);
+      if (input){ input.focus(); }
+    }
+  }
+
+  function mkBtn(text, onClick, isDanger=false){
+    const b = document.createElement("button");
+    b.className = "mini" + (isDanger ? " danger" : "");
+    b.textContent = text;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function buildExport(){
+    const style = $("styleSel").value;
+    const dotsTarget = clamp(Number($("lineWidth").value)||70, 10, 120);
+    const nums = computeNumbers(data);
+
+    // Determine max left length for alignment (number + title with indent)
+    const leftStrings = data.map((r, i)=>{
+      const indent = "  ".repeat(clamp(r.level,1,3)-1); // 2 spaces each level
+      const title = (r.title ?? "").trim();
+      return `${nums[i]} ${indent}${title}`;
+    });
+
+    const maxLeft = Math.max(...leftStrings.map(s => s.length), 10);
+
+    const lines = data.map((r, i)=>{
+      const left = leftStrings[i];
+      const pageRaw = (r.page ?? "").trim();
+      const pageText = style === "p"
+        ? (pageRaw ? `P.${pageRaw}` : "")
+        : (pageRaw ? `${pageRaw}` : "");
+
+      // dot leaders: fill from left to a fixed column
+      // Keep at least 3 dots if page exists, else keep minimal spacing.
+      const base = Math.max(maxLeft + 2, left.length + 2);
+      const dotsCount = Math.max(3, dotsTarget - left.length);
+      const dots = ".".repeat(dotsCount);
+
+      // If page empty, still keep a neat line (no trailing page)
+      return pageText
+        ? `${left} ${dots} ${pageText}`
+        : `${left}`;
+    });
+
+    outputEl.value = lines.join("\n");
+  }
+
+  function copyOutput(){
+    const txt = outputEl.value || "";
+    if (!txt.trim()){
+      buildExport();
+    }
+    navigator.clipboard.writeText(outputEl.value).then(()=>{
+      alert("已複製匯出結果！");
+    }).catch(()=>{
+      alert("複製失敗：瀏覽器可能限制，請手動全選複製。");
+    });
+  }
+
+  function saveToLocal(){
+    const payload = {
+      version: 1,
+      style: $("styleSel").value,
+      lineWidth: Number($("lineWidth").value)||70,
+      data
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+    alert("已儲存到此瀏覽器（localStorage）。");
+  }
+
+  function loadFromLocal(){
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw){
+      alert("找不到儲存資料，已載入範例。");
+      data = defaultData();
+      render();
+      return;
+    }
+    try{
+      const payload = JSON.parse(raw);
+      if (payload && Array.isArray(payload.data)){
+        data = payload.data.map(r => ({
+          id: r.id || uid(),
+          level: clamp(Number(r.level)||1, 1, 3),
+          title: String(r.title ?? ""),
+          page: String(r.page ?? "")
+        }));
+        if (payload.style) $("styleSel").value = payload.style;
+        if (payload.lineWidth) $("lineWidth").value = payload.lineWidth;
+        render();
+        alert("已載入。");
+      } else {
+        throw new Error("bad format");
+      }
+    }catch(e){
+      alert("載入失敗：儲存資料格式錯誤。已載入範例。");
+      data = defaultData();
+      render();
+    }
+  }
+
+  function clearAll(){
+    if (!confirm("確定清空目前內容？此操作無法復原。")) return;
+    data = [];
+    outputEl.value = "";
+    localStorage.removeItem(LS_KEY);
+    render();
+    alert("已清空所有內容。");
+  }
+
+  function downloadJson(){
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      style: $("styleSel").value,
+      lineWidth: Number($("lineWidth").value)||70,
+      data
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "sop_toc_backup.json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  function importJsonFile(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const payload = JSON.parse(reader.result);
+        if (!payload || !Array.isArray(payload.data)) throw new Error("bad format");
+        data = payload.data.map(r => ({
+          id: r.id || uid(),
+          level: clamp(Number(r.level)||1, 1, 3),
+          title: String(r.title ?? ""),
+          page: String(r.page ?? "")
+        }));
+        if (payload.style) $("styleSel").value = payload.style;
+        if (payload.lineWidth) $("lineWidth").value = payload.lineWidth;
+        render();
+        alert("已匯入 JSON。");
+      }catch(e){
+        alert("匯入失敗：JSON 格式不正確。");
+      }
+    };
+    reader.readAsText(file, "utf-8");
+  }
+
+  function applyBatch(){
+    const from = clamp(Number($("batchFrom").value)||1, 1, 999999) - 1;
+    const delta = Number($("batchDelta").value)||0;
+
+    for (let i=from;i<data.length;i++){
+      const p = String(data[i].page ?? "").trim();
+      if (!p) continue;
+      // accept numeric only; if not numeric, skip
+      const n = Number(p);
+      if (!Number.isFinite(n)) continue;
+      data[i].page = String(n + delta);
+    }
+    render(false);
+    buildExport();
+  }
+
+  // Wire up UI
+  $("addRowBtn").addEventListener("click", ()=>addRow(null));
+  $("exportBtn").addEventListener("click", buildExport);
+  $("copyBtn").addEventListener("click", copyOutput);
+  $("saveBtn").addEventListener("click", saveToLocal);
+  $("loadBtn").addEventListener("click", loadFromLocal);
+  $("clearBtn").addEventListener("click", clearAll);
+  $("downloadJsonBtn").addEventListener("click", downloadJson);
+  $("applyBatchBtn").addEventListener("click", applyBatch);
+
+  $("jsonFile").addEventListener("change", (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if (f) importJsonFile(f);
+    e.target.value = "";
+  });
+
+  $("styleSel").addEventListener("change", buildExport);
+  $("lineWidth").addEventListener("input", ()=>{ /* keep responsive */ });
+
+  // Init
+  loadFromLocal();
+  // If nothing in localStorage, loadFromLocal will fallback; ensure render done
+  render();
+</script>
 </body>
 </html>
