@@ -28,7 +28,7 @@
             }
         })();
     </script>
-    <title>待辦事項日曆</title>
+    <title>每日日曆</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -83,8 +83,8 @@
             <header class="mb-8">
                 <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start mb-4">
                     <div>
-                        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2 cursor-pointer select-none" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 待辦事項日曆</h1>
-                        <p class="text-gray-600">管理您的每日待辦事項<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2">[開發者模式]</span></p>
+                        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2 cursor-pointer select-none" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 每日日曆</h1>
+                        <p class="text-gray-600">即使很忙 也要對自己好一點<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2">[開發者模式]</span></p>
                     </div>
                     <!-- 使用者選擇區域 -->
                     <div class="w-full lg:w-auto">
@@ -317,8 +317,8 @@
         // 狀態管理
         let currentDate = new Date();
         let selectedDate = null;
-        let currentUserId = localStorage.getItem('currentUserId') || 'default';
-        let users = JSON.parse(localStorage.getItem('users') || '["default"]');
+        let currentUserId = localStorage.getItem('currentUserId') || 'Happy Bunny';
+        let users = JSON.parse(localStorage.getItem('users') || '["Happy Bunny"]');
         let todos = {};
 
         // 開發者模式
