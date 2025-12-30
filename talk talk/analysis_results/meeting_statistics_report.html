@@ -1,0 +1,2386 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>見面次數統計報告</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card.confirmed {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .stat-card.gray {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        th {
+            background: #34495e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .date-link {
+            color: #3498db;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        .date-link:hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+        }
+        .date-link.confirmed {
+            color: #27ae60;
+        }
+        .date-link.confirmed:hover {
+            background: #27ae60;
+            box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3);
+        }
+        .date-link.gray {
+            color: #e67e22;
+        }
+        .date-link.gray:hover {
+            background: #e67e22;
+            box-shadow: 0 2px 5px rgba(230, 126, 34, 0.3);
+        }
+        .file-list {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .month-section {
+            margin: 30px 0;
+        }
+        .month-title {
+            font-size: 18px;
+            color: #2c3e50;
+            margin: 20px 0 10px 0;
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 4px;
+        }
+        .filter-buttons {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .btn-verify, .btn-delete {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .btn-verify {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-verify:hover {
+            background: #229954;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3);
+        }
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3);
+        }
+        tr.verified {
+            opacity: 0.6;
+            background: #f0f0f0;
+        }
+        tr.deleted {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 見面次數統計報告</h1>
+        <p><strong>生成時間</strong>：2025-12-30 16:38:35</p>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>總檔案數</h3>
+                <div class="number">398</div>
+            </div>
+            <div class="stat-card confirmed">
+                <h3>確定見面</h3>
+                <div class="number">63</div>
+            </div>
+            <div class="stat-card gray">
+                <h3>疑似見面</h3>
+                <div class="number">146</div>
+            </div>
+            <div class="stat-card">
+                <h3>總見面次數</h3>
+                <div class="number">209</div>
+            </div>
+        </div>
+
+        <div class="filter-buttons">
+            <button class="filter-btn active" onclick="filterTable('all')">全部</button>
+            <button class="filter-btn" onclick="filterTable('confirmed')">確定見面</button>
+            <button class="filter-btn" onclick="filterTable('gray')">疑似見面</button>
+        </div>
+
+        <h2>✅ 確定見面日期列表</h2>
+        <table id="confirmed-table">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>檔案</th>
+                    <th style="width: 120px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2024-12-10.txt" target="_blank" class="date-link confirmed">2024-12-10 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-10.txt" target="_blank" class="file-link">2024-12-10.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2024-12-12.txt" target="_blank" class="date-link confirmed">2024-12-12 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-12.txt" target="_blank" class="file-link">2024-12-12.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2024-12-17.txt" target="_blank" class="date-link confirmed">2024-12-17 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-17.txt" target="_blank" class="file-link">2024-12-17.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2024-12-19.txt" target="_blank" class="date-link confirmed">2024-12-19 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-19.txt" target="_blank" class="file-link">2024-12-19.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-01-02.txt" target="_blank" class="date-link confirmed">2025-01-02 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-02.txt" target="_blank" class="file-link">2025-01-02.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-01-09.txt" target="_blank" class="date-link confirmed">2025-01-09 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-09.txt" target="_blank" class="file-link">2025-01-09.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-01-10.txt" target="_blank" class="date-link confirmed">2025-01-10 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-10.txt" target="_blank" class="file-link">2025-01-10.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-01-13.txt" target="_blank" class="date-link confirmed">2025-01-13 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-13.txt" target="_blank" class="file-link">2025-01-13.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-01-24.txt" target="_blank" class="date-link confirmed">2025-01-24 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-24.txt" target="_blank" class="file-link">2025-01-24.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-02-11.txt" target="_blank" class="date-link confirmed">2025-02-11 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-11.txt" target="_blank" class="file-link">2025-02-11.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-02-15.txt" target="_blank" class="date-link confirmed">2025-02-15 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-15.txt" target="_blank" class="file-link">2025-02-15.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-02-18.txt" target="_blank" class="date-link confirmed">2025-02-18 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-18.txt" target="_blank" class="file-link">2025-02-18.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-02-20.txt" target="_blank" class="date-link confirmed">2025-02-20 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-20.txt" target="_blank" class="file-link">2025-02-20.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-03-01.txt" target="_blank" class="date-link confirmed">2025-03-01 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-01.txt" target="_blank" class="file-link">2025-03-01.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-03-04.txt" target="_blank" class="date-link confirmed">2025-03-04 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-04.txt" target="_blank" class="file-link">2025-03-04.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-03-07.txt" target="_blank" class="date-link confirmed">2025-03-07 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-07.txt" target="_blank" class="file-link">2025-03-07.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-03-18.txt" target="_blank" class="date-link confirmed">2025-03-18 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-18.txt" target="_blank" class="file-link">2025-03-18.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-03-20.txt" target="_blank" class="date-link confirmed">2025-03-20 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-20.txt" target="_blank" class="file-link">2025-03-20.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-03-23.txt" target="_blank" class="date-link confirmed">2025-03-23 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-23.txt" target="_blank" class="file-link">2025-03-23.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-03-31.txt" target="_blank" class="date-link confirmed">2025-03-31 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-31.txt" target="_blank" class="file-link">2025-03-31.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-05-09.txt" target="_blank" class="date-link confirmed">2025-05-09 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-09.txt" target="_blank" class="file-link">2025-05-09.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-05-19.txt" target="_blank" class="date-link confirmed">2025-05-19 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-19.txt" target="_blank" class="file-link">2025-05-19.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-05-23.txt" target="_blank" class="date-link confirmed">2025-05-23 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-23.txt" target="_blank" class="file-link">2025-05-23.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-05-24.txt" target="_blank" class="date-link confirmed">2025-05-24 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-24.txt" target="_blank" class="file-link">2025-05-24.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-05-27.txt" target="_blank" class="date-link confirmed">2025-05-27 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-27.txt" target="_blank" class="file-link">2025-05-27.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-6-12_週四.txt" target="_blank" class="date-link confirmed">2025-06-12 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-12_週四.txt" target="_blank" class="file-link">2025-6-12_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-6-16_週一.txt" target="_blank" class="date-link confirmed">2025-06-16 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-16_週一.txt" target="_blank" class="file-link">2025-6-16_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-6-18_週三.txt" target="_blank" class="date-link confirmed">2025-06-18 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-18_週三.txt" target="_blank" class="file-link">2025-6-18_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-6-21_週六.txt" target="_blank" class="date-link confirmed">2025-06-21 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-21_週六.txt" target="_blank" class="file-link">2025-6-21_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-7-2_週三.txt" target="_blank" class="date-link confirmed">2025-07-02 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-2_週三.txt" target="_blank" class="file-link">2025-7-2_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-7-5_週六.txt" target="_blank" class="date-link confirmed">2025-07-05 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-5_週六.txt" target="_blank" class="file-link">2025-7-5_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-7-11_週五.txt" target="_blank" class="date-link confirmed">2025-07-11 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-11_週五.txt" target="_blank" class="file-link">2025-7-11_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-7-18_週五_PM.txt" target="_blank" class="date-link confirmed">2025-07-18 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-18_週五_PM.txt" target="_blank" class="file-link">2025-7-18_週五_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-7-22_週二.txt" target="_blank" class="date-link confirmed">2025-07-22 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-22_週二.txt" target="_blank" class="file-link">2025-7-22_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-7-28_週一.txt" target="_blank" class="date-link confirmed">2025-07-28 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-28_週一.txt" target="_blank" class="file-link">2025-7-28_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-7-29_週二.txt" target="_blank" class="date-link confirmed">2025-07-29 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-29_週二.txt" target="_blank" class="file-link">2025-7-29_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-8-8_週五.txt" target="_blank" class="date-link confirmed">2025-08-08 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-8_週五.txt" target="_blank" class="file-link">2025-8-8_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-9-6_週六.txt" target="_blank" class="date-link confirmed">2025-09-06 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-6_週六.txt" target="_blank" class="file-link">2025-9-6_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-9-10_週三.txt" target="_blank" class="date-link confirmed">2025-09-10 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-10_週三.txt" target="_blank" class="file-link">2025-9-10_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-9-11_週四.txt" target="_blank" class="date-link confirmed">2025-09-11 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-11_週四.txt" target="_blank" class="file-link">2025-9-11_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-9-20_週六.txt" target="_blank" class="date-link confirmed">2025-09-20 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-20_週六.txt" target="_blank" class="file-link">2025-9-20_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-10-4_週六.txt" target="_blank" class="date-link confirmed">2025-10-04 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-4_週六.txt" target="_blank" class="file-link">2025-10-4_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-10-10_週五.txt" target="_blank" class="date-link confirmed">2025-10-10 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-10_週五.txt" target="_blank" class="file-link">2025-10-10_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-10-11_週六.txt" target="_blank" class="date-link confirmed">2025-10-11 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-11_週六.txt" target="_blank" class="file-link">2025-10-11_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-10-28_週二.txt" target="_blank" class="date-link confirmed">2025-10-28 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-28_週二.txt" target="_blank" class="file-link">2025-10-28_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-10-30_週四.txt" target="_blank" class="date-link confirmed">2025-10-30 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-30_週四.txt" target="_blank" class="file-link">2025-10-30_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-8_週六.txt" target="_blank" class="date-link confirmed">2025-11-08 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-8_週六.txt" target="_blank" class="file-link">2025-11-8_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-9_週日.txt" target="_blank" class="date-link confirmed">2025-11-09 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-9_週日.txt" target="_blank" class="file-link">2025-11-9_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-11_週二.txt" target="_blank" class="date-link confirmed">2025-11-11 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-11_週二.txt" target="_blank" class="file-link">2025-11-11_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-14_週五_AM.txt" target="_blank" class="date-link confirmed">2025-11-14 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-14_週五_AM.txt" target="_blank" class="file-link">2025-11-14_週五_AM.txt</a>、<a href="../output/2025-11-14_週五_PM.txt" target="_blank" class="file-link">2025-11-14_週五_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-15_週六.txt" target="_blank" class="date-link confirmed">2025-11-15 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-15_週六.txt" target="_blank" class="file-link">2025-11-15_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-18_週二.txt" target="_blank" class="date-link confirmed">2025-11-18 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-18_週二.txt" target="_blank" class="file-link">2025-11-18_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-19_週三.txt" target="_blank" class="date-link confirmed">2025-11-19 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-19_週三.txt" target="_blank" class="file-link">2025-11-19_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-11-25_週二.txt" target="_blank" class="date-link confirmed">2025-11-25 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-25_週二.txt" target="_blank" class="file-link">2025-11-25_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-1_週一.txt" target="_blank" class="date-link confirmed">2025-12-01 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-1_週一.txt" target="_blank" class="file-link">2025-12-1_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-2_週二.txt" target="_blank" class="date-link confirmed">2025-12-02 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-2_週二.txt" target="_blank" class="file-link">2025-12-2_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-6_週六.txt" target="_blank" class="date-link confirmed">2025-12-06 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-6_週六.txt" target="_blank" class="file-link">2025-12-6_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-8_週一.txt" target="_blank" class="date-link confirmed">2025-12-08 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-8_週一.txt" target="_blank" class="file-link">2025-12-8_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-13_週六_PM.txt" target="_blank" class="date-link confirmed">2025-12-13 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-13_週六_PM.txt" target="_blank" class="file-link">2025-12-13_週六_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-15_週一.txt" target="_blank" class="date-link confirmed">2025-12-15 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-15_週一.txt" target="_blank" class="file-link">2025-12-15_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-23_週二_PM.txt" target="_blank" class="date-link confirmed">2025-12-23 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-23_週二_PM.txt" target="_blank" class="file-link">2025-12-23_週二_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-27_週六_PM.txt" target="_blank" class="date-link confirmed">2025-12-27 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-27_週六_PM.txt" target="_blank" class="file-link">2025-12-27_週六_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-confirmed">
+                    <td>
+                        <a href="../output/2025-12-28_週日.txt" target="_blank" class="date-link confirmed">2025-12-28 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-28_週日.txt" target="_blank" class="file-link">2025-12-28_週日.txt</a></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>⚠️ 疑似見面日期列表</h2>
+        <table id="gray-table">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>檔案</th>
+                    <th style="width: 120px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2024-12-08.txt" target="_blank" class="date-link gray">2024-12-08 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-08.txt" target="_blank" class="file-link">2024-12-08.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2024-12-13.txt" target="_blank" class="date-link gray">2024-12-13 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-13.txt" target="_blank" class="file-link">2024-12-13.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2024-12-16.txt" target="_blank" class="date-link gray">2024-12-16 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-16.txt" target="_blank" class="file-link">2024-12-16.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2024-12-26.txt" target="_blank" class="date-link gray">2024-12-26 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-26.txt" target="_blank" class="file-link">2024-12-26.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2024-12-29.txt" target="_blank" class="date-link gray">2024-12-29 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-29.txt" target="_blank" class="file-link">2024-12-29.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2024-12-31.txt" target="_blank" class="date-link gray">2024-12-31 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2024-12-31.txt" target="_blank" class="file-link">2024-12-31.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-04.txt" target="_blank" class="date-link gray">2025-01-04 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-04.txt" target="_blank" class="file-link">2025-01-04.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-05.txt" target="_blank" class="date-link gray">2025-01-05 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-05.txt" target="_blank" class="file-link">2025-01-05.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-06.txt" target="_blank" class="date-link gray">2025-01-06 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-06.txt" target="_blank" class="file-link">2025-01-06.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-07.txt" target="_blank" class="date-link gray">2025-01-07 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-07.txt" target="_blank" class="file-link">2025-01-07.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-08.txt" target="_blank" class="date-link gray">2025-01-08 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-08.txt" target="_blank" class="file-link">2025-01-08.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-11.txt" target="_blank" class="date-link gray">2025-01-11 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-11.txt" target="_blank" class="file-link">2025-01-11.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-14.txt" target="_blank" class="date-link gray">2025-01-14 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-14.txt" target="_blank" class="file-link">2025-01-14.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-15.txt" target="_blank" class="date-link gray">2025-01-15 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-15.txt" target="_blank" class="file-link">2025-01-15.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-16.txt" target="_blank" class="date-link gray">2025-01-16 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-16.txt" target="_blank" class="file-link">2025-01-16.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-20.txt" target="_blank" class="date-link gray">2025-01-20 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-20.txt" target="_blank" class="file-link">2025-01-20.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-21.txt" target="_blank" class="date-link gray">2025-01-21 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-21.txt" target="_blank" class="file-link">2025-01-21.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-22.txt" target="_blank" class="date-link gray">2025-01-22 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-22.txt" target="_blank" class="file-link">2025-01-22.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-23.txt" target="_blank" class="date-link gray">2025-01-23 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-23.txt" target="_blank" class="file-link">2025-01-23.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-27.txt" target="_blank" class="date-link gray">2025-01-27 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-27.txt" target="_blank" class="file-link">2025-01-27.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-28.txt" target="_blank" class="date-link gray">2025-01-28 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-28.txt" target="_blank" class="file-link">2025-01-28.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-01-29.txt" target="_blank" class="date-link gray">2025-01-29 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-01-29.txt" target="_blank" class="file-link">2025-01-29.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-02.txt" target="_blank" class="date-link gray">2025-02-02 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-02.txt" target="_blank" class="file-link">2025-02-02.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-04.txt" target="_blank" class="date-link gray">2025-02-04 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-04.txt" target="_blank" class="file-link">2025-02-04.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-05.txt" target="_blank" class="date-link gray">2025-02-05 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-05.txt" target="_blank" class="file-link">2025-02-05.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-06.txt" target="_blank" class="date-link gray">2025-02-06 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-06.txt" target="_blank" class="file-link">2025-02-06.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-07.txt" target="_blank" class="date-link gray">2025-02-07 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-07.txt" target="_blank" class="file-link">2025-02-07.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-12.txt" target="_blank" class="date-link gray">2025-02-12 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-12.txt" target="_blank" class="file-link">2025-02-12.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-14.txt" target="_blank" class="date-link gray">2025-02-14 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-14.txt" target="_blank" class="file-link">2025-02-14.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-17.txt" target="_blank" class="date-link gray">2025-02-17 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-17.txt" target="_blank" class="file-link">2025-02-17.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-19.txt" target="_blank" class="date-link gray">2025-02-19 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-19.txt" target="_blank" class="file-link">2025-02-19.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-25.txt" target="_blank" class="date-link gray">2025-02-25 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-25.txt" target="_blank" class="file-link">2025-02-25.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-26.txt" target="_blank" class="date-link gray">2025-02-26 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-26.txt" target="_blank" class="file-link">2025-02-26.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-02-27.txt" target="_blank" class="date-link gray">2025-02-27 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-02-27.txt" target="_blank" class="file-link">2025-02-27.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-02.txt" target="_blank" class="date-link gray">2025-03-02 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-02.txt" target="_blank" class="file-link">2025-03-02.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-06.txt" target="_blank" class="date-link gray">2025-03-06 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-06.txt" target="_blank" class="file-link">2025-03-06.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-09.txt" target="_blank" class="date-link gray">2025-03-09 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-09.txt" target="_blank" class="file-link">2025-03-09.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-11.txt" target="_blank" class="date-link gray">2025-03-11 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-11.txt" target="_blank" class="file-link">2025-03-11.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-12.txt" target="_blank" class="date-link gray">2025-03-12 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-12.txt" target="_blank" class="file-link">2025-03-12.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-21.txt" target="_blank" class="date-link gray">2025-03-21 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-21.txt" target="_blank" class="file-link">2025-03-21.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-25.txt" target="_blank" class="date-link gray">2025-03-25 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-25.txt" target="_blank" class="file-link">2025-03-25.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-03-30.txt" target="_blank" class="date-link gray">2025-03-30 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-03-30.txt" target="_blank" class="file-link">2025-03-30.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-01.txt" target="_blank" class="date-link gray">2025-04-01 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-01.txt" target="_blank" class="file-link">2025-04-01.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-02.txt" target="_blank" class="date-link gray">2025-04-02 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-02.txt" target="_blank" class="file-link">2025-04-02.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-08.txt" target="_blank" class="date-link gray">2025-04-08 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-08.txt" target="_blank" class="file-link">2025-04-08.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-10.txt" target="_blank" class="date-link gray">2025-04-10 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-10.txt" target="_blank" class="file-link">2025-04-10.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-12.txt" target="_blank" class="date-link gray">2025-04-12 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-12.txt" target="_blank" class="file-link">2025-04-12.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-15.txt" target="_blank" class="date-link gray">2025-04-15 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-15.txt" target="_blank" class="file-link">2025-04-15.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-28.txt" target="_blank" class="date-link gray">2025-04-28 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-28.txt" target="_blank" class="file-link">2025-04-28.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-29.txt" target="_blank" class="date-link gray">2025-04-29 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-29.txt" target="_blank" class="file-link">2025-04-29.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-04-30.txt" target="_blank" class="date-link gray">2025-04-30 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-04-30.txt" target="_blank" class="file-link">2025-04-30.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-01.txt" target="_blank" class="date-link gray">2025-05-01 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-01.txt" target="_blank" class="file-link">2025-05-01.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-03.txt" target="_blank" class="date-link gray">2025-05-03 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-03.txt" target="_blank" class="file-link">2025-05-03.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-05.txt" target="_blank" class="date-link gray">2025-05-05 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-05.txt" target="_blank" class="file-link">2025-05-05.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-06.txt" target="_blank" class="date-link gray">2025-05-06 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-06.txt" target="_blank" class="file-link">2025-05-06.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-08.txt" target="_blank" class="date-link gray">2025-05-08 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-08.txt" target="_blank" class="file-link">2025-05-08.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-10.txt" target="_blank" class="date-link gray">2025-05-10 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-10.txt" target="_blank" class="file-link">2025-05-10.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-11.txt" target="_blank" class="date-link gray">2025-05-11 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-11.txt" target="_blank" class="file-link">2025-05-11.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-13.txt" target="_blank" class="date-link gray">2025-05-13 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-13.txt" target="_blank" class="file-link">2025-05-13.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-05-20.txt" target="_blank" class="date-link gray">2025-05-20 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-05-20.txt" target="_blank" class="file-link">2025-05-20.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-6-3_週二.txt" target="_blank" class="date-link gray">2025-06-03 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-3_週二.txt" target="_blank" class="file-link">2025-6-3_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-6-8_週日.txt" target="_blank" class="date-link gray">2025-06-08 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-8_週日.txt" target="_blank" class="file-link">2025-6-8_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-6-17_週二.txt" target="_blank" class="date-link gray">2025-06-17 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-17_週二.txt" target="_blank" class="file-link">2025-6-17_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-6-19_週四.txt" target="_blank" class="date-link gray">2025-06-19 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-19_週四.txt" target="_blank" class="file-link">2025-6-19_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-6-24_週二.txt" target="_blank" class="date-link gray">2025-06-24 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-24_週二.txt" target="_blank" class="file-link">2025-6-24_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-6-29_週日.txt" target="_blank" class="date-link gray">2025-06-29 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-6-29_週日.txt" target="_blank" class="file-link">2025-6-29_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-4_週五.txt" target="_blank" class="date-link gray">2025-07-04 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-4_週五.txt" target="_blank" class="file-link">2025-7-4_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-7_週一.txt" target="_blank" class="date-link gray">2025-07-07 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-7_週一.txt" target="_blank" class="file-link">2025-7-7_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-8_週二.txt" target="_blank" class="date-link gray">2025-07-08 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-8_週二.txt" target="_blank" class="file-link">2025-7-8_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-9_週三.txt" target="_blank" class="date-link gray">2025-07-09 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-9_週三.txt" target="_blank" class="file-link">2025-7-9_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-10_週四.txt" target="_blank" class="date-link gray">2025-07-10 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-10_週四.txt" target="_blank" class="file-link">2025-7-10_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-12_週六_AM.txt" target="_blank" class="date-link gray">2025-07-12 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-12_週六_AM.txt" target="_blank" class="file-link">2025-7-12_週六_AM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-15_週二.txt" target="_blank" class="date-link gray">2025-07-15 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-15_週二.txt" target="_blank" class="file-link">2025-7-15_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-16_週三.txt" target="_blank" class="date-link gray">2025-07-16 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-16_週三.txt" target="_blank" class="file-link">2025-7-16_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-17_週四.txt" target="_blank" class="date-link gray">2025-07-17 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-17_週四.txt" target="_blank" class="file-link">2025-7-17_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-18_週五_AM.txt" target="_blank" class="date-link gray">2025-07-18 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-18_週五_AM.txt" target="_blank" class="file-link">2025-7-18_週五_AM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-19_週六_PM.txt" target="_blank" class="date-link gray">2025-07-19 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-19_週六_PM.txt" target="_blank" class="file-link">2025-7-19_週六_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-21_週一.txt" target="_blank" class="date-link gray">2025-07-21 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-21_週一.txt" target="_blank" class="file-link">2025-7-21_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-7-26_週六.txt" target="_blank" class="date-link gray">2025-07-26 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-7-26_週六.txt" target="_blank" class="file-link">2025-7-26_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-2_週六.txt" target="_blank" class="date-link gray">2025-08-02 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-2_週六.txt" target="_blank" class="file-link">2025-8-2_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-4_週一.txt" target="_blank" class="date-link gray">2025-08-04 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-4_週一.txt" target="_blank" class="file-link">2025-8-4_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-7_週四.txt" target="_blank" class="date-link gray">2025-08-07 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-7_週四.txt" target="_blank" class="file-link">2025-8-7_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-14_週四.txt" target="_blank" class="date-link gray">2025-08-14 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-14_週四.txt" target="_blank" class="file-link">2025-8-14_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-20_週三.txt" target="_blank" class="date-link gray">2025-08-20 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-20_週三.txt" target="_blank" class="file-link">2025-8-20_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-23_週六.txt" target="_blank" class="date-link gray">2025-08-23 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-23_週六.txt" target="_blank" class="file-link">2025-8-23_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-24_週日.txt" target="_blank" class="date-link gray">2025-08-24 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-24_週日.txt" target="_blank" class="file-link">2025-8-24_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-26_週二_PM.txt" target="_blank" class="date-link gray">2025-08-26 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-26_週二_PM.txt" target="_blank" class="file-link">2025-8-26_週二_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-27_週三.txt" target="_blank" class="date-link gray">2025-08-27 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-27_週三.txt" target="_blank" class="file-link">2025-8-27_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-29_週五.txt" target="_blank" class="date-link gray">2025-08-29 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-29_週五.txt" target="_blank" class="file-link">2025-8-29_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-30_週六.txt" target="_blank" class="date-link gray">2025-08-30 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-30_週六.txt" target="_blank" class="file-link">2025-8-30_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-8-31_週日.txt" target="_blank" class="date-link gray">2025-08-31 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-8-31_週日.txt" target="_blank" class="file-link">2025-8-31_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-1_週一.txt" target="_blank" class="date-link gray">2025-09-01 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-1_週一.txt" target="_blank" class="file-link">2025-9-1_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-3_週三.txt" target="_blank" class="date-link gray">2025-09-03 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-3_週三.txt" target="_blank" class="file-link">2025-9-3_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-4_週四.txt" target="_blank" class="date-link gray">2025-09-04 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-4_週四.txt" target="_blank" class="file-link">2025-9-4_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-7_週日.txt" target="_blank" class="date-link gray">2025-09-07 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-7_週日.txt" target="_blank" class="file-link">2025-9-7_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-9_週二.txt" target="_blank" class="date-link gray">2025-09-09 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-9_週二.txt" target="_blank" class="file-link">2025-9-9_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-16_週二.txt" target="_blank" class="date-link gray">2025-09-16 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-16_週二.txt" target="_blank" class="file-link">2025-9-16_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-17_週三.txt" target="_blank" class="date-link gray">2025-09-17 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-17_週三.txt" target="_blank" class="file-link">2025-9-17_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-18_週四.txt" target="_blank" class="date-link gray">2025-09-18 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-18_週四.txt" target="_blank" class="file-link">2025-9-18_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-19_週五.txt" target="_blank" class="date-link gray">2025-09-19 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-19_週五.txt" target="_blank" class="file-link">2025-9-19_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-24_週三.txt" target="_blank" class="date-link gray">2025-09-24 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-24_週三.txt" target="_blank" class="file-link">2025-9-24_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-25_週四.txt" target="_blank" class="date-link gray">2025-09-25 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-25_週四.txt" target="_blank" class="file-link">2025-9-25_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-29_週一.txt" target="_blank" class="date-link gray">2025-09-29 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-29_週一.txt" target="_blank" class="file-link">2025-9-29_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-9-30_週二.txt" target="_blank" class="date-link gray">2025-09-30 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-9-30_週二.txt" target="_blank" class="file-link">2025-9-30_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-1_週三.txt" target="_blank" class="date-link gray">2025-10-01 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-1_週三.txt" target="_blank" class="file-link">2025-10-1_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-5_週日.txt" target="_blank" class="date-link gray">2025-10-05 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-5_週日.txt" target="_blank" class="file-link">2025-10-5_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-6_週一.txt" target="_blank" class="date-link gray">2025-10-06 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-6_週一.txt" target="_blank" class="file-link">2025-10-6_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-7_週二.txt" target="_blank" class="date-link gray">2025-10-07 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-7_週二.txt" target="_blank" class="file-link">2025-10-7_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-9_週四.txt" target="_blank" class="date-link gray">2025-10-09 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-9_週四.txt" target="_blank" class="file-link">2025-10-9_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-15_週三.txt" target="_blank" class="date-link gray">2025-10-15 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-15_週三.txt" target="_blank" class="file-link">2025-10-15_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-17_週五.txt" target="_blank" class="date-link gray">2025-10-17 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-17_週五.txt" target="_blank" class="file-link">2025-10-17_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-18_週六.txt" target="_blank" class="date-link gray">2025-10-18 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-18_週六.txt" target="_blank" class="file-link">2025-10-18_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-21_週二.txt" target="_blank" class="date-link gray">2025-10-21 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-21_週二.txt" target="_blank" class="file-link">2025-10-21_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-24_週五.txt" target="_blank" class="date-link gray">2025-10-24 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-24_週五.txt" target="_blank" class="file-link">2025-10-24_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-29_週三.txt" target="_blank" class="date-link gray">2025-10-29 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-29_週三.txt" target="_blank" class="file-link">2025-10-29_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-10-31_週五.txt" target="_blank" class="date-link gray">2025-10-31 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-10-31_週五.txt" target="_blank" class="file-link">2025-10-31_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-2_週日.txt" target="_blank" class="date-link gray">2025-11-02 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-2_週日.txt" target="_blank" class="file-link">2025-11-2_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-3_週一.txt" target="_blank" class="date-link gray">2025-11-03 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-3_週一.txt" target="_blank" class="file-link">2025-11-3_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-4_週二.txt" target="_blank" class="date-link gray">2025-11-04 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-4_週二.txt" target="_blank" class="file-link">2025-11-4_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-6_週四.txt" target="_blank" class="date-link gray">2025-11-06 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-6_週四.txt" target="_blank" class="file-link">2025-11-6_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-7_週五.txt" target="_blank" class="date-link gray">2025-11-07 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-7_週五.txt" target="_blank" class="file-link">2025-11-7_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-10_週一.txt" target="_blank" class="date-link gray">2025-11-10 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-10_週一.txt" target="_blank" class="file-link">2025-11-10_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-12_週三.txt" target="_blank" class="date-link gray">2025-11-12 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-12_週三.txt" target="_blank" class="file-link">2025-11-12_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-13_週四_PM.txt" target="_blank" class="date-link gray">2025-11-13 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-13_週四_PM.txt" target="_blank" class="file-link">2025-11-13_週四_PM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-17_週一.txt" target="_blank" class="date-link gray">2025-11-17 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-17_週一.txt" target="_blank" class="file-link">2025-11-17_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-20_週四.txt" target="_blank" class="date-link gray">2025-11-20 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-20_週四.txt" target="_blank" class="file-link">2025-11-20_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-23_週日.txt" target="_blank" class="date-link gray">2025-11-23 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-23_週日.txt" target="_blank" class="file-link">2025-11-23_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-27_週四.txt" target="_blank" class="date-link gray">2025-11-27 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-27_週四.txt" target="_blank" class="file-link">2025-11-27_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-29_週六.txt" target="_blank" class="date-link gray">2025-11-29 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-29_週六.txt" target="_blank" class="file-link">2025-11-29_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-11-30_週日.txt" target="_blank" class="date-link gray">2025-11-30 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-11-30_週日.txt" target="_blank" class="file-link">2025-11-30_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-4_週四.txt" target="_blank" class="date-link gray">2025-12-04 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-4_週四.txt" target="_blank" class="file-link">2025-12-4_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-5_週五.txt" target="_blank" class="date-link gray">2025-12-05 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-5_週五.txt" target="_blank" class="file-link">2025-12-5_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-7_週日.txt" target="_blank" class="date-link gray">2025-12-07 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-7_週日.txt" target="_blank" class="file-link">2025-12-7_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-9_週二.txt" target="_blank" class="date-link gray">2025-12-09 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-9_週二.txt" target="_blank" class="file-link">2025-12-9_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-10_週三.txt" target="_blank" class="date-link gray">2025-12-10 (週三)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-10_週三.txt" target="_blank" class="file-link">2025-12-10_週三.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-11_週四.txt" target="_blank" class="date-link gray">2025-12-11 (週四)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-11_週四.txt" target="_blank" class="file-link">2025-12-11_週四.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-12_週五.txt" target="_blank" class="date-link gray">2025-12-12 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-12_週五.txt" target="_blank" class="file-link">2025-12-12_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-13_週六_AM.txt" target="_blank" class="date-link gray">2025-12-13 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-13_週六_AM.txt" target="_blank" class="file-link">2025-12-13_週六_AM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-14_週日.txt" target="_blank" class="date-link gray">2025-12-14 (週日)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-14_週日.txt" target="_blank" class="file-link">2025-12-14_週日.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-16_週二.txt" target="_blank" class="date-link gray">2025-12-16 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-16_週二.txt" target="_blank" class="file-link">2025-12-16_週二.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-19_週五.txt" target="_blank" class="date-link gray">2025-12-19 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-19_週五.txt" target="_blank" class="file-link">2025-12-19_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-20_週六.txt" target="_blank" class="date-link gray">2025-12-20 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-20_週六.txt" target="_blank" class="file-link">2025-12-20_週六.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-22_週一.txt" target="_blank" class="date-link gray">2025-12-22 (週一)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-22_週一.txt" target="_blank" class="file-link">2025-12-22_週一.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-23_週二_AM.txt" target="_blank" class="date-link gray">2025-12-23 (週二)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-23_週二_AM.txt" target="_blank" class="file-link">2025-12-23_週二_AM.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-26_週五.txt" target="_blank" class="date-link gray">2025-12-26 (週五)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-26_週五.txt" target="_blank" class="file-link">2025-12-26_週五.txt</a></div>
+                    </td>
+                </tr>
+
+                <tr class="row-gray">
+                    <td>
+                        <a href="../output/2025-12-27_週六_AM.txt" target="_blank" class="date-link gray">2025-12-27 (週六)</a>
+                    </td>
+                    <td>
+                        <div class="file-list"><a href="../output/2025-12-27_週六_AM.txt" target="_blank" class="file-link">2025-12-27_週六_AM.txt</a></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>📅 按月統計</h2>
+        <div class="month-section">
+            <h3 class="month-title">確定見面</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>月份</th>
+                        <th>次數</th>
+                        <th>日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>2024-12</td>
+                        <td><strong>4</strong></td>
+                        <td>10、12、17、19</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-01</td>
+                        <td><strong>5</strong></td>
+                        <td>02、09、10、13、24</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-02</td>
+                        <td><strong>4</strong></td>
+                        <td>11、15、18、20</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-03</td>
+                        <td><strong>7</strong></td>
+                        <td>01、04、07、18、20、23、31</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-05</td>
+                        <td><strong>5</strong></td>
+                        <td>09、19、23、24、27</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-06</td>
+                        <td><strong>4</strong></td>
+                        <td>12、16、18、21</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-07</td>
+                        <td><strong>7</strong></td>
+                        <td>02、05、11、18、22、28、29</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-08</td>
+                        <td><strong>1</strong></td>
+                        <td>08</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-09</td>
+                        <td><strong>4</strong></td>
+                        <td>06、10、11、20</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-10</td>
+                        <td><strong>5</strong></td>
+                        <td>04、10、11、28、30</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-11</td>
+                        <td><strong>8</strong></td>
+                        <td>08、09、11、14、15、18、19、25</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-12</td>
+                        <td><strong>9</strong></td>
+                        <td>01、02、06、08、13、15、23、27、28</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 class="month-title">疑似見面</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>月份</th>
+                        <th>次數</th>
+                        <th>日期</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>2024-12</td>
+                        <td><strong>6</strong></td>
+                        <td>08、13、16、26、29、31</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-01</td>
+                        <td><strong>16</strong></td>
+                        <td>04、05、06、07、08、11、14、15、16、20、21、22、23、27、28、29</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-02</td>
+                        <td><strong>12</strong></td>
+                        <td>02、04、05、06、07、12、14、17、19、25、26、27</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-03</td>
+                        <td><strong>8</strong></td>
+                        <td>02、06、09、11、12、21、25、30</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-04</td>
+                        <td><strong>9</strong></td>
+                        <td>01、02、08、10、12、15、28、29、30</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-05</td>
+                        <td><strong>9</strong></td>
+                        <td>01、03、05、06、08、10、11、13、20</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-06</td>
+                        <td><strong>6</strong></td>
+                        <td>03、08、17、19、24、29</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-07</td>
+                        <td><strong>13</strong></td>
+                        <td>04、07、08、09、10、12、15、16、17、18、19、21、26</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-08</td>
+                        <td><strong>12</strong></td>
+                        <td>02、04、07、14、20、23、24、26、27、29、30、31</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-09</td>
+                        <td><strong>13</strong></td>
+                        <td>01、03、04、07、09、16、17、18、19、24、25、29、30</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-10</td>
+                        <td><strong>12</strong></td>
+                        <td>01、05、06、07、09、15、17、18、21、24、29、31</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-11</td>
+                        <td><strong>14</strong></td>
+                        <td>02、03、04、06、07、10、12、13、17、20、23、27、29、30</td>
+                    </tr>
+
+                    <tr>
+                        <td>2025-12</td>
+                        <td><strong>16</strong></td>
+                        <td>04、05、07、09、10、11、12、13、14、16、19、20、22、23、26、27</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>本報告由自動分析程式生成</p>
+        </div>
+    </div>
+
+    <script>
+        // 初始化表格行的操作按鈕
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTableRows('confirmed-table');
+            initializeTableRows('gray-table');
+        });
+
+        function initializeTableRows(tableId) {
+            const table = document.getElementById(tableId);
+            const rows = table.querySelectorAll('tbody tr');
+
+            rows.forEach((row, index) => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 2) {
+                    // 建立操作按鈕單元格
+                    const actionCell = document.createElement('td');
+                    actionCell.className = 'action-buttons';
+                    actionCell.innerHTML = `
+                        <button class="btn-verify" onclick="verifyRow(this)" title="確認無誤">✓ 確認</button>
+                        <button class="btn-delete" onclick="deleteRow(this)" title="刪除此行">✕ 刪除</button>
+                    `;
+                    row.appendChild(actionCell);
+                }
+            });
+        }
+
+        function verifyRow(button) {
+            const row = button.closest('tr');
+            row.classList.add('verified');
+            button.disabled = true;
+            button.style.opacity = '0.5';
+            button.style.cursor = 'not-allowed';
+        }
+
+        function deleteRow(button) {
+            const row = button.closest('tr');
+            row.classList.add('deleted');
+        }
+
+        function filterTable(type) {
+            // 更新按鈕狀態
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 顯示/隱藏表格
+            const confirmedTable = document.getElementById('confirmed-table');
+            const grayTable = document.getElementById('gray-table');
+
+            if (type === 'all') {
+                confirmedTable.style.display = 'table';
+                grayTable.style.display = 'table';
+            } else if (type === 'confirmed') {
+                confirmedTable.style.display = 'table';
+                grayTable.style.display = 'none';
+            } else if (type === 'gray') {
+                confirmedTable.style.display = 'none';
+                grayTable.style.display = 'table';
+            }
+        }
+    </script>
+</body>
+</html>
