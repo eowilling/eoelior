@@ -1,0 +1,14 @@
+--- Willing 專案檔案備份 ---
+
+這裡只存放你 Willing 專案相關的程式碼路徑
+C:\xampp\mysql
+C:\xampp\htdocs\vendor
+C:\xampp\htdocs\eoelior
+C:\xampp\htdocs\master
+C:\xampp\htdocs\willingweb
+
+--- Willing 資料庫備份 ---
+
+這裡只會抓取名稱為 willing 的資料庫
+
+DB:willing
