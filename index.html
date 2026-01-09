@@ -9,10 +9,16 @@
 		header { background: #2d89ef; color: #fff; padding: 2rem 1rem 1rem 1rem; text-align: center; }
 		h1 { margin: 0 0 0.5rem 0; }
 		.intro { margin-bottom: 1rem; font-size: 1.1rem; }
-		.tools-bar { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
-		.tool-btn { background: #fff; border: 2px solid #2d89ef; color: #2d89ef; padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: background 0.2s, color 0.2s; }
-		.tool-btn:hover { background: #2d89ef; color: #fff; }
-		#tool-container { max-width: 900px; margin: 2rem auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); min-height: 300px; padding: 2rem; }
+		.tools-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-bottom: 2rem; }
+		.tool-btn { background: #fff; border: 2px solid #2d89ef; color: #2d89ef; padding: 0.6rem 1.2rem; border-radius: 999px; cursor: pointer; font-size: 0.95rem; transition: background 0.2s, color 0.2s, transform 0.1s; white-space: nowrap; }
+		.tool-btn:hover { background: #2d89ef; color: #fff; transform: translateY(-1px); }
+		#tool-container { max-width: 900px; margin: 2rem auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); min-height: 260px; padding: 2rem; }
+
+		@media (max-width: 640px) {
+			header { padding: 1.6rem 1rem 1rem 1rem; }
+			.tools-bar { gap: 0.5rem; }
+			.tool-btn { font-size: 0.85rem; padding: 0.5rem 1rem; }
+		}
 	</style>
 </head>
 <body>
@@ -29,6 +35,7 @@
 			<button class="tool-btn" onclick="openTool('IRS/THSR_BookingTool.html')" style="background:#ff6b35;border-color:#ff6b35;color:#fff;">🚄 高鐵搶票</button>
 			<button class="tool-btn" onclick="openTool('buytonobuy/index.html')" style="background:#fcd34d;border-color:#fcd34d;color:#000;">🎡 轉盤遊戲</button>
 			<button class="tool-btn" onclick="openTool('eveday/index.html')" style="background:#a78bfa;border-color:#a78bfa;color:#fff;">📅 每日打卡日曆</button>
+			<button class="tool-btn" onclick="openTool('sudo/index.html')" style="background:#10b981;border-color:#10b981;color:#fff;">🧩 數獨遊戲（Web）</button>
 		</div>
 	</header>
 	<main>
