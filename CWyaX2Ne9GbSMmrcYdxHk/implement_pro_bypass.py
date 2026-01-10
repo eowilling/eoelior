@@ -287,7 +287,7 @@ def main():
         json.dump(bypass_info, f, ensure_ascii=False, indent=2)
     
     print("\n绕过信息已保存到: cursor_pro_bypass_info.json")
-    utils.set_state(success=True, result=bypass_info)
+
 if __name__ == "__main__":
     import re
     main()

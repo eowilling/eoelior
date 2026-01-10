@@ -7,7 +7,7 @@ def analyze_error_log():
     print("=== 分析错误日志 ===")
     
     # 解析用户提供的错误日志
-    error_log = """
+    error_log = r"""
 .get (file:///C:/Program%20Files/Cursor/resources/app/out/main.js:229:1069)
     at Up.initChannels (file:///C:/Program%20Files/Cursor/resources/app/out/main.js:196:40704)
     at file:///C:/Program%20Files/Cursor/resources/app/out/main.js:196:31234
@@ -180,6 +180,6 @@ def main():
         json.dump(result, f, ensure_ascii=False, indent=2)
     
     print("\n分析结果已保存到: cursor_error_analysis.json")
-    utils.set_state(success=True, result=result)
+
 if __name__ == "__main__":
     main()
