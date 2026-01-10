@@ -1,55 +1,324 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>網站入口 - eoelior</title>
 	<style>
-		body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f7f7f7; }
-		header { background: #2d89ef; color: #fff; padding: 2rem 1rem 1rem 1rem; text-align: center; }
-		h1 { margin: 0 0 0.5rem 0; }
-		.intro { margin-bottom: 1rem; font-size: 1.1rem; }
-		.tools-bar { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-bottom: 2rem; }
-		.tool-btn { background: #fff; border: 2px solid #2d89ef; color: #2d89ef; padding: 0.6rem 1.2rem; border-radius: 999px; cursor: pointer; font-size: 0.95rem; transition: background 0.2s, color 0.2s, transform 0.1s; white-space: nowrap; }
-		.tool-btn:hover { background: #2d89ef; color: #fff; transform: translateY(-1px); }
-		#tool-container { max-width: 900px; margin: 2rem auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); min-height: 260px; padding: 2rem; }
+		* {
+			box-sizing: border-box;
+		}
 
-		@media (max-width: 640px) {
-			header { padding: 1.6rem 1rem 1rem 1rem; }
-			.tools-bar { gap: 0.5rem; }
-			.tool-btn { font-size: 0.85rem; padding: 0.5rem 1rem; }
+		body {
+			font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
+			margin: 0;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			padding-bottom: 2rem;
+		}
+
+		header {
+			background: rgba(255, 255, 255, 0.95);
+			backdrop-filter: blur(10px);
+			color: #333;
+			padding: 2.5rem 1.5rem 2rem 1.5rem;
+			text-align: center;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+		}
+
+		h1 {
+			margin: 0 0 0.5rem 0;
+			font-size: 2.5rem;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
+			font-weight: 700;
+		}
+
+		.subtitle {
+			color: #666;
+			font-size: 1rem;
+			margin-bottom: 2rem;
+			font-weight: 400;
+		}
+
+		.intro {
+			margin-bottom: 1.5rem;
+			font-size: 1.15rem;
+			color: #555;
+			max-width: 800px;
+			margin-left: auto;
+			margin-right: auto;
+			line-height: 1.6;
+		}
+
+		.tools-section {
+			max-width: 1200px;
+			margin: 0 auto 1.5rem auto;
+			padding: 0 1rem;
+		}
+
+		.section-title {
+			color: #fff;
+			font-size: 1.3rem;
+			font-weight: 600;
+			margin: 2rem 0 1rem 0;
+			text-align: center;
+			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+		}
+
+		.tools-bar {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 1rem;
+			margin-bottom: 1rem;
+		}
+
+		.tool-btn {
+			background: #fff;
+			border: none;
+			color: #333;
+			padding: 1rem 2rem;
+			border-radius: 12px;
+			cursor: pointer;
+			font-size: 1.05rem;
+			font-weight: 500;
+			transition: all 0.3s ease;
+			white-space: nowrap;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+			position: relative;
+			overflow: hidden;
+		}
+
+		.tool-btn::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: -100%;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+			transition: left 0.5s;
+		}
+
+		.tool-btn:hover::before {
+			left: 100%;
+		}
+
+		.tool-btn:hover {
+			transform: translateY(-3px);
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+		}
+
+		.tool-btn:active {
+			transform: translateY(-1px);
+		}
+
+		.tool-btn.featured {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: #fff;
+			font-weight: 600;
+		}
+
+		#tool-container {
+			max-width: 1000px;
+			margin: 2rem auto;
+			background: rgba(255, 255, 255, 0.95);
+			backdrop-filter: blur(10px);
+			border-radius: 16px;
+			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+			min-height: 300px;
+			padding: 3rem 2rem;
+		}
+
+		.info-box {
+			text-align: center;
+			color: #666;
+			padding: 2rem;
+		}
+
+		.info-title {
+			font-size: 1.5rem;
+			color: #333;
+			margin-bottom: 1rem;
+			font-weight: 600;
+		}
+
+		.info-text {
+			font-size: 1rem;
+			color: #777;
+			line-height: 1.8;
+		}
+
+		.feature-list {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 1.5rem;
+			margin-top: 2rem;
+		}
+
+		.feature-item {
+			background: #f8f9fa;
+			padding: 1.5rem;
+			border-radius: 12px;
+			border-left: 4px solid #667eea;
+			transition: transform 0.2s;
+		}
+
+		.feature-item:hover {
+			transform: translateX(5px);
+		}
+
+		.feature-icon {
+			font-size: 2rem;
+			margin-bottom: 0.5rem;
+		}
+
+		.feature-title {
+			font-size: 1.1rem;
+			font-weight: 600;
+			color: #333;
+			margin-bottom: 0.5rem;
+		}
+
+		.feature-desc {
+			font-size: 0.95rem;
+			color: #666;
+			line-height: 1.5;
+		}
+
+		footer {
+			text-align: center;
+			padding: 2rem 1rem;
+			color: rgba(255, 255, 255, 0.9);
+			font-size: 0.95rem;
+		}
+
+		footer a {
+			color: rgba(255, 255, 255, 0.9);
+			text-decoration: none;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+			transition: border-color 0.2s;
+		}
+
+		footer a:hover {
+			border-bottom-color: #fff;
+		}
+
+		@media (max-width: 768px) {
+			header {
+				padding: 2rem 1rem 1.5rem 1rem;
+			}
+
+			h1 {
+				font-size: 2rem;
+			}
+
+			.section-title {
+				font-size: 1.2rem;
+			}
+
+			.tools-bar {
+				gap: 0.75rem;
+			}
+
+			.tool-btn {
+				font-size: 0.95rem;
+				padding: 0.85rem 1.5rem;
+			}
+
+			#tool-container {
+				padding: 2rem 1.5rem;
+				margin: 1.5rem 1rem;
+			}
+
+			.feature-list {
+				grid-template-columns: 1fr;
+			}
 		}
 	</style>
 </head>
+
 <body>
 	<header>
-		<h1>eoelior 小工具入口</h1>
-		<div class="intro">歡迎使用 eoelior！所有小工具將在新分頁開啟。</div>
-		<div class="tools-bar">
-			<button class="tool-btn" onclick="openTool('FlowChart/FlowChat.html')">流程圖工具</button>
-			<button class="tool-btn" onclick="openTool('HeicPngJpg/H2PJ.html')">HEIC 轉 PNG/JPG</button>
-			<button class="tool-btn" onclick="openTool('QRcode/qr-generate-standalone.html')">QRcode 產生器</button>
-			<button class="tool-btn" onclick="openTool('SOPlist/SopList.html')">SOP 編寫工具</button>
-			<button class="tool-btn" onclick="openTool('LUSH/index.html')" style="background:#06b6d4;border-color:#06b6d4;color:#fff;">📋 SOP 目錄工具</button>
-			<button class="tool-btn" onclick="openTool('flower/債權.html')">債權工具</button>
-			<button class="tool-btn" onclick="openTool('IRS/THSR_BookingTool.html')" style="background:#ff6b35;border-color:#ff6b35;color:#fff;">🚄 高鐵搶票</button>
-			<button class="tool-btn" onclick="openTool('buytonobuy/index.html')" style="background:#fcd34d;border-color:#fcd34d;color:#000;">🎡 轉盤遊戲</button>
-			<button class="tool-btn" onclick="openTool('eveday/index.html')" style="background:#a78bfa;border-color:#a78bfa;color:#fff;">📅 每日打卡日曆</button>
-			<button class="tool-btn" onclick="openTool('sudo/index.html')" style="background:#10b981;border-color:#10b981;color:#fff;">🧩 數獨遊戲（Web）</button>
+		<h1>🛠️ eoelior</h1>
+		<div class="subtitle">實用 Web 工具集合</div>
+		<div class="intro">
+			一站式的工具平台，提供生產力、圖像處理、專業工具和遊戲娛樂等多種功能。<br>
+			所有工具皆為純前端應用，無需安裝即可在瀏覽器中直接使用。
 		</div>
 	</header>
+
 	<main>
+		<div class="tools-section">
+			<div class="section-title">📊 生產力工具</div>
+			<div class="tools-bar">
+				<button class="tool-btn" onclick="openTool('FlowChart/FlowChat.html')">📈 流程圖工具</button>
+				<button class="tool-btn" onclick="openTool('SOPlist/SopList.html')">📝 SOP 編寫工具</button>
+				<button class="tool-btn featured" onclick="openTool('LUSH/index.html')">📋 SOP 目錄工具</button>
+				<button class="tool-btn featured" onclick="openTool('eveday/index.html')">📅 每日打卡日曆</button>
+			</div>
+
+			<div class="section-title">🎨 圖像處理</div>
+			<div class="tools-bar">
+				<button class="tool-btn" onclick="openTool('HeicPngJpg/H2PJ.html')">🖼️ HEIC 轉 PNG/JPG</button>
+				<button class="tool-btn" onclick="openTool('QRcode/qr-generate-standalone.html')">📱 QRcode 產生器</button>
+			</div>
+
+			<div class="section-title">💼 專業工具</div>
+			<div class="tools-bar">
+				<button class="tool-btn" onclick="openTool('flower/債權.html')">💰 債權工具</button>
+				<button class="tool-btn featured" onclick="openTool('IRS/THSR_BookingTool.html')">🚄 高鐵搶票助手</button>
+			</div>
+
+			<div class="section-title">🎮 遊戲娛樂</div>
+			<div class="tools-bar">
+				<button class="tool-btn featured" onclick="openTool('buytonobuy/index.html')">🎡 轉盤遊戲</button>
+				<button class="tool-btn featured" onclick="openTool('sudo/index.html')">🧩 數獨遊戲</button>
+			</div>
+		</div>
+
 		<div id="tool-container">
-			<div style="text-align:center;color:#888;padding:3rem 2rem;">
-				<div style="font-size:1.2rem;color:#555;margin-bottom:1rem;">點擊上方按鈕開啟小工具</div>
-				<div style="font-size:0.95rem;color:#888;">所有工具將在新分頁開啟，方便您同時使用多個工具</div>
+			<div class="info-box">
+				<div class="info-title">✨ 為什麼選擇 eoelior？</div>
+				<div class="feature-list">
+					<div class="feature-item">
+						<div class="feature-icon">⚡</div>
+						<div class="feature-title">無需安裝</div>
+						<div class="feature-desc">所有工具在瀏覽器中直接運行，開箱即用</div>
+					</div>
+					<div class="feature-item">
+						<div class="feature-icon">📱</div>
+						<div class="feature-title">響應式設計</div>
+						<div class="feature-desc">完美支援桌面和行動裝置，隨時隨地使用</div>
+					</div>
+					<div class="feature-item">
+						<div class="feature-icon">🎯</div>
+						<div class="feature-title">簡單易用</div>
+						<div class="feature-desc">直覺的使用者介面，無需學習即可上手</div>
+					</div>
+					<div class="feature-item">
+						<div class="feature-icon">🔄</div>
+						<div class="feature-title">持續更新</div>
+						<div class="feature-desc">不斷加入新工具，持續改進使用體驗</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</main>
+
+	<footer>
+		<p>© 2026 eoelior - 實用 Web 工具集合</p>
+		<p>所有工具將在新分頁開啟 | <a href="https://github.com/yourusername/eoelior" target="_blank">GitHub</a></p>
+	</footer>
 	<script>
 		function openTool(url) {
 			window.open(url, '_blank', 'noopener');
 		}
 	</script>
 </body>
+
 </html>
