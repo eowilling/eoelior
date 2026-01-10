@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
 		:root {
 			color-scheme: light;
 		}
+
 		body {
 			margin: 0;
 			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
@@ -17,6 +19,7 @@
 			align-items: stretch;
 			justify-content: center;
 		}
+
 		.app-shell {
 			flex: 1;
 			max-width: 1080px;
@@ -28,6 +31,7 @@
 			flex-direction: column;
 			overflow: hidden;
 		}
+
 		header {
 			background: linear-gradient(135deg, #0ea5e9, #6366f1);
 			color: #fff;
@@ -37,11 +41,13 @@
 			justify-content: space-between;
 			gap: 0.75rem;
 		}
+
 		.header-title {
 			display: flex;
 			flex-direction: column;
 			gap: 0.15rem;
 		}
+
 		.header-title-main {
 			font-size: 1.1rem;
 			font-weight: 700;
@@ -49,10 +55,12 @@
 			align-items: center;
 			gap: 0.4rem;
 		}
+
 		.header-title-sub {
 			font-size: 0.8rem;
 			opacity: 0.9;
 		}
+
 		.back-btn {
 			border-radius: 999px;
 			border: none;
@@ -62,15 +70,18 @@
 			font-size: 0.8rem;
 			cursor: pointer;
 		}
+
 		.back-btn:hover {
 			background: rgba(15, 23, 42, 0.28);
 		}
+
 		main {
 			padding: 1.25rem 1.5rem 1.5rem;
 			display: flex;
 			flex-direction: column;
 			gap: 0.75rem;
 		}
+
 		.toolbar {
 			display: flex;
 			flex-wrap: wrap;
@@ -78,6 +89,7 @@
 			justify-content: space-between;
 			gap: 0.5rem;
 		}
+
 		.toolbar-left,
 		.toolbar-right {
 			display: flex;
@@ -85,6 +97,7 @@
 			align-items: center;
 			gap: 0.4rem;
 		}
+
 		.badge {
 			border-radius: 999px;
 			padding: 0.15rem 0.6rem;
@@ -92,6 +105,7 @@
 			background: #eef2ff;
 			color: #4338ca;
 		}
+
 		.sudoku-btn {
 			border-radius: 999px;
 			border: 1px solid #e5e7eb;
@@ -101,29 +115,35 @@
 			cursor: pointer;
 			color: #111827;
 		}
+
 		.sudoku-btn.primary {
 			background: #4f46e5;
 			color: #fff;
 			border-color: #4f46e5;
 		}
+
 		.sudoku-btn.accent {
 			background: #0ea5e9;
 			color: #fff;
 			border-color: #0ea5e9;
 		}
+
 		.sudoku-btn.danger {
 			background: #fee2e2;
 			color: #b91c1c;
 			border-color: #fecaca;
 		}
+
 		.sudoku-btn.selected {
 			background: #4f46e5;
 			color: #fff;
 			border-color: #4338ca;
 		}
+
 		.sudoku-btn:hover {
 			filter: brightness(0.96);
 		}
+
 		.board-section {
 			display: flex;
 			justify-content: center;
@@ -132,10 +152,12 @@
 			margin-top: 0.5rem;
 			flex-wrap: wrap;
 		}
+
 		.board-wrapper {
 			display: flex;
 			justify-content: center;
 		}
+
 		#sudokuGrid {
 			display: grid;
 			grid-template-columns: repeat(9, 1fr);
@@ -149,6 +171,7 @@
 			touch-action: manipulation;
 			background: #111827;
 		}
+
 		.sudoku-cell {
 			background: #ffffff;
 			border: 1px solid #e5e7eb;
@@ -160,21 +183,26 @@
 			color: #111827;
 			cursor: pointer;
 		}
+
 		.sudoku-cell.given {
 			background: #eff6ff;
 			color: #1d4ed8;
 		}
+
 		.sudoku-cell.selected {
 			background: #fef3c7;
 		}
+
 		.sudoku-cell.hint {
 			color: #16a34a;
 			background: #ecfdf5;
 		}
+
 		.sudoku-cell.error {
 			background: #fee2e2;
 			color: #b91c1c;
 		}
+
 		.sudoku-side {
 			display: flex;
 			flex-direction: column;
@@ -182,11 +210,13 @@
 			min-width: 170px;
 			max-width: 200px;
 		}
+
 		.sudoku-numbers {
 			display: grid;
 			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: 0.5rem;
 		}
+
 		.sudoku-num-btn {
 			border-radius: 999px;
 			border: 1px solid #e5e7eb;
@@ -196,43 +226,62 @@
 			font-weight: 600;
 			cursor: pointer;
 		}
+
 		.sudoku-num-btn:hover {
 			background: #e5e7eb;
 		}
+
 		.status-row {
 			font-size: 0.78rem;
 			color: #4b5563;
 		}
+
 		.status-row-strong {
 			color: #111827;
 			font-weight: 600;
 		}
+
 		.footer-note {
 			font-size: 0.7rem;
 			color: #9ca3af;
 		}
+
 		@media (max-width: 640px) {
 			.app-shell {
 				margin: 0.75rem;
 			}
+
 			header {
 				padding: 0.85rem 1rem;
 			}
+
 			main {
 				padding: 1rem 1rem 1.25rem;
 			}
+
 			.board-section {
 				flex-direction: column;
 				align-items: center;
 				gap: 0.75rem;
 			}
+
 			.sudoku-side {
 				align-items: center;
 				text-align: center;
 			}
+
+			.sudoku-numbers {
+				gap: 0.75rem;
+			}
+
+			.sudoku-num-btn {
+				padding: 0.75rem 0;
+				font-size: 1.1rem;
+			}
 		}
 	</style>
 </head>
+
 <body>
 	<div class="app-shell">
 		<header>
@@ -249,11 +298,16 @@
 			<div class="toolbar">
 				<div class="toolbar-left">
 					<span class="badge">難度</span>
-					<button class="sudoku-btn selected" type="button" data-difficulty="1" onclick="setSudokuDifficulty(1)">⭐ 1</button>
-					<button class="sudoku-btn" type="button" data-difficulty="2" onclick="setSudokuDifficulty(2)">⭐⭐ 2</button>
-					<button class="sudoku-btn" type="button" data-difficulty="3" onclick="setSudokuDifficulty(3)">⭐⭐⭐ 3</button>
-					<button class="sudoku-btn" type="button" data-difficulty="4" onclick="setSudokuDifficulty(4)">⭐⭐⭐⭐ 4</button>
-					<button class="sudoku-btn" type="button" data-difficulty="5" onclick="setSudokuDifficulty(5)">⭐⭐⭐⭐⭐ 5</button>
+					<button class="sudoku-btn selected" type="button" data-difficulty="1"
+						onclick="setSudokuDifficulty(1)">⭐ 1</button>
+					<button class="sudoku-btn" type="button" data-difficulty="2" onclick="setSudokuDifficulty(2)">⭐⭐
+						2</button>
+					<button class="sudoku-btn" type="button" data-difficulty="3" onclick="setSudokuDifficulty(3)">⭐⭐⭐
+						3</button>
+					<button class="sudoku-btn" type="button" data-difficulty="4" onclick="setSudokuDifficulty(4)">⭐⭐⭐⭐
+						4</button>
+					<button class="sudoku-btn" type="button" data-difficulty="5" onclick="setSudokuDifficulty(5)">⭐⭐⭐⭐⭐
+						5</button>
 				</div>
 				<div class="toolbar-right">
 					<button class="sudoku-btn primary" type="button" onclick="newSudokuGame()">新遊戲</button>
@@ -510,5 +564,5 @@
 		});
 	</script>
 </body>
-</html>
 
+</html>
