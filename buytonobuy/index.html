@@ -6,368 +6,119 @@
     <title>eoElior | 秘密轉盤</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'Noto Sans TC', 'sans-serif'] },
-                    colors: { 'accent-spin': '#fcd34d' }
-                }
-            }
-        }
-    </script>
     <style>
-        #wheelCanvas {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            border-radius: 9999px;
-            transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-        }
-        .pointer {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid #f8fafc;
-            z-index: 20;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-        }
-        .canvas-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            margin: auto;
-            aspect-ratio: 1 / 1;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+        #wheelCanvas { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border-radius: 9999px; transition: transform 5000ms cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #fff; z-index: 20; }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans">
 
-    <!-- 頂部導航 -->
-    <nav class="p-6 flex justify-between items-center">
-        <a href="../index.html" class="flex items-center gap-2 text-slate-400 hover:text-white transition-all">
-            <i class="fa-solid fa-box-open"></i> 回玩具盒子
-        </a>
-        <div id="dbStatus" class="text-[10px] px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-500">
-            <i class="fa-solid fa-circle text-[8px] mr-1"></i> 雲端未連線
-        </div>
+    <nav class="absolute top-0 w-full p-6 flex justify-between">
+        <a href="../index.html" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left"></i> 回玩具盒子</a>
+        <div id="dbStatus" class="text-[10px] text-slate-500">雲端連線中...</div>
     </nav>
 
-    <main class="flex-grow flex flex-col items-center justify-center p-4">
-        <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- 左側：轉盤本體 -->
-            <div class="lg:col-span-2 glass-card p-8 rounded-3xl relative overflow-hidden">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold gradient-text" id="wheelTitle">命運輪盤</h2>
-                    <p id="wheelDescription" class="text-slate-400 text-sm mt-2"></p>
-                </div>
-
-                <div class="canvas-container mb-8">
-                    <div class="pointer"></div>
-                    <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
-                </div>
-
-                <div class="flex flex-col items-center gap-4">
-                    <button id="spinButton" class="w-full md:w-auto px-16 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-bold rounded-2xl shadow-lg shadow-indigo-900/40 transition-all transform active:scale-95 disabled:opacity-50">
-                        開始旋轉！
-                    </button>
-                    <div id="resultDisplay" class="text-xl font-bold text-indigo-300 min-h-[1.5em]"></div>
-                </div>
-
-                <!-- 隱藏的機率入口 (點擊總和進入管理員模式) -->
-                <div class="mt-8 pt-6 border-t border-white/5 opacity-40 hover:opacity-100 transition-opacity">
-                    <div class="flex justify-between items-center text-xs text-slate-500">
-                        <span id="secretEntry">總機率計數：100% (點擊設定)</span>
-                        <a href="admin.html" class="underline">簡易設定</a>
-                    </div>
-                </div>
+    <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
+        <div class="lg:col-span-2 glass-card p-8 rounded-3xl text-center">
+            <h2 id="wheelTitle" class="text-3xl font-bold mb-8">命運輪盤</h2>
+            <div class="relative w-full max-w-[320px] aspect-square mx-auto mb-8">
+                <div class="pointer"></div>
+                <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
             </div>
+            <button id="spinBtn" class="bg-indigo-600 px-12 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">開始旋轉</button>
+            <p id="resultDisplay" class="mt-4 text-indigo-300 font-bold h-6"></p>
+        </div>
 
-            <!-- 右側：功能區 -->
-            <div class="space-y-6">
-                <!-- 雲端分享區 -->
-                <div class="glass-card p-6 rounded-3xl">
-                    <h3 class="font-bold mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-share-nodes text-indigo-400"></i> 雲端分享連結
-                    </h3>
-                    <div class="space-y-4">
-                        <button id="cloudShareBtn" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> 存入雲端並分享
-                        </button>
-                        <div id="shareArea" class="hidden space-y-2">
-                            <input type="text" id="shareUrlInput" readonly class="w-full bg-black/30 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300">
-                            <button id="copyBtn" class="w-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 py-2 rounded-lg text-xs transition-all">複製連結</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 歷史紀錄 -->
-                <div class="glass-card p-6 rounded-3xl flex-grow h-[300px] flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-500">歷史紀錄</h3>
-                        <button id="resetHistoryBtn" class="text-[10px] text-rose-400 hover:underline">清除</button>
-                    </div>
-                    <div id="historyDisplay" class="overflow-y-auto space-y-2 flex-grow pr-2 text-xs">
-                        <p class="text-slate-600 italic text-center py-8">目前尚無紀錄</p>
-                    </div>
-                </div>
+        <div class="glass-card p-6 rounded-3xl space-y-4">
+            <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest">雲端同步分享</h3>
+            <button id="cloudShareBtn" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl text-xs font-bold transition-all">生成分享連結</button>
+            <div id="shareArea" class="hidden space-y-2">
+                <input type="text" id="shareUrlInput" readonly class="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300 focus:outline-none">
+                <button id="copyBtn" class="w-full bg-indigo-600/20 text-indigo-300 py-2 rounded-lg text-[10px] hover:bg-indigo-600/40">複製連結</button>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase 初始化
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // ✅ 已填入你的專屬金鑰
+        const firebaseConfig = {
+            projectId: "studio-2298218799-c99fe",
+            appId: "1:848457307119:web:d0c416db3468efb9ef5c1a",
+            apiKey: "AIzaSyDDgQUZH5N1IaNR2-CeOIHCQjccsJEYD5s",
+            authDomain: "studio-2298218799-c99fe.firebaseapp.com",
+            messagingSenderId: "848457307119"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const appId = "eoelior-wheel-data";
 
-        // 修正 appId 中的斜線問題，確保 Firestore 路徑段數正確
-        const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'elior-wheel-v1';
-        const appId = rawAppId.replace(/\//g, '_');
-
-        // 預設配置
-        const defaultConfig = {
-            title: "命運輪盤",
-            description: "這是一個公平、公正、公開的轉盤 (大概吧)",
-            segments: [
-                { label: "買", color: '#10b981', visualPercent: 50, realPercent: 80 },
-                { label: "不買", color: '#ef4444', visualPercent: 50, realPercent: 20 }
-            ]
-        };
-
-        let config = JSON.parse(JSON.stringify(defaultConfig));
-        let currentUser = null;
-        let isSpinning = false;
+        let config = { title: "命運輪盤", segments: [{label: "買", color: "#10b981", visualPercent: 50, realPercent: 80}, {label: "不買", color: "#ef4444", visualPercent: 50, realPercent: 20}] };
         let currentRotation = 0;
 
-        const canvas = document.getElementById('wheelCanvas');
-        const ctx = canvas.getContext('2d');
-        const spinButton = document.getElementById('spinButton');
-        const resultDisplay = document.getElementById('resultDisplay');
-        const historyDisplay = document.getElementById('historyDisplay');
-        const dbStatus = document.getElementById('dbStatus');
-
-        // 1. 啟動身份驗證與 URL 檢查
         async function init() {
             try {
-                // 優先使用自定義 Token
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
+                await signInAnonymously(auth);
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        currentUser = user;
-                        dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-emerald-500"></i> 雲端已連線';
-                        await checkUrlParams();
-                        renderUI();
+                        document.getElementById('dbStatus').innerText = "雲端已連線";
+                        const params = new URLSearchParams(window.location.search);
+                        const shareId = params.get('share');
+                        if (shareId) {
+                            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_wheels', shareId));
+                            if (snap.exists()) { config = snap.data(); document.getElementById('wheelTitle').innerText = config.title; }
+                        }
+                        drawWheel();
                     }
                 });
-            } catch (e) {
-                console.error("Auth init failed", e);
-                dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-rose-500"></i> 連線驗證失敗';
-            }
-        }
-
-        // 檢查 URL 參數 (同時支援 c=Base64 和 share=ID)
-        async function checkUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            const shareId = params.get('share');
-            const configParam = params.get('c');
-
-            if (shareId) {
-                dbStatus.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i> 正在抓取雲端轉盤...';
-                try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_wheels', shareId);
-                    const snap = await getDoc(docRef);
-                    if (snap.exists()) {
-                        config = snap.data();
-                        dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-emerald-500"></i> 雲端載入成功';
-                    }
-                } catch (e) { console.error("Cloud load fail", e); }
-            } else if (configParam) {
-                try {
-                    const decoded = JSON.parse(atob(configParam.replace(/-/g, '+').replace(/_/g, '/')));
-                    config.title = decoded.t || decoded.title;
-                    config.segments = (decoded.s || decoded.segments).map(s => ({
-                        label: s.l || s.label,
-                        color: s.c || s.color,
-                        visualPercent: s.v || s.visualPercent,
-                        realPercent: s.r !== undefined ? s.r : (s.v || s.visualPercent)
-                    }));
-                } catch (e) { console.warn("Base64 decode fail"); }
-            }
-        }
-
-        function renderUI() {
-            document.getElementById('wheelTitle').innerText = config.title;
-            document.getElementById('wheelDescription').innerText = config.description || "";
-            drawWheel();
-            renderHistory();
+            } catch (e) { console.error(e); }
         }
 
         function drawWheel() {
-            const centerX = 200;
-            const centerY = 200;
-            const radius = 190;
-            let currentAngle = 0;
-
-            ctx.clearRect(0, 0, 400, 400);
-
+            const ctx = document.getElementById('wheelCanvas').getContext('2d');
+            ctx.clearRect(0,0,400,400);
+            let angle = 0;
             config.segments.forEach(seg => {
-                const degrees = (seg.visualPercent / 100) * 360;
-                const arc = (degrees * Math.PI) / 180;
-
-                ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
-                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + arc);
-                ctx.fillStyle = seg.color;
-                ctx.fill();
-
-                // 繪製文字
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate(currentAngle + arc / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "white";
-                ctx.font = "bold 16px Noto Sans TC";
-                ctx.fillText(seg.label, radius - 20, 5);
-                ctx.restore();
-
-                currentAngle += arc;
+                const arc = (seg.visualPercent / 100) * Math.PI * 2;
+                ctx.beginPath(); ctx.moveTo(200,200); ctx.arc(200,200,190,angle,angle+arc); ctx.fillStyle = seg.color; ctx.fill();
+                ctx.save(); ctx.translate(200,200); ctx.rotate(angle+arc/2); ctx.textAlign="right"; ctx.fillStyle="white"; ctx.font="bold 16px Inter"; ctx.fillText(seg.label, 170, 5); ctx.restore();
+                angle += arc;
             });
-
-            // 繪製圓心
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
-            ctx.fillStyle = "#0f172a";
-            ctx.fill();
-            ctx.strokeStyle = "rgba(255,255,255,0.1)";
-            ctx.lineWidth = 2;
-            ctx.stroke();
         }
 
-        // 轉動轉盤邏輯
-        function spin() {
-            if (isSpinning) return;
-            isSpinning = true;
-            spinButton.disabled = true;
-            resultDisplay.innerText = "旋轉中...";
-
+        document.getElementById('spinBtn').onclick = () => {
             const random = Math.random() * 100;
-            let cumulative = 0;
-            let selectedIndex = 0;
-            for (let i = 0; i < config.segments.length; i++) {
+            let cumulative = 0, selected = 0;
+            for(let i=0; i<config.segments.length; i++) {
                 cumulative += config.segments[i].realPercent;
-                if (random <= cumulative) {
-                    selectedIndex = i;
-                    break;
-                }
+                if(random <= cumulative) { selected = i; break; }
             }
+            const seg = config.segments[selected];
+            let start = 0; for(let i=0; i<selected; i++) start += (config.segments[i].visualPercent/100)*360;
+            const mid = start + (seg.visualPercent/100)*180;
+            const target = (270 - mid + 360) % 360;
+            const final = currentRotation + (10 * 360) + target - (currentRotation % 360);
+            document.getElementById('wheelCanvas').style.transform = `rotate(${final}deg)`;
+            currentRotation = final;
+            document.getElementById('resultDisplay').innerText = "旋轉中...";
+            setTimeout(() => { document.getElementById('resultDisplay').innerText = "🎉 結果：" + seg.label; }, 5000);
+        };
 
-            const segment = config.segments[selectedIndex];
-            let visualStartAngle = 0;
-            for(let i=0; i<selectedIndex; i++) visualStartAngle += (config.segments[i].visualPercent/100)*360;
-            const visualMidAngle = visualStartAngle + (segment.visualPercent/100)*180;
-
-            const targetAngle = (270 - visualMidAngle + 360) % 360;
-            const fullRotations = (8 + Math.floor(Math.random() * 5)) * 360;
-            const finalRotation = currentRotation + fullRotations + targetAngle - (currentRotation % 360);
-
-            canvas.style.transform = `rotate(${finalRotation}deg)`;
-            currentRotation = finalRotation;
-
-            setTimeout(() => {
-                isSpinning = false;
-                spinButton.disabled = false;
-                const result = config.segments[selectedIndex];
-                resultDisplay.innerText = `🎉 結果：${result.label}`;
-                addHistory(result);
-            }, 5000);
-        }
-
-        // 雲端分享功能 (Firestore)
         document.getElementById('cloudShareBtn').onclick = async () => {
-            if (!currentUser) return;
             const btn = document.getElementById('cloudShareBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 儲存中...';
-
-            try {
-                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'shared_wheels');
-                const docRef = await addDoc(colRef, {
-                    ...config,
-                    createdAt: new Date(),
-                    creator: currentUser.uid
-                });
-
-                const shareUrl = window.location.origin + window.location.pathname + "?share=" + docRef.id;
-                document.getElementById('shareUrlInput').value = shareUrl;
-                document.getElementById('shareArea').classList.remove('hidden');
-            } catch (e) {
-                console.error("Upload failed", e);
-                alert("儲存到雲端失敗，請稍後再試。");
-            }
-            finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 存入雲端並分享';
-            }
+            btn.disabled = true; btn.innerText = "儲存中...";
+            const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'shared_wheels'), config);
+            document.getElementById('shareUrlInput').value = window.location.origin + window.location.pathname + "?share=" + docRef.id;
+            document.getElementById('shareArea').classList.remove('hidden');
+            btn.disabled = false; btn.innerText = "生成分享連結";
         };
 
-        // 歷史紀錄處理
-        function addHistory(res) {
-            const history = JSON.parse(localStorage.getItem('wheel_history') || '[]');
-            history.unshift({ label: res.label, color: res.color, time: new Date().toLocaleTimeString() });
-            localStorage.setItem('wheel_history', JSON.stringify(history.slice(0, 10)));
-            renderHistory();
-        }
-
-        function renderHistory() {
-            const history = JSON.parse(localStorage.getItem('wheel_history') || '[]');
-            if (history.length === 0) return;
-            historyDisplay.innerHTML = history.map(h => `
-                <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
-                    <span class="font-bold" style="color: ${h.color}">${h.label}</span>
-                    <span class="text-[9px] text-slate-600">${h.time}</span>
-                </div>
-            `).join('');
-        }
-
-        // 秘密入口邏輯
-        document.getElementById('secretEntry').ondblclick = () => {
-            window.location.href = 'adminplus.html';
-        };
-
-        document.getElementById('copyBtn').onclick = () => {
-            document.getElementById('shareUrlInput').select();
-            document.execCommand('copy');
-            document.getElementById('copyBtn').innerText = "已複製！";
-            setTimeout(() => document.getElementById('copyBtn').innerText = "複製連結", 2000);
-        };
-
-        document.getElementById('resetHistoryBtn').onclick = () => {
-            localStorage.removeItem('wheel_history');
-            historyDisplay.innerHTML = '<p class="text-slate-600 italic text-center py-8">目前尚無紀錄</p>';
-        };
-
-        spinButton.onclick = spin;
         init();
     </script>
 </body>
