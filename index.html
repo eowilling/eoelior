@@ -1,324 +1,374 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>網站入口 - eoelior</title>
-	<style>
-		* {
-			box-sizing: border-box;
-		}
-
-		body {
-			font-family: 'Segoe UI', 'Microsoft JhengHei', Arial, sans-serif;
-			margin: 0;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			min-height: 100vh;
-			padding-bottom: 2rem;
-		}
-
-		header {
-			background: rgba(255, 255, 255, 0.95);
-			backdrop-filter: blur(10px);
-			color: #333;
-			padding: 2.5rem 1.5rem 2rem 1.5rem;
-			text-align: center;
-			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-		}
-
-		h1 {
-			margin: 0 0 0.5rem 0;
-			font-size: 2.5rem;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			-webkit-background-clip: text;
-			-webkit-text-fill-color: transparent;
-			background-clip: text;
-			font-weight: 700;
-		}
-
-		.subtitle {
-			color: #666;
-			font-size: 1rem;
-			margin-bottom: 2rem;
-			font-weight: 400;
-		}
-
-		.intro {
-			margin-bottom: 1.5rem;
-			font-size: 1.15rem;
-			color: #555;
-			max-width: 800px;
-			margin-left: auto;
-			margin-right: auto;
-			line-height: 1.6;
-		}
-
-		.tools-section {
-			max-width: 1200px;
-			margin: 0 auto 1.5rem auto;
-			padding: 0 1rem;
-		}
-
-		.section-title {
-			color: #fff;
-			font-size: 1.3rem;
-			font-weight: 600;
-			margin: 2rem 0 1rem 0;
-			text-align: center;
-			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-		}
-
-		.tools-bar {
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: center;
-			gap: 1rem;
-			margin-bottom: 1rem;
-		}
-
-		.tool-btn {
-			background: #fff;
-			border: none;
-			color: #333;
-			padding: 1rem 2rem;
-			border-radius: 12px;
-			cursor: pointer;
-			font-size: 1.05rem;
-			font-weight: 500;
-			transition: all 0.3s ease;
-			white-space: nowrap;
-			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-			position: relative;
-			overflow: hidden;
-		}
-
-		.tool-btn::before {
-			content: '';
-			position: absolute;
-			top: 0;
-			left: -100%;
-			width: 100%;
-			height: 100%;
-			background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-			transition: left 0.5s;
-		}
-
-		.tool-btn:hover::before {
-			left: 100%;
-		}
-
-		.tool-btn:hover {
-			transform: translateY(-3px);
-			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-		}
-
-		.tool-btn:active {
-			transform: translateY(-1px);
-		}
-
-		.tool-btn.featured {
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			color: #fff;
-			font-weight: 600;
-		}
-
-		#tool-container {
-			max-width: 1000px;
-			margin: 2rem auto;
-			background: rgba(255, 255, 255, 0.95);
-			backdrop-filter: blur(10px);
-			border-radius: 16px;
-			box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-			min-height: 300px;
-			padding: 3rem 2rem;
-		}
-
-		.info-box {
-			text-align: center;
-			color: #666;
-			padding: 2rem;
-		}
-
-		.info-title {
-			font-size: 1.5rem;
-			color: #333;
-			margin-bottom: 1rem;
-			font-weight: 600;
-		}
-
-		.info-text {
-			font-size: 1rem;
-			color: #777;
-			line-height: 1.8;
-		}
-
-		.feature-list {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-			gap: 1.5rem;
-			margin-top: 2rem;
-		}
-
-		.feature-item {
-			background: #f8f9fa;
-			padding: 1.5rem;
-			border-radius: 12px;
-			border-left: 4px solid #667eea;
-			transition: transform 0.2s;
-		}
-
-		.feature-item:hover {
-			transform: translateX(5px);
-		}
-
-		.feature-icon {
-			font-size: 2rem;
-			margin-bottom: 0.5rem;
-		}
-
-		.feature-title {
-			font-size: 1.1rem;
-			font-weight: 600;
-			color: #333;
-			margin-bottom: 0.5rem;
-		}
-
-		.feature-desc {
-			font-size: 0.95rem;
-			color: #666;
-			line-height: 1.5;
-		}
-
-		footer {
-			text-align: center;
-			padding: 2rem 1rem;
-			color: rgba(255, 255, 255, 0.9);
-			font-size: 0.95rem;
-		}
-
-		footer a {
-			color: rgba(255, 255, 255, 0.9);
-			text-decoration: none;
-			border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-			transition: border-color 0.2s;
-		}
-
-		footer a:hover {
-			border-bottom-color: #fff;
-		}
-
-		@media (max-width: 768px) {
-			header {
-				padding: 2rem 1rem 1.5rem 1rem;
-			}
-
-			h1 {
-				font-size: 2rem;
-			}
-
-			.section-title {
-				font-size: 1.2rem;
-			}
-
-			.tools-bar {
-				gap: 0.75rem;
-			}
-
-			.tool-btn {
-				font-size: 0.95rem;
-				padding: 0.85rem 1.5rem;
-			}
-
-			#tool-container {
-				padding: 2rem 1.5rem;
-				margin: 1.5rem 1rem;
-			}
-
-			.feature-list {
-				grid-template-columns: 1fr;
-			}
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eoElior | 秘密轉盤</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'Noto Sans TC', 'sans-serif'] },
+                    colors: { 'accent-spin': '#fcd34d' }
+                }
+            }
+        }
+    </script>
+    <style>
+        #wheelCanvas {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-radius: 9999px;
+            transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+        .pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #f8fafc;
+            z-index: 20;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: auto;
+            aspect-ratio: 1 / 1;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
 
-<body>
-	<header>
-		<h1>🛠️ eoelior</h1>
-		<div class="subtitle">實用 Web 工具集合</div>
-		<div class="intro">
-			一站式的工具平台，提供生產力、圖像處理、專業工具和遊戲娛樂等多種功能。<br>
-			所有工具皆為純前端應用，無需安裝即可在瀏覽器中直接使用。
-		</div>
-	</header>
+    <!-- 頂部導航 -->
+    <nav class="p-6 flex justify-between items-center">
+        <a href="../index.html" class="flex items-center gap-2 text-slate-400 hover:text-white transition-all">
+            <i class="fa-solid fa-box-open"></i> 回玩具盒子
+        </a>
+        <div id="dbStatus" class="text-[10px] px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-500">
+            <i class="fa-solid fa-circle text-[8px] mr-1"></i> 雲端未連線
+        </div>
+    </nav>
 
-	<main>
-		<div class="tools-section">
-			<div class="section-title">📊 生產力工具</div>
-			<div class="tools-bar">
-				<button class="tool-btn" onclick="openTool('FlowChart/FlowChat.html')">📈 流程圖工具</button>
-				<button class="tool-btn" onclick="openTool('SOPlist/SopList.html')">📝 SOP 編寫工具</button>
-				<button class="tool-btn featured" onclick="openTool('LUSH/index.html')">📋 SOP 目錄工具</button>
-				<button class="tool-btn featured" onclick="openTool('eveday/index.html')">📅 每日打卡日曆</button>
-			</div>
+    <main class="flex-grow flex flex-col items-center justify-center p-4">
+        <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-			<div class="section-title">🎨 圖像處理</div>
-			<div class="tools-bar">
-				<button class="tool-btn" onclick="openTool('HeicPngJpg/H2PJ.html')">🖼️ HEIC 轉 PNG/JPG</button>
-				<button class="tool-btn" onclick="openTool('QRcode/qr-generate-standalone.html')">📱 QRcode 產生器</button>
-			</div>
+            <!-- 左側：轉盤本體 -->
+            <div class="lg:col-span-2 glass-card p-8 rounded-3xl relative overflow-hidden">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold gradient-text" id="wheelTitle">命運輪盤</h2>
+                    <p id="wheelDescription" class="text-slate-400 text-sm mt-2"></p>
+                </div>
 
-			<div class="section-title">💼 專業工具</div>
-			<div class="tools-bar">
-				<button class="tool-btn" onclick="openTool('flower/債權.html')">💰 債權工具</button>
-				<button class="tool-btn featured" onclick="openTool('IRS/THSR_BookingTool.html')">🚄 高鐵搶票助手</button>
-			</div>
+                <div class="canvas-container mb-8">
+                    <div class="pointer"></div>
+                    <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
+                </div>
 
-			<div class="section-title">🎮 遊戲娛樂</div>
-			<div class="tools-bar">
-				<button class="tool-btn featured" onclick="openTool('buytonobuy/index.html')">🎡 轉盤遊戲</button>
-				<button class="tool-btn featured" onclick="openTool('sudo/index.html')">🧩 數獨遊戲</button>
-			</div>
-		</div>
+                <div class="flex flex-col items-center gap-4">
+                    <button id="spinButton" class="w-full md:w-auto px-16 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-bold rounded-2xl shadow-lg shadow-indigo-900/40 transition-all transform active:scale-95 disabled:opacity-50">
+                        開始旋轉！
+                    </button>
+                    <div id="resultDisplay" class="text-xl font-bold text-indigo-300 min-h-[1.5em]"></div>
+                </div>
 
-		<div id="tool-container">
-			<div class="info-box">
-				<div class="info-title">✨ 為什麼選擇 eoelior？</div>
-				<div class="feature-list">
-					<div class="feature-item">
-						<div class="feature-icon">⚡</div>
-						<div class="feature-title">無需安裝</div>
-						<div class="feature-desc">所有工具在瀏覽器中直接運行，開箱即用</div>
-					</div>
-					<div class="feature-item">
-						<div class="feature-icon">📱</div>
-						<div class="feature-title">響應式設計</div>
-						<div class="feature-desc">完美支援桌面和行動裝置，隨時隨地使用</div>
-					</div>
-					<div class="feature-item">
-						<div class="feature-icon">🎯</div>
-						<div class="feature-title">簡單易用</div>
-						<div class="feature-desc">直覺的使用者介面，無需學習即可上手</div>
-					</div>
-					<div class="feature-item">
-						<div class="feature-icon">🔄</div>
-						<div class="feature-title">持續更新</div>
-						<div class="feature-desc">不斷加入新工具，持續改進使用體驗</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</main>
+                <!-- 隱藏的機率入口 (點擊總和進入管理員模式) -->
+                <div class="mt-8 pt-6 border-t border-white/5 opacity-40 hover:opacity-100 transition-opacity">
+                    <div class="flex justify-between items-center text-xs text-slate-500">
+                        <span id="secretEntry">總機率計數：100% (點擊設定)</span>
+                        <a href="admin.html" class="underline">簡易設定</a>
+                    </div>
+                </div>
+            </div>
 
-	<footer>
-		<p>© 2026 eoelior - 實用 Web 工具集合</p>
-		<p>所有工具將在新分頁開啟 | <a href="https://github.com/yourusername/eoelior" target="_blank">GitHub</a></p>
-	</footer>
-	<script>
-		function openTool(url) {
-			window.open(url, '_blank', 'noopener');
-		}
-	</script>
+            <!-- 右側：功能區 -->
+            <div class="space-y-6">
+                <!-- 雲端分享區 -->
+                <div class="glass-card p-6 rounded-3xl">
+                    <h3 class="font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-share-nodes text-indigo-400"></i> 雲端分享連結
+                    </h3>
+                    <div class="space-y-4">
+                        <button id="cloudShareBtn" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> 存入雲端並分享
+                        </button>
+                        <div id="shareArea" class="hidden space-y-2">
+                            <input type="text" id="shareUrlInput" readonly class="w-full bg-black/30 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300">
+                            <button id="copyBtn" class="w-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 py-2 rounded-lg text-xs transition-all">複製連結</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 歷史紀錄 -->
+                <div class="glass-card p-6 rounded-3xl flex-grow h-[300px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-500">歷史紀錄</h3>
+                        <button id="resetHistoryBtn" class="text-[10px] text-rose-400 hover:underline">清除</button>
+                    </div>
+                    <div id="historyDisplay" class="overflow-y-auto space-y-2 flex-grow pr-2 text-xs">
+                        <p class="text-slate-600 italic text-center py-8">目前尚無紀錄</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase 初始化
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // 修正 appId 中的斜線問題，確保 Firestore 路徑段數正確
+        const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'elior-wheel-v1';
+        const appId = rawAppId.replace(/\//g, '_');
+
+        // 預設配置
+        const defaultConfig = {
+            title: "命運輪盤",
+            description: "這是一個公平、公正、公開的轉盤 (大概吧)",
+            segments: [
+                { label: "買", color: '#10b981', visualPercent: 50, realPercent: 80 },
+                { label: "不買", color: '#ef4444', visualPercent: 50, realPercent: 20 }
+            ]
+        };
+
+        let config = JSON.parse(JSON.stringify(defaultConfig));
+        let currentUser = null;
+        let isSpinning = false;
+        let currentRotation = 0;
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spinButton');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const historyDisplay = document.getElementById('historyDisplay');
+        const dbStatus = document.getElementById('dbStatus');
+
+        // 1. 啟動身份驗證與 URL 檢查
+        async function init() {
+            try {
+                // 優先使用自定義 Token
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUser = user;
+                        dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-emerald-500"></i> 雲端已連線';
+                        await checkUrlParams();
+                        renderUI();
+                    }
+                });
+            } catch (e) {
+                console.error("Auth init failed", e);
+                dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-rose-500"></i> 連線驗證失敗';
+            }
+        }
+
+        // 檢查 URL 參數 (同時支援 c=Base64 和 share=ID)
+        async function checkUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const shareId = params.get('share');
+            const configParam = params.get('c');
+
+            if (shareId) {
+                dbStatus.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i> 正在抓取雲端轉盤...';
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_wheels', shareId);
+                    const snap = await getDoc(docRef);
+                    if (snap.exists()) {
+                        config = snap.data();
+                        dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-emerald-500"></i> 雲端載入成功';
+                    }
+                } catch (e) { console.error("Cloud load fail", e); }
+            } else if (configParam) {
+                try {
+                    const decoded = JSON.parse(atob(configParam.replace(/-/g, '+').replace(/_/g, '/')));
+                    config.title = decoded.t || decoded.title;
+                    config.segments = (decoded.s || decoded.segments).map(s => ({
+                        label: s.l || s.label,
+                        color: s.c || s.color,
+                        visualPercent: s.v || s.visualPercent,
+                        realPercent: s.r !== undefined ? s.r : (s.v || s.visualPercent)
+                    }));
+                } catch (e) { console.warn("Base64 decode fail"); }
+            }
+        }
+
+        function renderUI() {
+            document.getElementById('wheelTitle').innerText = config.title;
+            document.getElementById('wheelDescription').innerText = config.description || "";
+            drawWheel();
+            renderHistory();
+        }
+
+        function drawWheel() {
+            const centerX = 200;
+            const centerY = 200;
+            const radius = 190;
+            let currentAngle = 0;
+
+            ctx.clearRect(0, 0, 400, 400);
+
+            config.segments.forEach(seg => {
+                const degrees = (seg.visualPercent / 100) * 360;
+                const arc = (degrees * Math.PI) / 180;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + arc);
+                ctx.fillStyle = seg.color;
+                ctx.fill();
+
+                // 繪製文字
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(currentAngle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "white";
+                ctx.font = "bold 16px Noto Sans TC";
+                ctx.fillText(seg.label, radius - 20, 5);
+                ctx.restore();
+
+                currentAngle += arc;
+            });
+
+            // 繪製圓心
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
+            ctx.fillStyle = "#0f172a";
+            ctx.fill();
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // 轉動轉盤邏輯
+        function spin() {
+            if (isSpinning) return;
+            isSpinning = true;
+            spinButton.disabled = true;
+            resultDisplay.innerText = "旋轉中...";
+
+            const random = Math.random() * 100;
+            let cumulative = 0;
+            let selectedIndex = 0;
+            for (let i = 0; i < config.segments.length; i++) {
+                cumulative += config.segments[i].realPercent;
+                if (random <= cumulative) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+
+            const segment = config.segments[selectedIndex];
+            let visualStartAngle = 0;
+            for(let i=0; i<selectedIndex; i++) visualStartAngle += (config.segments[i].visualPercent/100)*360;
+            const visualMidAngle = visualStartAngle + (segment.visualPercent/100)*180;
+
+            const targetAngle = (270 - visualMidAngle + 360) % 360;
+            const fullRotations = (8 + Math.floor(Math.random() * 5)) * 360;
+            const finalRotation = currentRotation + fullRotations + targetAngle - (currentRotation % 360);
+
+            canvas.style.transform = `rotate(${finalRotation}deg)`;
+            currentRotation = finalRotation;
+
+            setTimeout(() => {
+                isSpinning = false;
+                spinButton.disabled = false;
+                const result = config.segments[selectedIndex];
+                resultDisplay.innerText = `🎉 結果：${result.label}`;
+                addHistory(result);
+            }, 5000);
+        }
+
+        // 雲端分享功能 (Firestore)
+        document.getElementById('cloudShareBtn').onclick = async () => {
+            if (!currentUser) return;
+            const btn = document.getElementById('cloudShareBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 儲存中...';
+
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'shared_wheels');
+                const docRef = await addDoc(colRef, {
+                    ...config,
+                    createdAt: new Date(),
+                    creator: currentUser.uid
+                });
+
+                const shareUrl = window.location.origin + window.location.pathname + "?share=" + docRef.id;
+                document.getElementById('shareUrlInput').value = shareUrl;
+                document.getElementById('shareArea').classList.remove('hidden');
+            } catch (e) {
+                console.error("Upload failed", e);
+                alert("儲存到雲端失敗，請稍後再試。");
+            }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 存入雲端並分享';
+            }
+        };
+
+        // 歷史紀錄處理
+        function addHistory(res) {
+            const history = JSON.parse(localStorage.getItem('wheel_history') || '[]');
+            history.unshift({ label: res.label, color: res.color, time: new Date().toLocaleTimeString() });
+            localStorage.setItem('wheel_history', JSON.stringify(history.slice(0, 10)));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('wheel_history') || '[]');
+            if (history.length === 0) return;
+            historyDisplay.innerHTML = history.map(h => `
+                <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
+                    <span class="font-bold" style="color: ${h.color}">${h.label}</span>
+                    <span class="text-[9px] text-slate-600">${h.time}</span>
+                </div>
+            `).join('');
+        }
+
+        // 秘密入口邏輯
+        document.getElementById('secretEntry').ondblclick = () => {
+            window.location.href = 'adminplus.html';
+        };
+
+        document.getElementById('copyBtn').onclick = () => {
+            document.getElementById('shareUrlInput').select();
+            document.execCommand('copy');
+            document.getElementById('copyBtn').innerText = "已複製！";
+            setTimeout(() => document.getElementById('copyBtn').innerText = "複製連結", 2000);
+        };
+
+        document.getElementById('resetHistoryBtn').onclick = () => {
+            localStorage.removeItem('wheel_history');
+            historyDisplay.innerHTML = '<p class="text-slate-600 italic text-center py-8">目前尚無紀錄</p>';
+        };
+
+        spinButton.onclick = spin;
+        init();
+    </script>
 </body>
-
 </html>
