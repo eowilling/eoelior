@@ -51,6 +51,7 @@
         .gradient-text {
             background: linear-gradient(135deg, #818cf8, #c084fc);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -171,6 +172,14 @@
                 <p class="text-slate-400 text-sm mb-6 flex-grow">完整的數獨挑戰系統。</p>
                 <a href="sudo/index.html" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">開啟工具 <i class="fa-solid fa-arrow-right text-xs"></i></a>
             </div>
+            <div class="tool-card glass-card rounded-2xl p-6 flex flex-col group" data-category="entertainment" data-name="買不買轉盤">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-circle-notch"></i></div>
+                </div>
+                <h3 class="text-xl font-bold mb-2">買不買轉盤</h3>
+                <p class="text-slate-400 text-sm mb-6 flex-grow">可自訂選項與機率的命運轉盤。</p>
+                <a href="buytonobuy/index.html" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">開啟工具 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+            </div>
         </div>
 
         <footer class="mt-24 pt-8 border-t border-slate-800 text-center">
@@ -193,7 +202,32 @@
             statsPath: 'stats/visitors' // 資料庫路徑
         };
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Firebase 配置 - 如果沒有外部定義，使用預設值
+        let firebaseConfig;
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+            } else {
+                // 預設配置（如果沒有外部定義）
+                firebaseConfig = {
+                    projectId: "studio-2298218799-c99fe",
+                    appId: "1:848457307119:web:d0c416db3468efb9ef5c1a",
+                    apiKey: "AIzaSyDDgQUZH5N1IaNR2-CeOIHCQjccsJEYD5s",
+                    authDomain: "studio-2298218799-c99fe.firebaseapp.com",
+                    messagingSenderId: "848457307119"
+                };
+            }
+        } catch (e) {
+            console.error('Firebase 配置解析失敗:', e);
+            // 使用預設配置
+            firebaseConfig = {
+                projectId: "studio-2298218799-c99fe",
+                appId: "1:848457307119:web:d0c416db3468efb9ef5c1a",
+                apiKey: "AIzaSyDDgQUZH5N1IaNR2-CeOIHCQjccsJEYD5s",
+                authDomain: "studio-2298218799-c99fe.firebaseapp.com",
+                messagingSenderId: "848457307119"
+            };
+        }
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
