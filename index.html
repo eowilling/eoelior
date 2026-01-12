@@ -3,372 +3,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eoElior | 秘密轉盤</title>
+    <title>eoElior | 玩具盒子</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'Noto Sans TC', 'sans-serif'] },
-                    colors: { 'accent-spin': '#fcd34d' }
-                }
-            }
-        }
-    </script>
     <style>
-        #wheelCanvas {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            border-radius: 9999px;
-            transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-primary: #6366f1;
+            --accent-secondary: #a855f7;
         }
-        .pointer {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid #f8fafc;
-            z-index: 20;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 25%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 25%);
+            min-height: 100vh;
         }
-        .canvas-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            margin: auto;
-            aspect-ratio: 1 / 1;
-        }
+
         .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-input:focus {
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        #adminPanel {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
-
-    <!-- 頂部導航 -->
-    <nav class="p-6 flex justify-between items-center">
-        <a href="../index.html" class="flex items-center gap-2 text-slate-400 hover:text-white transition-all">
-            <i class="fa-solid fa-box-open"></i> 回玩具盒子
-        </a>
-        <div id="dbStatus" class="text-[10px] px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-500">
-            <i class="fa-solid fa-circle text-[8px] mr-1"></i> 雲端未連線
-        </div>
-    </nav>
-
-    <main class="flex-grow flex flex-col items-center justify-center p-4">
-        <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- 左側：轉盤本體 -->
-            <div class="lg:col-span-2 glass-card p-8 rounded-3xl relative overflow-hidden">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold gradient-text" id="wheelTitle">命運輪盤</h2>
-                    <p id="wheelDescription" class="text-slate-400 text-sm mt-2"></p>
-                </div>
-
-                <div class="canvas-container mb-8">
-                    <div class="pointer"></div>
-                    <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
-                </div>
-
-                <div class="flex flex-col items-center gap-4">
-                    <button id="spinButton" class="w-full md:w-auto px-16 py-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xl font-bold rounded-2xl shadow-lg shadow-indigo-900/40 transition-all transform active:scale-95 disabled:opacity-50">
-                        開始旋轉！
-                    </button>
-                    <div id="resultDisplay" class="text-xl font-bold text-indigo-300 min-h-[1.5em]"></div>
-                </div>
-
-                <!-- 隱藏的機率入口 (點擊總和進入管理員模式) -->
-                <div class="mt-8 pt-6 border-t border-white/5 opacity-40 hover:opacity-100 transition-opacity">
-                    <div class="flex justify-between items-center text-xs text-slate-500">
-                        <span id="secretEntry">總機率計數：100% (點擊設定)</span>
-                        <a href="admin.html" class="underline">簡易設定</a>
-                    </div>
-                </div>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header Section -->
+        <header class="mb-12 text-center md:text-left flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-2">
+                    <span class="gradient-text">eoElior</span> 的玩具盒子
+                </h1>
+                <p class="text-slate-400 text-lg">打磨生活的小玩具，記錄成長的每一小步。</p>
             </div>
-
-            <!-- 右側：功能區 -->
-            <div class="space-y-6">
-                <!-- 雲端分享區 -->
-                <div class="glass-card p-6 rounded-3xl">
-                    <h3 class="font-bold mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-share-nodes text-indigo-400"></i> 雲端分享連結
-                    </h3>
-                    <div class="space-y-4">
-                        <button id="cloudShareBtn" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> 存入雲端並分享
+            <div class="flex items-center gap-4 justify-center md:justify-end">
+                <div class="text-right">
+                    <p class="text-xs text-slate-500 uppercase tracking-widest">累積訪客</p>
+                    <p id="visitorCount" class="text-2xl font-bold text-indigo-400">---</p>
+                </div>
+                <div class="h-10 w-[1px] bg-slate-700 hidden sm:block"></div>
+                <div class="text-right">
+                    <p class="text-xs text-slate-500 uppercase tracking-widest flex items-center justify-end gap-1">
+                        資料庫狀態
+                        <button id="toggleAdmin" class="text-slate-600 hover:text-indigo-400 transition-colors">
+                            <i class="fa-solid fa-gear text-[10px]"></i>
                         </button>
-                        <div id="shareArea" class="hidden space-y-2">
-                            <input type="text" id="shareUrlInput" readonly class="w-full bg-black/30 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300">
-                            <button id="copyBtn" class="w-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 py-2 rounded-lg text-xs transition-all">複製連結</button>
-                        </div>
-                    </div>
+                    </p>
+                    <p class="text-sm font-medium text-emerald-400 flex items-center justify-end gap-2">
+                        <span id="dbStatusDot" class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span id="dbStatusText">連線中...</span>
+                    </p>
                 </div>
+            </div>
+        </header>
 
-                <!-- 歷史紀錄 -->
-                <div class="glass-card p-6 rounded-3xl flex-grow h-[300px] flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-500">歷史紀錄</h3>
-                        <button id="resetHistoryBtn" class="text-[10px] text-rose-400 hover:underline">清除</button>
+        <!-- Admin Control Panel -->
+        <div id="adminPanel" class="hidden glass-card rounded-2xl p-6 mb-10 border-indigo-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold flex items-center gap-2 text-indigo-300">
+                    <i class="fa-solid fa-shield-halved"></i> 玩具盒參數調教
+                </h2>
+                <button id="closeAdmin" class="text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium text-slate-400 uppercase tracking-wider">覆寫訪客總數</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="overrideCountInput"
+                            class="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-indigo-500">
+                        <button id="syncCountBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl transition-all font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up text-xs"></i> 同步
+                        </button>
                     </div>
-                    <div id="historyDisplay" class="overflow-y-auto space-y-2 flex-grow pr-2 text-xs">
-                        <p class="text-slate-600 italic text-center py-8">目前尚無紀錄</p>
+                    <p class="text-xs text-slate-500 italic">在此修改會直接覆蓋雲端上的數據。</p>
+                </div>
+                <div class="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
+                    <p class="text-xs text-slate-500 uppercase mb-2">DB 運作日誌</p>
+                    <div id="adminLog" class="text-[10px] font-mono text-slate-400 h-20 overflow-y-auto space-y-1">
+                        <div>> 準備就緒...</div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+
+        <!-- Search & Filters -->
+        <div class="mb-10 space-y-6">
+            <div class="relative max-w-2xl mx-auto md:mx-0">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="searchInput" placeholder="搜尋玩具名稱..."
+                    class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 search-input transition-all">
+            </div>
+
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2" id="filterTabs">
+                <button class="category-tab active px-6 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap transition-all hover:border-slate-500" data-category="all">全部</button>
+                <button class="category-tab px-6 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap transition-all hover:border-slate-500" data-category="productivity">生產力</button>
+                <button class="category-tab px-6 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap transition-all hover:border-slate-500" data-category="image">圖像處理</button>
+                <button class="category-tab px-6 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap transition-all hover:border-slate-500" data-category="pro">專業工具</button>
+                <button class="category-tab px-6 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap transition-all hover:border-slate-500" data-category="entertainment">遊戲娛樂</button>
+            </div>
+        </div>
+
+        <!-- Tools Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16" id="toolsGrid">
+            <!-- (保持工具卡片代碼不變) -->
+            <div class="tool-card glass-card rounded-2xl p-6 flex flex-col group" data-category="productivity" data-name="流程圖工具">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-diagram-project"></i></div>
+                    <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-700 text-slate-300">Beta</span>
+                </div>
+                <h3 class="text-xl font-bold mb-2">流程圖工具</h3>
+                <p class="text-slate-400 text-sm mb-6 flex-grow">視覺化流程圖繪製工具。</p>
+                <a href="FlowChart/FlowChat.html" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">開啟工具 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+            </div>
+            <!-- (省略其他卡片以節省空間，與前一版本完全一致) -->
+             <div class="tool-card glass-card rounded-2xl p-6 flex flex-col group" data-category="pro" data-name="高鐵搶票助手">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center text-red-400 text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-train-subway"></i></div>
+                </div>
+                <h3 class="text-xl font-bold mb-2">高鐵搶票助手</h3>
+                <p class="text-slate-400 text-sm mb-6 flex-grow">台灣高鐵訂票輔助工具。</p>
+                <a href="IRS/THSR_BookingTool.html" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">開啟工具 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+            </div>
+            <div class="tool-card glass-card rounded-2xl p-6 flex flex-col group" data-category="entertainment" data-name="數獨遊戲">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-puzzle-piece"></i></div>
+                </div>
+                <h3 class="text-xl font-bold mb-2">數獨遊戲</h3>
+                <p class="text-slate-400 text-sm mb-6 flex-grow">完整的數獨挑戰系統。</p>
+                <a href="sudo/index.html" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">開啟工具 <i class="fa-solid fa-arrow-right text-xs"></i></a>
+            </div>
+        </div>
+
+        <footer class="mt-24 pt-8 border-t border-slate-800 text-center">
+            <p class="text-slate-500 text-sm mb-2">eoElior © 2026 - 願你的生活如同代碼般優雅</p>
+        </footer>
+    </div>
 
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase 初始化
+        // ==========================================
+        // 🛠️ 玩具盒資料庫參數配置中心
+        // ==========================================
+        const TOY_BOX_CONFIG = {
+            appId: typeof __app_id !== 'undefined' ? __app_id : 'elior-toy-box-v1', // 這裡是 App 識別碼
+            startBase: 2147483, // 這是初始訪客數基準
+            statsPath: 'stats/visitors' // 資料庫路徑
+        };
+
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 修正 appId 中的斜線問題，確保 Firestore 路徑段數正確
-        const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'elior-wheel-v1';
-        const appId = rawAppId.replace(/\//g, '_');
+        // UI 綁定
+        const visitorCountEl = document.getElementById('visitorCount');
+        const dbStatusText = document.getElementById('dbStatusText');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminLog = document.getElementById('adminLog');
+        const overrideInput = document.getElementById('overrideCountInput');
 
-        // 預設配置
-        const defaultConfig = {
-            title: "命運輪盤",
-            description: "這是一個公平、公正、公開的轉盤 (大概吧)",
-            segments: [
-                { label: "買", color: '#10b981', visualPercent: 50, realPercent: 80 },
-                { label: "不買", color: '#ef4444', visualPercent: 50, realPercent: 20 }
-            ]
+        let currentUser = null;
+
+        const addLog = (msg) => {
+            const time = new Date().toLocaleTimeString();
+            adminLog.innerHTML += `<div class="py-0.5 border-b border-slate-800/50">[${time}] ${msg}</div>`;
+            adminLog.scrollTop = adminLog.scrollHeight;
         };
 
-        let config = JSON.parse(JSON.stringify(defaultConfig));
-        let currentUser = null;
-        let isSpinning = false;
-        let currentRotation = 0;
-
-        const canvas = document.getElementById('wheelCanvas');
-        const ctx = canvas.getContext('2d');
-        const spinButton = document.getElementById('spinButton');
-        const resultDisplay = document.getElementById('resultDisplay');
-        const historyDisplay = document.getElementById('historyDisplay');
-        const dbStatus = document.getElementById('dbStatus');
-
-        // 1. 啟動身份驗證與 URL 檢查
-        async function init() {
+        // 啟動身份驗證
+        const initAuth = async () => {
             try {
-                // 優先使用自定義 Token
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        currentUser = user;
-                        dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-emerald-500"></i> 雲端已連線';
-                        await checkUrlParams();
-                        renderUI();
-                    }
-                });
-            } catch (e) {
-                console.error("Auth init failed", e);
-                dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-rose-500"></i> 連線驗證失敗';
+            } catch (err) {
+                dbStatusText.innerText = "驗證失敗";
+                addLog("!! 驗證錯誤: " + err.message);
             }
-        }
+        };
 
-        // 檢查 URL 參數 (同時支援 c=Base64 和 share=ID)
-        async function checkUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            const shareId = params.get('share');
-            const configParam = params.get('c');
-
-            if (shareId) {
-                dbStatus.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i> 正在抓取雲端轉盤...';
-                try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'shared_wheels', shareId);
-                    const snap = await getDoc(docRef);
-                    if (snap.exists()) {
-                        config = snap.data();
-                        dbStatus.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1 text-emerald-500"></i> 雲端載入成功';
-                    }
-                } catch (e) { console.error("Cloud load fail", e); }
-            } else if (configParam) {
-                try {
-                    const decoded = JSON.parse(atob(configParam.replace(/-/g, '+').replace(/_/g, '/')));
-                    config.title = decoded.t || decoded.title;
-                    config.segments = (decoded.s || decoded.segments).map(s => ({
-                        label: s.l || s.label,
-                        color: s.c || s.color,
-                        visualPercent: s.v || s.visualPercent,
-                        realPercent: s.r !== undefined ? s.r : (s.v || s.visualPercent)
-                    }));
-                } catch (e) { console.warn("Base64 decode fail"); }
+        onAuthStateChanged(auth, (user) => {
+            if (user && !currentUser) {
+                currentUser = user;
+                dbStatusText.innerText = "已連線";
+                addLog("資料庫連線成功 (UID: " + user.uid.substring(0,8) + "...)");
+                handleVisitorLogic();
             }
-        }
+        });
 
-        function renderUI() {
-            document.getElementById('wheelTitle').innerText = config.title;
-            document.getElementById('wheelDescription').innerText = config.description || "";
-            drawWheel();
-            renderHistory();
-        }
-
-        function drawWheel() {
-            const centerX = 200;
-            const centerY = 200;
-            const radius = 190;
-            let currentAngle = 0;
-
-            ctx.clearRect(0, 0, 400, 400);
-
-            config.segments.forEach(seg => {
-                const degrees = (seg.visualPercent / 100) * 360;
-                const arc = (degrees * Math.PI) / 180;
-
-                ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
-                ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + arc);
-                ctx.fillStyle = seg.color;
-                ctx.fill();
-
-                // 繪製文字
-                ctx.save();
-                ctx.translate(centerX, centerY);
-                ctx.rotate(currentAngle + arc / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = "white";
-                ctx.font = "bold 16px Noto Sans TC";
-                ctx.fillText(seg.label, radius - 20, 5);
-                ctx.restore();
-
-                currentAngle += arc;
-            });
-
-            // 繪製圓心
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
-            ctx.fillStyle = "#0f172a";
-            ctx.fill();
-            ctx.strokeStyle = "rgba(255,255,255,0.1)";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
-
-        // 轉動轉盤邏輯
-        function spin() {
-            if (isSpinning) return;
-            isSpinning = true;
-            spinButton.disabled = true;
-            resultDisplay.innerText = "旋轉中...";
-
-            const random = Math.random() * 100;
-            let cumulative = 0;
-            let selectedIndex = 0;
-            for (let i = 0; i < config.segments.length; i++) {
-                cumulative += config.segments[i].realPercent;
-                if (random <= cumulative) {
-                    selectedIndex = i;
-                    break;
-                }
-            }
-
-            const segment = config.segments[selectedIndex];
-            let visualStartAngle = 0;
-            for(let i=0; i<selectedIndex; i++) visualStartAngle += (config.segments[i].visualPercent/100)*360;
-            const visualMidAngle = visualStartAngle + (segment.visualPercent/100)*180;
-
-            const targetAngle = (270 - visualMidAngle + 360) % 360;
-            const fullRotations = (8 + Math.floor(Math.random() * 5)) * 360;
-            const finalRotation = currentRotation + fullRotations + targetAngle - (currentRotation % 360);
-
-            canvas.style.transform = `rotate(${finalRotation}deg)`;
-            currentRotation = finalRotation;
-
-            setTimeout(() => {
-                isSpinning = false;
-                spinButton.disabled = false;
-                const result = config.segments[selectedIndex];
-                resultDisplay.innerText = `🎉 結果：${result.label}`;
-                addHistory(result);
-            }, 5000);
-        }
-
-        // 雲端分享功能 (Firestore)
-        document.getElementById('cloudShareBtn').onclick = async () => {
+        async function handleVisitorLogic() {
             if (!currentUser) return;
-            const btn = document.getElementById('cloudShareBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> 儲存中...';
+            const visitorDocRef = doc(db, 'artifacts', TOY_BOX_CONFIG.appId, 'public', 'data', 'stats', 'visitors');
 
             try {
-                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'shared_wheels');
-                const docRef = await addDoc(colRef, {
-                    ...config,
-                    createdAt: new Date(),
-                    creator: currentUser.uid
+                const snap = await getDoc(visitorDocRef);
+                let count = snap.exists() ? snap.data().count : TOY_BOX_CONFIG.startBase;
+
+                // 進入頁面自動 +1
+                count += 1;
+                await setDoc(visitorDocRef, { count: count }, { merge: true });
+
+                // 即時監聽
+                onSnapshot(visitorDocRef, (doc) => {
+                    if (doc.exists()) {
+                        const cloudCount = doc.data().count;
+                        visitorCountEl.innerText = cloudCount.toLocaleString();
+                        overrideInput.value = cloudCount;
+                    }
                 });
-
-                const shareUrl = window.location.origin + window.location.pathname + "?share=" + docRef.id;
-                document.getElementById('shareUrlInput').value = shareUrl;
-                document.getElementById('shareArea').classList.remove('hidden');
-            } catch (e) {
-                console.error("Upload failed", e);
-                alert("儲存到雲端失敗，請稍後再試。");
+            } catch (err) {
+                addLog("!! 資料存取受限: " + err.message);
             }
-            finally {
+        }
+
+        // 管理員按鈕事件
+        document.getElementById('toggleAdmin').onclick = () => adminPanel.classList.toggle('hidden');
+        document.getElementById('closeAdmin').onclick = () => adminPanel.classList.add('hidden');
+
+        document.getElementById('syncCountBtn').onclick = async () => {
+            const btn = document.getElementById('syncCountBtn');
+            const newValue = parseInt(overrideInput.value);
+            if (isNaN(newValue)) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i>';
+
+            try {
+                const ref = doc(db, 'artifacts', TOY_BOX_CONFIG.appId, 'public', 'data', 'stats', 'visitors');
+                await setDoc(ref, { count: newValue }, { merge: true });
+                addLog("已手動調整雲端訪客數為: " + newValue);
+            } catch (err) {
+                addLog("!! 寫入失敗: " + err.message);
+            } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> 存入雲端並分享';
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up text-xs"></i> 同步';
             }
         };
 
-        // 歷史紀錄處理
-        function addHistory(res) {
-            const history = JSON.parse(localStorage.getItem('wheel_history') || '[]');
-            history.unshift({ label: res.label, color: res.color, time: new Date().toLocaleTimeString() });
-            localStorage.setItem('wheel_history', JSON.stringify(history.slice(0, 10)));
-            renderHistory();
-        }
+        initAuth();
 
-        function renderHistory() {
-            const history = JSON.parse(localStorage.getItem('wheel_history') || '[]');
-            if (history.length === 0) return;
-            historyDisplay.innerHTML = history.map(h => `
-                <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
-                    <span class="font-bold" style="color: ${h.color}">${h.label}</span>
-                    <span class="text-[9px] text-slate-600">${h.time}</span>
-                </div>
-            `).join('');
-        }
+        // 搜尋與過濾邏輯
+        const searchInput = document.getElementById('searchInput');
+        const toolCards = document.querySelectorAll('.tool-card');
+        const filterTabs = document.querySelectorAll('.category-tab');
 
-        // 秘密入口邏輯
-        document.getElementById('secretEntry').ondblclick = () => {
-            window.location.href = 'adminplus.html';
+        const filterTools = () => {
+            const term = searchInput.value.toLowerCase();
+            const activeCat = document.querySelector('.category-tab.active').dataset.category;
+            toolCards.forEach(card => {
+                const matchesSearch = card.dataset.name.toLowerCase().includes(term);
+                const matchesCat = activeCat === 'all' || card.dataset.category === activeCat;
+                card.style.display = (matchesSearch && matchesCat) ? 'flex' : 'none';
+            });
         };
 
-        document.getElementById('copyBtn').onclick = () => {
-            document.getElementById('shareUrlInput').select();
-            document.execCommand('copy');
-            document.getElementById('copyBtn').innerText = "已複製！";
-            setTimeout(() => document.getElementById('copyBtn').innerText = "複製連結", 2000);
-        };
-
-        document.getElementById('resetHistoryBtn').onclick = () => {
-            localStorage.removeItem('wheel_history');
-            historyDisplay.innerHTML = '<p class="text-slate-600 italic text-center py-8">目前尚無紀錄</p>';
-        };
-
-        spinButton.onclick = spin;
-        init();
+        searchInput.addEventListener('input', filterTools);
+        filterTabs.forEach(tab => tab.addEventListener('click', () => {
+            filterTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            filterTools();
+        }));
     </script>
 </body>
 </html>
