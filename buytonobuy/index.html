@@ -14,13 +14,12 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans">
 
-    <nav class="absolute top-0 w-full p-6 flex justify-between">
+    <nav class="absolute top-0 w-full p-6">
         <a href="../index.html" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left"></i> 回玩具盒子</a>
-        <div id="dbStatus" class="text-[10px] text-slate-500">雲端連線中...</div>
     </nav>
 
-    <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
-        <div class="lg:col-span-2 glass-card p-8 rounded-3xl text-center">
+    <div class="max-w-2xl w-full mt-12">
+        <div class="glass-card p-8 rounded-3xl text-center">
             <h2 id="wheelTitle" class="text-3xl font-bold mb-8">命運輪盤</h2>
             <div class="relative w-full max-w-[320px] aspect-square mx-auto mb-8">
                 <div class="pointer"></div>
@@ -29,55 +28,15 @@
             <button id="spinBtn" class="bg-indigo-600 px-12 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">開始旋轉</button>
             <p id="resultDisplay" class="mt-4 text-indigo-300 font-bold h-6"></p>
         </div>
-
-        <div class="glass-card p-6 rounded-3xl space-y-4">
-            <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest">雲端同步分享</h3>
-            <button id="cloudShareBtn" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl text-xs font-bold transition-all">生成分享連結</button>
-            <div id="shareArea" class="hidden space-y-2">
-                <input type="text" id="shareUrlInput" readonly class="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300 focus:outline-none">
-                <button id="copyBtn" class="w-full bg-indigo-600/20 text-indigo-300 py-2 rounded-lg text-[10px] hover:bg-indigo-600/40">複製連結</button>
-            </div>
-        </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ✅ 已填入你的專屬金鑰
-        const firebaseConfig = {
-            projectId: "studio-2298218799-c99fe",
-            appId: "1:848457307119:web:d0c416db3468efb9ef5c1a",
-            apiKey: "AIzaSyDDgQUZH5N1IaNR2-CeOIHCQjccsJEYD5s",
-            authDomain: "studio-2298218799-c99fe.firebaseapp.com",
-            messagingSenderId: "848457307119"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = "eoelior-wheel-data";
-
+    <script>
         let config = { title: "命運輪盤", segments: [{label: "買", color: "#10b981", visualPercent: 50, realPercent: 80}, {label: "不買", color: "#ef4444", visualPercent: 50, realPercent: 20}] };
         let currentRotation = 0;
 
-        async function init() {
-            try {
-                await signInAnonymously(auth);
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        document.getElementById('dbStatus').innerText = "雲端已連線";
-                        const params = new URLSearchParams(window.location.search);
-                        const shareId = params.get('share');
-                        if (shareId) {
-                            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_wheels', shareId));
-                            if (snap.exists()) { config = snap.data(); document.getElementById('wheelTitle').innerText = config.title; }
-                        }
-                        drawWheel();
-                    }
-                });
-            } catch (e) { console.error(e); }
+        function init() {
+            document.getElementById('wheelTitle').innerText = config.title;
+            drawWheel();
         }
 
         function drawWheel() {
@@ -108,15 +67,6 @@
             currentRotation = final;
             document.getElementById('resultDisplay').innerText = "旋轉中...";
             setTimeout(() => { document.getElementById('resultDisplay').innerText = "🎉 結果：" + seg.label; }, 5000);
-        };
-
-        document.getElementById('cloudShareBtn').onclick = async () => {
-            const btn = document.getElementById('cloudShareBtn');
-            btn.disabled = true; btn.innerText = "儲存中...";
-            const docRef = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'shared_wheels'), config);
-            document.getElementById('shareUrlInput').value = window.location.origin + window.location.pathname + "?share=" + docRef.id;
-            document.getElementById('shareArea').classList.remove('hidden');
-            btn.disabled = false; btn.innerText = "生成分享連結";
         };
 
         init();
