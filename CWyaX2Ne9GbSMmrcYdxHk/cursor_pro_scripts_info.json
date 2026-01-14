@@ -1,7 +1,0 @@
-{
-  "main_script": "cursor_pro_auto_reset.bat",
-  "quick_script": "start_cursor_pro.bat",
-  "monitor_script": "cursor_pro_monitor.bat",
-  "startup_script": "add_to_startup.bat",
-  "created_at": "2026-01-10 19:20:55"
-}
