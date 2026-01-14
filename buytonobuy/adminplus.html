@@ -22,7 +22,7 @@
             <h1 class="text-3xl font-bold text-gray-800">轉盤後台管理（完整權限）</h1>
             <div class="flex gap-4">
                 <a href="admin.html" class="text-sm text-gray-500 hover:text-gray-700 underline">表面設定</a>
-                <a href="buyROnobuy.html" class="text-blue-600 hover:text-blue-800 underline">返回轉盤</a>
+                <a href="index.html" class="text-blue-600 hover:text-blue-800 underline">返回轉盤</a>
             </div>
         </div>
 
@@ -31,7 +31,7 @@
                 <strong>說明：</strong><br>
                 • <strong>視覺面積</strong>：轉盤上顯示的扇區大小比例（用戶看到的）<br>
                 • <strong>真實機率</strong>：實際轉盤停止在各選項的機率（隱藏的實際控制）<br>
-                • <strong>自動計算</strong>：調整任一選項的百分比時，其他選項會自動按比例調整，總和保持 100%<br>
+                • 調整百分比時，請確保總和為 100%<br>
                 • 例如：視覺上 50:50，但真實機率可以設為 80:20，這樣「買」的機率會更高
             </p>
         </div>
@@ -112,7 +112,12 @@
         </div>
 
         <div id="previewSection" class="mt-8 p-4 bg-gray-100 rounded-lg">
-            <h2 class="text-xl font-bold mb-4">預覽資訊</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">預覽資訊</h2>
+                <button id="refreshPreviewBtn" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded transition">
+                    更新預覽
+                </button>
+            </div>
             <div id="previewInfo" class="text-sm text-gray-700">
                 <!-- 預覽資訊將顯示在這裡 -->
             </div>
@@ -150,17 +155,39 @@
         }
 
         // 儲存配置
+        // 確保配置已保存（在返回轉盤前）
+        function ensureConfigSaved() {
+            updateConfigFromDOM();
+            saveConfig(config);
+            console.log('💾 確保配置已保存');
+        }
+
+        // 返回轉盤連結：點擊時自動保存配置
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            ensureConfigSaved();
+            // 允許正常跳轉
+        });
+
         function saveConfig(configToSave) {
             // 暫時標記為儲存中，避免觸發同步檢查
             isEditing = true;
 
-            localStorage.setItem('wheelConfig', JSON.stringify(configToSave));
+            // 確保配置格式正確
+            const configToSaveStr = JSON.stringify(configToSave);
+            localStorage.setItem('wheelConfig', configToSaveStr);
             config = configToSave; // 更新當前配置
 
-            // 觸發自定義事件以在同一頁面內同步（但不重新渲染）
+            // 觸發自定義事件以在同一頁面內同步
+            // 使用 CustomEvent 而不是 StorageEvent，因為 StorageEvent 在同頁面內可能不會觸發
+            window.dispatchEvent(new CustomEvent('wheelConfigUpdated', {
+                detail: configToSave
+            }));
+
+            // 也觸發 storage 事件（用於跨標籤頁同步）
             window.dispatchEvent(new StorageEvent('storage', {
                 key: 'wheelConfig',
-                newValue: JSON.stringify(configToSave),
+                newValue: configToSaveStr,
+                oldValue: localStorage.getItem('wheelConfig'),
                 storageArea: localStorage
             }));
 
@@ -170,6 +197,8 @@
             setTimeout(() => {
                 isEditing = false;
             }, 500);
+
+            console.log('✅ 配置已保存到 localStorage');
 
             alert('設定已儲存！');
         }
@@ -208,13 +237,11 @@
         // 標題和說明輸入框事件
         wheelTitleInput.addEventListener('input', () => {
             markEditing(); // 標記為正在編輯
-            updateTitleAndDescription();
-            updatePreview();
+            // 不自動更新預覽
         });
         wheelDescriptionInput.addEventListener('input', () => {
             markEditing(); // 標記為正在編輯
-            updateTitleAndDescription();
-            updatePreview();
+            // 不自動更新預覽
         });
 
         // 創建選項表單
@@ -303,41 +330,32 @@
             colorInput.addEventListener('input', (e) => {
                 markEditing(); // 標記為正在編輯
                 colorText.value = e.target.value;
-                updateConfigFromDOM();
-                updatePreview();
+                // 不自動更新預覽
             });
             colorText.addEventListener('input', (e) => {
                 if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
                     markEditing(); // 標記為正在編輯
                     colorInput.value = e.target.value;
-                    updateConfigFromDOM();
-                    updatePreview();
+                    // 不自動更新預覽
                 }
             });
 
             // 選項名稱輸入
             div.querySelector('.segment-label').addEventListener('input', () => {
                 markEditing(); // 標記為正在編輯
-                updateConfigFromDOM();
-                updatePreview();
+                // 不自動更新配置和預覽，讓用戶自由輸入
             });
 
-            // 視覺面積輸入 - 自動按比例調整其他選項
+            // 視覺面積輸入 - 不自動更新，讓用戶自由輸入
             div.querySelector('.segment-visual').addEventListener('input', (e) => {
                 markEditing(); // 標記為正在編輯
-                const changedIndex = parseInt(div.dataset.index);
-                const newValue = parseFloat(e.target.value) || 0;
-                autoAdjustPercentages('visual', changedIndex, newValue);
-                updatePreview();
+                // 不更新配置和預覽，讓用戶自由輸入
             });
 
-            // 真實機率輸入 - 自動按比例調整其他選項
+            // 真實機率輸入 - 不自動更新，讓用戶自由輸入
             div.querySelector('.segment-real').addEventListener('input', (e) => {
                 markEditing(); // 標記為正在編輯
-                const changedIndex = parseInt(div.dataset.index);
-                const newValue = parseFloat(e.target.value) || 0;
-                autoAdjustPercentages('real', changedIndex, newValue);
-                updatePreview();
+                // 不更新配置和預覽，讓用戶自由輸入
             });
 
             return div;
@@ -458,30 +476,38 @@
             updatePreview();
         }
 
-        // 更新預覽資訊
+        // 更新預覽資訊（不自動刷新，只在需要時手動調用）
         function updatePreview() {
-            updateConfigFromDOM();
+            // 從 DOM 讀取當前值（不更新配置）
+            const segments = [];
+            segmentsContainer.querySelectorAll('[data-index]').forEach((div, index) => {
+                const label = div.querySelector('.segment-label').value || `選項${index + 1}`;
+                const color = div.querySelector('.segment-color').value;
+                const visualPercent = parseFloat(div.querySelector('.segment-visual').value) || 0;
+                const realPercent = parseFloat(div.querySelector('.segment-real').value) || 0;
+                segments.push({ label, color, visualPercent, realPercent });
+            });
 
-            const visualTotal = config.segments.reduce((sum, s) => sum + s.visualPercent, 0);
-            const realTotal = config.segments.reduce((sum, s) => sum + s.realPercent, 0);
+            const visualTotal = segments.reduce((sum, s) => sum + s.visualPercent, 0);
+            const realTotal = segments.reduce((sum, s) => sum + s.realPercent, 0);
 
             let html = '<div class="space-y-2">';
             const visualStatus = Math.abs(visualTotal - 100) < 0.01 ?
-                '<span class="text-green-600">✓ 已自動調整為 100%</span>' :
-                `<span class="text-red-600">${visualTotal.toFixed(2)}%（建議調整為 100%）</span>`;
+                '<span class="text-green-600">✓ 100%</span>' :
+                `<span class="text-yellow-600">${visualTotal.toFixed(2)}%（保存時將按比例調整為 100%）</span>`;
             const realStatus = Math.abs(realTotal - 100) < 0.01 ?
-                '<span class="text-green-600">✓ 已自動調整為 100%</span>' :
-                `<span class="text-red-600">${realTotal.toFixed(2)}%（建議調整為 100%）</span>`;
+                '<span class="text-green-600">✓ 100%</span>' :
+                `<span class="text-yellow-600">${realTotal.toFixed(2)}%（保存時將按比例調整為 100%）</span>`;
 
             html += `<p><strong>視覺面積總和：</strong>${visualStatus}</p>`;
             html += `<p><strong>真實機率總和：</strong>${realStatus}</p>`;
             html += '<div class="mt-4"><strong>視覺顯示：</strong>';
-            config.segments.forEach(s => {
+            segments.forEach(s => {
                 html += `<span class="inline-block px-3 py-1 rounded text-white mr-2" style="background-color: ${s.color}">${s.label} ${s.visualPercent.toFixed(2)}%</span>`;
             });
             html += '</div>';
             html += '<div class="mt-2"><strong>真實機率：</strong>';
-            config.segments.forEach(s => {
+            segments.forEach(s => {
                 html += `<span class="inline-block px-3 py-1 rounded text-white mr-2" style="background-color: ${s.color}">${s.label} ${s.realPercent.toFixed(2)}%</span>`;
             });
             html += '</div></div>';
@@ -559,30 +585,52 @@
                 return;
             }
 
-            // 確保總和為 100%（自動調整）
-            const visualTotal = config.segments.reduce((sum, s) => sum + s.visualPercent, 0);
-            const realTotal = config.segments.reduce((sum, s) => sum + s.realPercent, 0);
+            // 計算總和
+            const visualTotal = config.segments.reduce((sum, s) => sum + (parseFloat(s.visualPercent) || 0), 0);
+            const realTotal = config.segments.reduce((sum, s) => sum + (parseFloat(s.realPercent) || 0), 0);
 
-            if (Math.abs(visualTotal - 100) > 0.01) {
-                // 按比例調整視覺面積
+            // 如果總和不為 100%，按現有數字按比例規劃
+            if (Math.abs(visualTotal - 100) > 0.01 && visualTotal > 0) {
+                // 按比例調整視覺面積，保持相對比例
                 const ratio = 100 / visualTotal;
                 config.segments.forEach(seg => {
-                    seg.visualPercent = Math.round(seg.visualPercent * ratio * 100) / 100;
+                    seg.visualPercent = Math.round((parseFloat(seg.visualPercent) || 0) * ratio * 100) / 100;
+                });
+            } else if (visualTotal === 0) {
+                // 如果總和為 0，平均分配
+                const avg = 100 / config.segments.length;
+                config.segments.forEach(seg => {
+                    seg.visualPercent = Math.round(avg * 100) / 100;
                 });
             }
 
-            if (Math.abs(realTotal - 100) > 0.01) {
-                // 按比例調整真實機率
+            if (Math.abs(realTotal - 100) > 0.01 && realTotal > 0) {
+                // 按比例調整真實機率，保持相對比例
                 const ratio = 100 / realTotal;
                 config.segments.forEach(seg => {
-                    seg.realPercent = Math.round(seg.realPercent * ratio * 100) / 100;
+                    seg.realPercent = Math.round((parseFloat(seg.realPercent) || 0) * ratio * 100) / 100;
+                });
+            } else if (realTotal === 0) {
+                // 如果總和為 0，平均分配
+                const avg = 100 / config.segments.length;
+                config.segments.forEach(seg => {
+                    seg.realPercent = Math.round(avg * 100) / 100;
                 });
             }
 
-            // 儲存配置（會觸發更新預覽）
+            // 儲存配置
             saveConfig(config);
             // 重新渲染以顯示調整後的值
             renderSegments();
+            // 顯示調整訊息
+            let message = '設定已儲存！';
+            if (Math.abs(visualTotal - 100) > 0.01) {
+                message += `\n視覺面積已按比例調整為 100%（原總和：${visualTotal.toFixed(2)}%）`;
+            }
+            if (Math.abs(realTotal - 100) > 0.01) {
+                message += `\n真實機率已按比例調整為 100%（原總和：${realTotal.toFixed(2)}%）`;
+            }
+            alert(message);
         });
 
         // 重置為預設值
@@ -675,7 +723,7 @@
                     // 獲取目錄路徑
                     const pathParts = currentUrlObj.pathname.split('/').filter(p => p); // 過濾空字符串
                     // 移除當前文件名，添加目標文件名
-                    pathParts[pathParts.length - 1] = 'buyROnobuy.html';
+                    pathParts[pathParts.length - 1] = 'index.html';
                     // 重新構建路徑（確保以 / 開頭）
                     currentUrlObj.pathname = '/' + pathParts.join('/');
                     // 清除現有的查詢參數和錨點，添加新的配置參數
@@ -690,7 +738,7 @@
                     const currentPath = window.location.pathname;
                     const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
                     // 構建完整的絕對網址
-                    shareUrl = `${protocol}//${host}${dirPath}buyROnobuy.html?c=${configBase64}`;
+                    shareUrl = `${protocol}//${host}${dirPath}index.html?c=${configBase64}`;
                 }
 
                 return shareUrl;
@@ -917,6 +965,11 @@
                 }
             }
         }, 1000); // 改為1秒檢查一次，減少頻率
+
+        // 手動更新預覽按鈕
+        document.getElementById('refreshPreviewBtn').addEventListener('click', () => {
+            updatePreview();
+        });
 
         // 初始化
         loadTitleAndDescription();
