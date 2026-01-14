@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- background -->
+  <rect width="64" height="64" rx="14" fill="#0ea5e9"/>
+
+  <!-- hat brim -->
+  <path d="M10 26h44l-5-12H15z" fill="#020617"/>
+
+  <!-- hood/face silhouette -->
+  <path d="M14 26c2.2 14 13 24 18 24s15.8-10 18-24" fill="#0f172a"/>
+
+  <!-- face -->
+  <path d="M20 36c0-6.6 5.4-12 12-12s12 5.4 12 12-5.4 12-12 12-12-5.4-12-12z" fill="#f8fafc"/>
+
+  <!-- eyes -->
+  <circle cx="28" cy="36" r="3" fill="#020617"/>
+  <circle cx="36" cy="36" r="3" fill="#020617"/>
+
+  <!-- mouth -->
+  <path d="M28 43c2.5 2 5.5 2 8 0" stroke="#020617" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- shoulders -->
+  <path d="M18 56c4-9 24-9 28 0" fill="#020617"/>
+</svg>
+
