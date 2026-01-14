@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 資訊安全意識教育訓練</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #020617;
+            /* Very Dark Slate */
+            color: #f1f5f9;
+            /* Slate 100 */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0ea5e9;
+            border-radius: 4px;
+        }
+
+        .neon-text {
+            text-shadow: 0 0 5px rgba(14, 165, 233, 0.5), 0 0 10px rgba(14, 165, 233, 0.3);
+        }
+    </style>
+</head>
+
+<body class="overflow-hidden" x-data="presentation()">
+
+    <!-- Main Container -->
+    <div class="flex h-screen w-full">
+
+        <!-- Sidebar Navigation -->
+        <div class="w-64 bg-slate-900 border-r border-slate-700 flex flex-col hidden md:flex z-50 shadow-2xl">
+            <div class="p-6 border-b border-slate-700 bg-slate-800">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-shield-halved text-3xl text-cyan-400 neon-text"></i>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-wider text-white">ISMS 2026</h1>
+                        <p class="text-xs text-cyan-400">資訊安全管理系統</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-4">
+                <template x-for="(navTitle, index) in slideTitles" :key="index">
+                    <button @click="goToSlide(index)"
+                        class="w-full text-left px-6 py-3 transition-all duration-200 border-l-4 group"
+                        :class="currentSlide === index ? 'bg-slate-800 border-cyan-400 text-cyan-300' :
+                            'border-transparent text-slate-400 hover:bg-slate-800 hover:text-white'">
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm font-mono opacity-50"
+                                x-text="String(index + 1).padStart(2, '0')"></span>
+                            <span class="text-sm font-medium" x-text="navTitle"></span>
+                        </div>
+                    </button>
+                </template>
+            </nav>
+
+            <div class="p-4 border-t border-slate-700 bg-slate-800">
+                <div class="text-xs text-slate-400 text-center">
+                    <p>按 <kbd class="px-1 py-0.5 bg-slate-700 rounded text-white">Space</kbd> 下一頁</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <main class="flex-1 relative bg-slate-950 overflow-hidden flex flex-col">
+
+            <!-- Progress Bar -->
+            <div class="h-1 bg-slate-800 w-full">
+                <div class="h-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.7)] transition-all duration-500 ease-out"
+                    :style="`width: ${(currentSlide / (slideTitles.length - 1)) * 100}%`"></div>
+            </div>
+
+            <!-- Slides Container -->
+            <div class="flex-1 relative p-8 md:p-12 lg:p-16 flex items-center justify-center overflow-y-auto">
+
+                <!-- Slide 0: Cover -->
+                <div x-show="currentSlide === 0" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="text-center space-y-8">
+                        <div
+                            class="inline-block p-6 rounded-full bg-slate-800 border-2 border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.2)] mb-8 animate-bounce">
+                            <i class="fas fa-user-shield text-8xl text-cyan-400"></i>
+                        </div>
+                        <h1 class="text-6xl md:text-7xl font-black tracking-tight text-white mb-4">
+                            <span class="block text-2xl md:text-3xl font-light tracking-widest mb-2 text-cyan-300">2026
+                                年度</span>
+                            資訊安全<span class="text-cyan-400">意識</span>教育訓練
+                        </h1>
+                        <p class="text-2xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed">
+                            強化全員資安聯防，守護企業核心數位資產
+                        </p>
+                        <div class="pt-12 flex justify-center gap-6">
+                            <div class="flex items-center gap-2 text-slate-400">
+                                <i class="fas fa-building"></i> 資訊課
+                            </div>
+                        </div>
+                        <div class="mt-12">
+                            <button @click="nextSlide()"
+                                class="px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all transform hover:scale-105">
+                                開始課程 <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 1: Importance -->
+                <div x-show="currentSlide === 1" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        <div class="space-y-2"> <!-- Changed space-y-6 to space-y-2 to fit more content -->
+
+                            <!-- What is InfoSec Section -->
+                            <div class="mb-6">
+                                <h2 class="text-3xl font-bold text-white mb-3 border-l-8 border-green-500 pl-6">什麼是資訊安全？
+                                </h2>
+                                <p
+                                    class="text-lg text-slate-300 leading-relaxed bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                                    資訊安全 (InfoSec) 不僅僅是防毒軟體或防火牆，而是透過<span
+                                        class="text-green-400 font-bold">技術</span>、<span
+                                        class="text-green-400 font-bold">流程</span>與<span
+                                        class="text-green-400 font-bold">人員管理</span>，來保護企業的核心價值與資產免受各種威脅。
+                                </p>
+                            </div>
+
+                            <!-- Why Important Section -->
+                            <div>
+                                <h2 class="text-3xl font-bold text-white mb-3 border-l-8 border-cyan-400 pl-6">為什麼很重要？
+                                </h2>
+                                <ul class="space-y-3">
+                                    <li
+                                        class="flex items-center gap-4 p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-red-500 transition-colors group">
+                                        <div
+                                            class="p-2 bg-red-900/50 rounded-lg group-hover:bg-red-600 transition-colors">
+                                            <i class="fas fa-sack-dollar text-red-100 text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-base font-bold text-red-200">鉅額財務損失</h3>
+                                            <p class="text-slate-400 text-xs">勒索軟體贖金、營運中斷。</p>
+                                        </div>
+                                    </li>
+                                    <li
+                                        class="flex items-center gap-4 p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-orange-500 transition-colors group">
+                                        <div
+                                            class="p-2 bg-orange-900/50 rounded-lg group-hover:bg-orange-600 transition-colors">
+                                            <i class="fas fa-users-slash text-orange-100 text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-base font-bold text-orange-200">商譽受損</h3>
+                                            <p class="text-slate-400 text-xs">客戶信任崩盤，品牌重創。</p>
+                                        </div>
+                                    </li>
+                                    <li
+                                        class="flex items-center gap-4 p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-yellow-500 transition-colors group">
+                                        <div
+                                            class="p-2 bg-yellow-900/50 rounded-lg group-hover:bg-yellow-600 transition-colors">
+                                            <i class="fas fa-gavel text-yellow-100 text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-base font-bold text-yellow-200">法律責任</h3>
+                                            <p class="text-slate-400 text-xs">個資法罰則、訴訟。</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10">
+                                <i class="fas fa-chart-line text-9xl text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-cyan-400 mb-6">2025 全球資安數據</h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-white">網路攻擊年增率</span>
+                                        <span class="text-red-400 font-bold">+38%</span>
+                                    </div>
+                                    <div class="h-3 bg-slate-700 rounded-full">
+                                        <div
+                                            class="h-3 bg-red-500 rounded-full w-[38%] shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-white">平均洩漏成本 (USD)</span>
+                                        <span class="text-orange-400 font-bold">445 萬鎂</span>
+                                    </div>
+                                    <div class="h-3 bg-slate-700 rounded-full">
+                                        <div
+                                            class="h-3 bg-orange-500 rounded-full w-[80%] shadow-[0_0_10px_rgba(249,115,22,0.5)]">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-white">人為疏失比例</span>
+                                        <span class="text-yellow-400 font-bold">74%</span>
+                                    </div>
+                                    <div class="h-3 bg-slate-700 rounded-full">
+                                        <div
+                                            class="h-3 bg-yellow-500 rounded-full w-[74%] shadow-[0_0_10px_rgba(234,179,8,0.5)]">
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-yellow-500 mt-2 text-right">* Verizon 2025 DBIR 報告</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: News Cases (Modified) -->
+                <div x-show="currentSlide === 2" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col absolute inset-0 p-8 md:p-16 overflow-y-auto">
+                    <div class="space-y-6">
+                        <h2 class="text-4xl font-bold text-white border-l-8 border-cyan-400 pl-6">2025-2026 重大資安事件</h2>
+                        <p class="text-slate-400">點擊下方案例查看詳細分析與解決方案</p>
+
+                        <!-- Cards Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <template x-for="caseItem in cases" :key="caseItem.id">
+                                <div @click="selectedCase = caseItem"
+                                    class="bg-slate-800 rounded-xl overflow-hidden border transition-all cursor-pointer transform hover:-translate-y-1 relative"
+                                    :class="selectedCase && selectedCase.id === caseItem.id ?
+                                        'border-cyan-400 ring-2 ring-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.3)]' :
+                                        'border-slate-700 hover:border-cyan-400 hover:shadow-lg'">
+                                    <div class="p-4 border-b flex justify-between items-center"
+                                        :class="`bg-${caseItem.color}-900/30 border-${caseItem.color}-900/50`">
+                                        <span class="text-white text-xs px-2 py-1 rounded"
+                                            :class="`bg-${caseItem.color}-600`" x-text="caseItem.category"></span>
+                                        <span class="text-sm" :class="`text-${caseItem.color}-300`"
+                                            x-text="caseItem.date"></span>
+                                    </div>
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-bold text-white mb-3" x-text="caseItem.title"></h3>
+                                        <p class="text-slate-400 text-sm leading-relaxed" x-text="caseItem.desc"></p>
+                                        <div class="mt-4 text-center">
+                                            <span class="text-xs text-cyan-400 group-hover:underline">點擊查看詳情 <i
+                                                    class="fas fa-chevron-down ml-1"></i></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Details Section (Dynamic) -->
+                        <div x-show="selectedCase" x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="opacity-0 translate-y-5"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            class="bg-slate-900/80 border border-slate-700 rounded-xl p-8 mt-6 shadow-2xl relative">
+                            <button @click="selectedCase = null"
+                                class="absolute top-4 right-4 text-slate-400 hover:text-white"><i
+                                    class="fas fa-times text-xl"></i></button>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <i class="fas fa-newspaper text-cyan-400"></i> 新聞摘要
+                                    </h3>
+                                    <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-cyan-400 shadow-inner">
+                                        <p class="text-slate-300 leading-relaxed text-lg"
+                                            x-text="selectedCase ? selectedCase.details : ''"></p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <i class="fas fa-tools text-green-400"></i> 專家建議與解決方案
+                                    </h3>
+                                    <div class="bg-slate-800 p-6 rounded-lg border-l-4 border-green-400 shadow-inner">
+                                        <ul class="space-y-3">
+                                            <template x-for="sol in (selectedCase ? selectedCase.solutions : [])">
+                                                <li class="flex items-start gap-3">
+                                                    <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                                                    <span class="text-slate-300" x-text="sol"></span>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Core Concepts -->
+                <div x-show="currentSlide === 3" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-8 md:p-16 overflow-y-auto">
+                    <div class="h-full flex flex-col justify-center">
+                        <h2
+                            class="text-4xl font-bold text-white mb-8 text-center pb-4 border-b border-slate-700 inline-block w-full">
+                            資訊安全黃金三角 <span class="text-cyan-400">(CIA)</span>
+                        </h2>
+
+                        <div class="flex flex-wrap justify-center gap-6 relative transition-all duration-300"
+                            :class="selectedCIA ? 'mb-8' : 'mb-0'">
+                            <!-- Helper Lines Background -->
+                            <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none"
+                                x-show="!selectedCIA">
+                                <div class="w-64 h-64 border-[20px] border-slate-600 rounded-full"></div>
+                            </div>
+
+                            <template x-for="item in ciaItems" :key="item.id">
+                                <div @click="selectedCIA = item"
+                                    class="w-full md:w-80 p-6 bg-slate-800 rounded-xl border-t-4 shadow-xl z-20 cursor-pointer transition-all transform hover:scale-105 relative group"
+                                    :class="{
+                                        'border-blue-500 ring-2 ring-blue-500/50': item.color === 'blue' &&
+                                            selectedCIA && selectedCIA.id === item.id,
+                                        'border-green-500 ring-2 ring-green-500/50': item.color === 'green' &&
+                                            selectedCIA && selectedCIA.id === item.id,
+                                        'border-orange-500 ring-2 ring-orange-500/50': item.color === 'orange' &&
+                                            selectedCIA && selectedCIA.id === item.id,
+                                        'border-blue-500': item.color === 'blue' && (!selectedCIA || selectedCIA
+                                            .id !== item.id),
+                                        'border-green-500': item.color === 'green' && (!selectedCIA || selectedCIA
+                                            .id !== item.id),
+                                        'border-orange-500': item.color === 'orange' && (!selectedCIA || selectedCIA
+                                            .id !== item.id),
+                                        'opacity-50 hover:opacity-100': selectedCIA && selectedCIA.id !== item.id
+                                    }">
+                                    <div class="flex items-center gap-4 mb-4">
+                                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+                                            :class="{
+                                                'bg-blue-500/20 text-blue-400': item.color === 'blue',
+                                                'bg-green-500/20 text-green-400': item.color === 'green',
+                                                'bg-orange-500/20 text-orange-400': item.color === 'orange'
+                                            }">
+                                            <i :class="`fas fa-${item.icon}`"></i>
+                                        </div>
+                                        <h3 class="text-2xl font-bold text-white" x-text="item.title"></h3>
+                                        <div class="text-sm font-mono ml-auto"
+                                            :class="{
+                                                'text-blue-500': item.color === 'blue',
+                                                'text-green-500': item.color === 'green',
+                                                'text-orange-500': item.color === 'orange'
+                                            }"
+                                            x-text="item.enTitle"></div>
+                                    </div>
+
+                                    <p class="text-slate-400 leading-relaxed">
+                                        <span x-text="item.shortDesc"></span>
+                                        <span
+                                            class="ml-2 px-2 py-0.5 rounded text-xs inline-block border bg-slate-900 border-slate-700"
+                                            :class="{
+                                                'text-blue-300': item.color === 'blue',
+                                                'text-green-300': item.color === 'green',
+                                                'text-orange-300': item.color === 'orange'
+                                            }">
+                                            防護：<span x-text="item.shortProtection"></span>
+                                        </span>
+                                    </p>
+
+                                    <div
+                                        class="mt-4 text-center text-xs opacity-0 group-hover:opacity-100 transition-opacity text-slate-500">
+                                        點擊查看詳情 <i class="fas fa-chevron-down ml-1"></i>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- CIA Details Section (Dynamic) -->
+                        <div x-show="selectedCIA" x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="opacity-0 translate-y-5"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            class="bg-slate-900/90 border border-slate-600 rounded-xl p-8 mt-4 shadow-2xl relative flex-1 overflow-y-auto">
+
+                            <button @click="selectedCIA = null"
+                                class="absolute top-4 right-4 text-slate-400 hover:text-white"><i
+                                    class="fas fa-times text-xl"></i></button>
+
+                            <template x-if="selectedCIA">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+                                    <div class="space-y-6">
+                                        <div>
+                                            <h3 class="text-2xl font-bold mb-2 flex items-center gap-3"
+                                                :class="{
+                                                    'text-blue-400': selectedCIA.color === 'blue',
+                                                    'text-green-400': selectedCIA.color === 'green',
+                                                    'text-orange-400': selectedCIA.color === 'orange'
+                                                }">
+                                                <i :class="`fas fa-${selectedCIA.icon}`"></i>
+                                                <span x-text="selectedCIA.title"></span>
+                                                <span class="text-base text-slate-500 font-normal"
+                                                    x-text="selectedCIA.enTitle"></span>
+                                            </h3>
+                                            <p class="text-slate-300 text-lg leading-relaxed border-l-4 pl-4 py-2 bg-slate-800/50 rounded-r-lg"
+                                                :class="{
+                                                    'border-blue-500': selectedCIA.color === 'blue',
+                                                    'border-green-500': selectedCIA.color === 'green',
+                                                    'border-orange-500': selectedCIA.color === 'orange'
+                                                }"
+                                                x-text="selectedCIA.longDesc"></p>
+                                        </div>
+
+                                        <div>
+                                            <h4 class="text-white font-bold mb-3"><i
+                                                    class="fas fa-shield-alt text-slate-400 mr-2"></i>常見應用範例</h4>
+                                            <div class="grid grid-cols-1 gap-2">
+                                                <template x-for="ex in selectedCIA.examples">
+                                                    <div
+                                                        class="flex items-center gap-3 p-3 bg-slate-800 rounded border border-slate-700">
+                                                        <i class="fas fa-check text-cyan-500"></i>
+                                                        <span class="text-slate-300" x-text="ex"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-6">
+                                        <div>
+                                            <h4 class="text-white font-bold mb-3"><i
+                                                    class="fas fa-bug text-red-400 mr-2"></i>常見攻擊與威脅</h4>
+                                            <div class="bg-red-900/20 border border-red-900/50 rounded-lg p-4">
+                                                <ul class="space-y-3">
+                                                    <template x-for="at in selectedCIA.attacks">
+                                                        <li class="flex items-start gap-3">
+                                                            <i class="fas fa-times-circle text-red-500 mt-1"></i>
+                                                            <span class="text-red-100" x-text="at"></span>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-auto pt-4 text-center">
+                                            <div
+                                                class="inline-block px-4 py-2 rounded-full border border-slate-600 bg-slate-800 text-slate-400 text-sm">
+                                                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                                                思考：您的日常工作中，哪一項最常遇到？
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 4: Social Engineering (Cases) -->
+                <div x-show="currentSlide === 4" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="h-full flex flex-col">
+                        <div class="flex justify-between items-end mb-6">
+                            <div>
+                                <h2 class="text-4xl font-bold text-cyan-400 mb-2">社交工程案例解析</h2>
+                                <p class="text-slate-400">駭客不攻破系統，而是攻破「人心」。</p>
+                            </div>
+                            <div class="flex bg-slate-800 p-1 rounded-lg">
+                                <button @click="activeSocialTab = 'phishing'"
+                                    class="px-6 py-2 rounded-md font-bold transition-all"
+                                    :class="activeSocialTab === 'phishing' ? 'bg-cyan-600 text-white shadow-lg' :
+                                        'text-slate-400 hover:text-white'">
+                                    <i class="fas fa-envelope mr-2"></i>釣魚郵件
+                                </button>
+                                <button @click="activeSocialTab = 'smishing'"
+                                    class="px-6 py-2 rounded-md font-bold transition-all"
+                                    :class="activeSocialTab === 'smishing' ? 'bg-cyan-600 text-white shadow-lg' :
+                                        'text-slate-400 hover:text-white'">
+                                    <i class="fas fa-sms mr-2"></i>簡訊詐騙
+                                </button>
+                                <button @click="activeSocialTab = 'vishing'"
+                                    class="px-6 py-2 rounded-md font-bold transition-all"
+                                    :class="activeSocialTab === 'vishing' ? 'bg-cyan-600 text-white shadow-lg' :
+                                        'text-slate-400 hover:text-white'">
+                                    <i class="fas fa-phone mr-2"></i>語音釣魚
+                                </button>
+                            </div>
+                        </div>
+
+                        <div
+                            class="flex-1 bg-slate-800/50 rounded-2xl border border-slate-700 p-8 relative overflow-hidden">
+
+                            <!-- Phishing Email Case -->
+                            <div x-show="activeSocialTab === 'phishing'"
+                                class="h-full flex lg:flex-row flex-col gap-8">
+                                <div
+                                    class="flex-1 bg-white rounded-lg p-6 text-slate-900 font-sans shadow-2xl relative">
+                                    <div class="border-b pb-4 mb-4">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <div class="font-bold text-lg text-red-600">⚠ 帳號安全性通知</div>
+                                                <div class="text-xs text-gray-500">寄件者: Google 安全團隊
+                                                    &lt;security-alert@g00gle.support.com&gt;</div>
+                                                <div class="text-xs text-gray-400">時間: 今天 上午 3:42</div>
+                                            </div>
+                                            <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold">
+                                                外部郵件</div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <p class="font-bold">親愛的用戶您好：</p>
+                                        <p>我們偵測到您的帳號有異常登入活動。為確保您的資金與資料安全，請<span
+                                                class="font-bold text-red-600">立即</span>驗證您的身分。</p>
+                                        <p>若未在 24 小時內完成驗證，您的帳號將被<span class="underline">永久凍結</span>。</p>
+                                        <div class="py-4 text-center">
+                                            <button
+                                                class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 pointer-events-none">
+                                                👉 按此驗證身分 (Verify Now)
+                                            </button>
+                                        </div>
+                                        <p class="text-xs text-gray-400 text-center mt-8">Google Security Team, 2026
+                                        </p>
+                                    </div>
+                                    <!-- Red Circles/Hints -->
+                                    <div
+                                        class="absolute top-16 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none">
+                                        <span
+                                            class="bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg animate-bounce inline-block">偽造的寄件網域
+                                            (g00gle)</span>
+                                    </div>
+                                    <div
+                                        class="absolute bottom-20 left-1/2 -translate-x-1/2 w-full text-center pointer-events-none">
+                                        <span
+                                            class="bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg animate-bounce animation-delay-500 inline-block">急迫性威脅
+                                            (永久凍結)</span>
+                                    </div>
+                                </div>
+                                <div class="w-full lg:w-1/3 flex flex-col justify-center space-y-6">
+                                    <div class="p-4 bg-slate-900 rounded-xl border-l-4 border-red-500">
+                                        <h3 class="font-bold text-white mb-2">特徵解析</h3>
+                                        <ul class="text-slate-400 text-sm space-y-2">
+                                            <li><i class="fas fa-check text-red-500 mr-2"></i><strong>偽冒網域</strong>：利用
+                                                `0` 取代 `o`，或使用相似子網域。</li>
+                                            <li><i
+                                                    class="fas fa-check text-red-500 mr-2"></i><strong>情緒勒索</strong>：製造「緊急」、「恐慌」感，迫使你關閉理性思考。
+                                            </li>
+                                            <li><i
+                                                    class="fas fa-check text-red-500 mr-2"></i><strong>惡意連結</strong>：按鈕背後通常導向竊取帳密的假登入頁。
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Smishing SMS Case -->
+                            <div x-show="activeSocialTab === 'smishing'"
+                                class="h-full flex lg:flex-row flex-col gap-8 justify-center items-center">
+                                <div
+                                    class="w-[300px] h-full bg-slate-900 border-8 border-slate-700 rounded-[3rem] p-4 relative shadow-2xl">
+                                    <div
+                                        class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-700 rounded-b-xl">
+                                    </div>
+                                    <div class="h-full bg-slate-800 rounded-2xl overflow-hidden flex flex-col">
+                                        <div class="bg-slate-700 p-4 text-center text-white font-bold text-sm pt-8">
+                                            +886 9XX-XXX-XXX
+                                        </div>
+                                        <div class="flex-1 p-4 space-y-4">
+                                            <div
+                                                class="bg-slate-700 p-3 rounded-xl rounded-tl-none text-white text-sm max-w-[85%]">
+                                                【監理站通知】您有一筆交通罰款 NT$1,800 逾期未繳。
+                                                請於 1/13 前點擊連結繳納，以免駕照註銷：
+                                                <span
+                                                    class="text-blue-400 underline">https://mvdis-gov.tw.top/pay</span>
+                                            </div>
+                                            <div class="text-xs text-slate-500 text-center">上午 10:23</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 max-w-md space-y-6">
+                                    <h3 class="text-2xl font-bold text-white">別被「未繳費」簡訊騙了！</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-start gap-4">
+                                            <div
+                                                class="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 shrink-0">
+                                                <i class="fas fa-link"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-bold text-white">亂碼/奇怪網址</h4>
+                                                <p class="text-slate-400 text-sm">政府機關網址結尾一定是 `.gov.tw`，且不會用 `gov.tw`
+                                                    當作次級網域前面加奇怪單字 (如 .top, .xyz)。</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-4">
+                                            <div
+                                                class="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center text-orange-400 shrink-0">
+                                                <i class="fas fa-file-invoice-dollar"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-bold text-white">常見名義</h4>
+                                                <p class="text-slate-400 text-sm">水電費、ETC
+                                                    通行費、罰單、包裹關稅。這類「小額且民生相關」最容易讓人放下戒心。</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vishing Voice Case -->
+                            <div x-show="activeSocialTab === 'vishing'"
+                                class="h-full flex lg:flex-row flex-col gap-12 items-center">
+                                <div class="flex-1 space-y-6">
+                                    <div class="bg-slate-900 p-6 rounded-2xl border border-slate-700 relative">
+                                        <i
+                                            class="fas fa-quote-left text-4xl text-slate-700 absolute -top-4 -left-4"></i>
+                                        <p class="text-lg text-white leading-relaxed font-mono">
+                                            <span
+                                                class="text-purple-400 font-bold">[詐騙者]</span>：喂？這裡是銀行資安中心。我們偵測到您的帳戶剛剛在海外被盜刷
+                                            30 萬。
+                                            <br><br>
+                                            <span class="text-slate-400 font-bold">[受害者]</span>：真的嗎？那我該怎麼辦？
+                                            <br><br>
+                                            <span
+                                                class="text-purple-400 font-bold">[詐騙者]</span>：為了凍結款項，我需要核對您的身分。請您提供傳到手機的
+                                            6 位數驗證碼... 然後把錢先轉到我們的「安全監管帳戶」...
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="w-full lg:w-1/3">
+                                    <div class="bg-purple-900/20 p-6 rounded-xl border border-purple-500/30">
+                                        <h3 class="text-xl font-bold text-white mb-4"><i
+                                                class="fas fa-shield-alt mr-2 text-purple-400"></i>防範語音釣魚</h3>
+                                        <ul class="space-y-4 text-slate-300">
+                                            <li class="flex items-center gap-3">
+                                                <i class="fas fa-times-circle text-red-500"></i>
+                                                <span>銀行/檢警絕不會要求「監管帳戶」</span>
+                                            </li>
+                                            <li class="flex items-center gap-3">
+                                                <i class="fas fa-times-circle text-red-500"></i>
+                                                <span>絕不告訴任何人 OTP 驗證碼</span>
+                                            </li>
+                                            <li class="flex items-center gap-3">
+                                                <i class="fas fa-phone text-green-500"></i>
+                                                <span>掛斷電話，撥打卡片背後的官方客服</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Phishing Analysis Lab (New) -->
+                <div x-show="currentSlide === 5" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="h-full flex flex-col">
+                        <h2
+                            class="text-4xl font-bold text-white mb-8 border-l-8 border-yellow-400 pl-6 flex items-center gap-4">
+                            釣魚郵件快篩實驗室
+                            <span
+                                class="text-sm bg-yellow-900/50 text-yellow-200 px-3 py-1 rounded-full border border-yellow-500/30">Phishing
+                                Analysis Lab</span>
+                        </h2>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 flex-1">
+
+                            <!-- Left: Education (SLAM Method) -->
+                            <div class="space-y-6 overflow-y-auto pr-2">
+
+                                <!-- Phishing Example Card (Embedded Image Style) -->
+                                <div
+                                    class="bg-[#f8f9fa] text-[#202124] p-4 rounded-lg shadow-lg font-sans text-sm border-l-4 border-red-500 relative overflow-hidden group">
+                                    <!-- Badge -->
+                                    <div
+                                        class="absolute top-2 right-2 bg-red-100 text-red-600 px-2 py-0.5 rounded text-xs font-bold border border-red-200">
+                                        <i class="fas fa-bug mr-1"></i>釣魚範本
+                                    </div>
+
+                                    <!-- Header -->
+                                    <div class="border-b border-gray-300 pb-3 mb-3">
+                                        <div class="flex items-start gap-3">
+                                            <div
+                                                class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white text-xl overflow-hidden shrink-0">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-baseline flex-wrap gap-2">
+                                                    <span class="font-bold text-base truncate">陳靖中</span>
+                                                    <span
+                                                        class="text-gray-600 text-xs font-mono bg-gray-200 px-1 rounded">&lt;KGBEHcUre@outlook.com&gt;</span>
+                                                </div>
+                                                <div class="text-xs text-gray-500 truncate">威輪工業股份有限公司</div>
+                                                <div class="text-xs text-gray-500 mt-1">收件者: Willingbikes_King</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Body -->
+                                    <div class="space-y-4 leading-relaxed text-gray-800">
+                                        <p>因工作需要，需要你建立一個只有你在內公司的Line群組，暫時不要邀請其他人加入，進群後我再邀請新業務方的相關人員加入群組。</p>
+                                        <p>建立完成後，請將群組的 QR Code 轉寄到此信箱，以便後續工作安排。</p>
+                                    </div>
+
+                                    <!-- Footer -->
+                                    <div
+                                        class="mt-6 pt-4 border-t border-dashed border-gray-400 text-gray-600 font-serif">
+                                        <p>陳靖中</p>
+                                        <p>2026/1/12</p>
+                                    </div>
+
+                                    <!-- Analysis Overlay (Hover) -->
+                                    <div
+                                        class="absolute inset-0 bg-slate-900/95 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 p-6 text-center backdrop-blur-sm cursor-help">
+                                        <i class="fas fa-search text-4xl text-yellow-400 mb-4 animate-bounce"></i>
+                                        <h4 class="text-xl font-bold text-yellow-400 mb-4">S.L.A.M. 案例分析</h4>
+                                        <ul class="text-left space-y-3 text-sm max-w-sm">
+                                            <li class="flex items-start gap-2">
+                                                <span
+                                                    class="bg-red-500 text-white px-1.5 rounded font-bold font-sans">S</span>
+                                                <span><strong>寄件者偽冒：</strong>自稱陳靖中，卻使用 <code
+                                                        class="text-yellow-300">outlook.com</code> 免費信箱。</span>
+                                            </li>
+                                            <li class="flex items-start gap-2">
+                                                <span
+                                                    class="bg-red-500 text-white px-1.5 rounded font-bold font-sans">M</span>
+                                                <span><strong>內容異常：</strong>要求建立「一人群組」並傳送 QR Code，這是竊取 Line
+                                                    帳號的典型手法。</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div
+                                        class="absolute bottom-2 right-2 text-xs text-red-400 opacity-60 group-hover:opacity-0 transition-opacity">
+                                        <i class="fas fa-mouse-pointer mr-1"></i>滑鼠懸停查看分析
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-700">
+                                    <h3 class="text-xl font-bold text-cyan-400 mb-4"><i
+                                            class="fas fa-microscope mr-2"></i>S.L.A.M. 辨識法</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex gap-4">
+                                            <div
+                                                class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-xl font-black text-white shadow-lg font-sans">
+                                                S</div>
+                                            <div>
+                                                <h4 class="font-bold text-white">Sender (寄件者)</h4>
+                                                <p class="text-slate-400 text-sm">檢查寄件人地址是否與其聲稱的身分相符？<br>例如聲稱是「HR」但來自
+                                                    `@gmail.com`？</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-4">
+                                            <div
+                                                class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-xl font-black text-white shadow-lg font-sans">
+                                                L</div>
+                                            <div>
+                                                <h4 class="font-bold text-white">Links (連結)</h4>
+                                                <p class="text-slate-400 text-sm">滑鼠懸停 (Hover)
+                                                    在連結上，檢查真實導向網址。<br>是否為短網址或奇怪的 `xyz`, `top` 網域？</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-4">
+                                            <div
+                                                class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-xl font-black text-white shadow-lg font-sans">
+                                                A</div>
+                                            <div>
+                                                <h4 class="font-bold text-white">Attachments (附件)</h4>
+                                                <p class="text-slate-400 text-sm">未預期的附件絕不開啟。特別是 `.exe`, `.zip`,
+                                                    `.xlsm` 等執行檔或巨集文件。</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex gap-4">
+                                            <div
+                                                class="w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-xl font-black text-white shadow-lg font-sans">
+                                                M</div>
+                                            <div>
+                                                <h4 class="font-bold text-white">Message (內容)</h4>
+                                                <p class="text-slate-400 text-sm">是否語氣急迫？文法怪異？<br>要求提供敏感個資或立即轉帳？</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: The Validator Tool -->
+                            <div
+                                class="bg-slate-900 border-2 border-slate-700 rounded-2xl p-8 shadow-2xl flex flex-col relative overflow-hidden">
+                                <div
+                                    class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 via-red-500 to-yellow-500">
+                                </div>
+                                <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <i class="fas fa-robot text-yellow-500"></i> 釣魚郵件風險計算機
+                                </h3>
+
+                                <div class="space-y-4 flex-1 overflow-y-auto pr-2">
+                                    <!-- Inputs -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">1. 寄件者
+                                            Email</label>
+                                        <input type="email" x-model="phishingTool.sender"
+                                            placeholder="ex: hr-support@gmail.com"
+                                            class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:border-yellow-500 outline-none">
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <input type="checkbox" id="isInternal"
+                                                x-model="phishingTool.isInternalClaim"
+                                                class="w-4 h-4 rounded bg-slate-700 border-slate-600 text-yellow-500">
+                                            <label for="isInternal"
+                                                class="text-xs text-slate-400 cursor-pointer">信件內容聲稱是「公司內部/主管/IT」寄的？</label>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">2. 信件主旨
+                                            (Subject)</label>
+                                        <input type="text" x-model="phishingTool.subject"
+                                            placeholder="ex: URGENT: Account Suspended"
+                                            class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:border-yellow-500 outline-none">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">3. 信件內容
+                                            (Body Text)</label>
+                                        <textarea x-model="phishingTool.body" rows="3" placeholder="貼上可疑的內容關鍵字或連結..."
+                                            class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:border-yellow-500 outline-none"></textarea>
+                                    </div>
+
+                                    <button @click="analyzePhishing()"
+                                        class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-lg transition-all shadow-lg transform active:scale-95">
+                                        <i class="fas fa-search-dollar mr-2"></i> 開始分析
+                                    </button>
+                                </div>
+
+                                <!-- Result Area -->
+                                <div x-show="phishingTool.result" x-transition
+                                    class="mt-6 pt-6 border-t border-slate-700">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span class="text-sm text-slate-400">風險評估</span>
+                                        <span class="font-black text-xl"
+                                            :class="{
+                                                'text-green-500': phishingTool.result && phishingTool.result
+                                                    .risk === 'Low',
+                                                'text-yellow-500': phishingTool.result && phishingTool.result
+                                                    .risk === 'Medium',
+                                                'text-red-500': phishingTool.result && phishingTool.result
+                                                    .risk === 'High'
+                                            }"
+                                            x-text="phishingTool.result ? phishingTool.result.risk + ' Risk' : ''"></span>
+                                    </div>
+
+                                    <div class="bg-slate-800 rounded p-3 text-xs space-y-2 max-h-32 overflow-y-auto">
+                                        <template
+                                            x-for="msg in (phishingTool.result ? phishingTool.result.messages : [])">
+                                            <div class="flex items-start gap-2">
+                                                <i class="fas mt-0.5"
+                                                    :class="{
+                                                        'fa-check-circle text-green-500': msg.type === 'success',
+                                                        'fa-exclamation-triangle text-yellow-500': msg
+                                                            .type === 'warning',
+                                                        'fa-skull-crossbones text-red-500': msg.type === 'danger'
+                                                    }"></i>
+                                                <span class="text-slate-300" x-text="msg.text"></span>
+                                            </div>
+                                        </template>
+                                        <div x-show="phishingTool.result && phishingTool.result.messages.length === 0"
+                                            class="text-slate-500 text-center italic">
+                                            沒有發現明顯的惡意特徵，但仍需保持警覺。
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Risk Level Guide -->
+                                <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-700">
+                                    <div class="bg-green-900/20 border border-green-500/30 p-2 rounded text-center">
+                                        <div class="text-green-500 font-bold text-sm">Low Risk</div>
+                                        <div class="text-xs text-green-200">內部/安全網域</div>
+                                    </div>
+                                    <div class="bg-yellow-900/20 border border-yellow-500/30 p-2 rounded text-center">
+                                        <div class="text-yellow-500 font-bold text-sm">Medium Risk</div>
+                                        <div class="text-xs text-yellow-200">免費信箱/可疑</div>
+                                    </div>
+                                    <div class="bg-red-900/20 border border-red-500/30 p-2 rounded text-center">
+                                        <div class="text-red-500 font-bold text-sm">High Risk</div>
+                                        <div class="text-xs text-red-200">偽冒/急迫威脅</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 5: Password Security -->
+                <div x-show="currentSlide === 6" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="h-full flex flex-col justify-center">
+                        <h2 class="text-4xl font-bold text-center text-cyan-400 mb-10">你的密碼夠安全嗎？</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+                            <!-- Left: Interactive Meter -->
+                            <div
+                                class="bg-slate-800 p-8 rounded-2xl border border-slate-600 shadow-2xl relative overflow-hidden">
+                                <div
+                                    class="absolute top-0 right-0 bg-cyan-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                                    互動體驗</div>
+                                <label class="block text-sm font-medium text-slate-400 mb-2">輸入測試密碼</label>
+                                <div class="relative">
+                                    <input type="text" x-model="passwordInput" @input="checkStrength()"
+                                        class="w-full bg-slate-900 text-white border border-slate-600 rounded-lg p-4 pl-12 focus:ring-2 focus:ring-cyan-500 outline-none font-mono tracking-wider"
+                                        placeholder="ex: P@ssw0rd123">
+                                    <i class="fas fa-key absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                                </div>
+                                <!-- Strength Meter -->
+                                <div class="mt-6">
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-xs text-slate-400">強度評估</span>
+                                        <span class="text-xs font-bold" :class="getStrengthColor(passwordStrength)"
+                                            x-text="['極弱', '弱', '普通', '強', '極強'][Math.min(passwordStrength, 4)]"></span>
+                                    </div>
+                                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                        <div class="h-full transition-all duration-500"
+                                            :class="getStrengthBarClass(passwordStrength)"></div>
+                                    </div>
+                                </div>
+                                <ul class="mt-6 space-y-2 text-sm">
+                                    <li class="flex items-center gap-3"
+                                        :class="passwordInput.length >= 12 ? 'text-green-400' : 'text-slate-500'"><i
+                                            class="fas fa-check-circle"></i> 長度超過 12 字元</li>
+                                    <li class="flex items-center gap-3"
+                                        :class="/[A-Z]/.test(passwordInput) ? 'text-green-400' : 'text-slate-500'"><i
+                                            class="fas fa-check-circle"></i> 包含大寫英文字母</li>
+                                    <li class="flex items-center gap-3"
+                                        :class="/[0-9]/.test(passwordInput) ? 'text-green-400' : 'text-slate-500'"><i
+                                            class="fas fa-check-circle"></i> 包含數字</li>
+                                    <li class="flex items-center gap-3"
+                                        :class="/[^A-Za-z0-9]/.test(passwordInput) ? 'text-green-400' : 'text-slate-500'">
+                                        <i class="fas fa-check-circle"></i> 包含特殊符號
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Right: Examples & Guide -->
+                            <div class="space-y-6">
+                                <!-- Examples -->
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-600/60">
+                                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2"><i
+                                            class="fas fa-list-ul text-cyan-400"></i> 密碼範例對照</h3>
+                                    <div class="space-y-4">
+                                        <!-- Bad Section -->
+                                        <div class="p-4 bg-red-900/20 rounded-xl border border-red-500/30">
+                                            <div class="text-red-400 font-bold text-sm mb-2 flex items-center gap-2">
+                                                <i class="fas fa-times-circle"></i> 弱密碼 (NO!)
+                                            </div>
+                                            <div class="font-mono text-slate-300 text-sm grid grid-cols-2 gap-y-2">
+                                                <span class="opacity-70">123456</span> <span
+                                                    class="text-xs text-slate-500">太簡單</span>
+                                                <span class="opacity-70">password</span> <span
+                                                    class="text-xs text-slate-500">常見字</span>
+                                                <span class="opacity-70">admin888</span> <span
+                                                    class="text-xs text-slate-500">規則簡單</span>
+                                                <span class="opacity-70">20240101</span> <span
+                                                    class="text-xs text-slate-500">生日/日期</span>
+                                            </div>
+                                        </div>
+                                        <!-- Good Section -->
+                                        <div class="p-4 bg-green-900/20 rounded-xl border border-green-500/30">
+                                            <div class="text-green-400 font-bold text-sm mb-2 flex items-center gap-2">
+                                                <i class="fas fa-check-circle"></i> 強密碼 (YES!)
+                                            </div>
+                                            <div class="font-mono text-slate-300 text-sm space-y-2">
+                                                <div>Tr0ub4dor&3 <span
+                                                        class="text-xs text-slate-500 ml-2">(大小寫+符號+數字)</span></div>
+                                                <div>Banana-Horse-Staple <span
+                                                        class="text-xs text-slate-500 ml-2">(Passphrase詞組)</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tips -->
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-600/60">
+                                    <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2"><i
+                                            class="fas fa-tools text-yellow-400"></i> 設定建議</h3>
+                                    <ul class="space-y-3 text-slate-300 text-sm">
+                                        <li class="flex items-start gap-3"><i
+                                                class="fas fa-star text-yellow-400 mt-1"></i> 使用 <strong>密碼管理器</strong>
+                                            (Bitwarden, 1Password) 產生亂數。</li>
+                                        <li class="flex items-start gap-3"><i
+                                                class="fas fa-star text-yellow-400 mt-1"></i>
+                                            <strong>切勿共用</strong>同一組密碼，避免資料庫外洩時「一屍多命」。
+                                        </li>
+                                        <li class="flex items-start gap-3"><i
+                                                class="fas fa-star text-yellow-400 mt-1"></i> 務必開啟 <strong>MFA
+                                                (多因子驗證)</strong> 才是真正的金鐘罩。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 6: Zero Trust & Personal Defense -->
+                <div x-show="currentSlide === 7" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="h-full flex flex-col">
+                        <h2
+                            class="text-4xl font-bold text-white mb-8 border-l-8 border-cyan-400 pl-6 flex items-center gap-4">
+                            零信任與個人防護
+                            <span class="text-xl bg-slate-700 text-cyan-300 px-3 py-1 rounded-full">Never Trust, Always
+                                Verify</span>
+                        </h2>
+
+                        <div class="grid grid-cols-2 gap-8 flex-1">
+                            <!-- Left: Zero Trust Pillars -->
+                            <div
+                                class="bg-slate-800/80 p-6 rounded-2xl border border-slate-600 relative overflow-hidden group">
+                                <div
+                                    class="absolute -right-10 -top-10 w-40 h-40 bg-cyan-900/30 rounded-full blur-3xl group-hover:bg-cyan-600/20 transition-all">
+                                </div>
+                                <h3 class="text-2xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
+                                    <i class="fas fa-shield-alt"></i> 零信任架構 (ZTA)
+                                </h3>
+
+                                <div class="space-y-6">
+                                    <div
+                                        class="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors">
+                                        <div
+                                            class="w-12 h-12 rounded-lg bg-blue-900/50 flex items-center justify-center shrink-0 border border-blue-500/30">
+                                            <i class="fas fa-id-card text-blue-400 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-lg">身分 (Identity)</h4>
+                                            <ul class="text-sm text-slate-400 mt-2 list-disc list-inside space-y-1">
+                                                <li><strong>FIDO2 / Passkeys</strong>：消除傳統密碼竊取風險。</li>
+                                                <li><strong>MFA 多因子驗證</strong>：驗證「你是誰」+「你有什麼」。</li>
+                                                <li><strong>情境感知 (Context)</strong>：若在異常時間/地點登入，即刻阻擋。</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors">
+                                        <div
+                                            class="w-12 h-12 rounded-lg bg-purple-900/50 flex items-center justify-center shrink-0 border border-purple-500/30">
+                                            <i class="fas fa-laptop-medical text-purple-400 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-lg">裝置 (Device)</h4>
+                                            <ul class="text-sm text-slate-400 mt-2 list-disc list-inside space-y-1">
+                                                <li><strong>合規性檢查</strong>：OS 版本過舊或未裝 EDR 則禁入。</li>
+                                                <li><strong>受信任裝置</strong>：僅允許公司納管 (MDM) 之設備存取。</li>
+                                                <li><strong>端點防護 (EDR)</strong>：即時監控勒索軟體行為。</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors">
+                                        <div
+                                            class="w-12 h-12 rounded-lg bg-orange-900/50 flex items-center justify-center shrink-0 border border-orange-500/30">
+                                            <i class="fas fa-network-wired text-orange-400 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-white text-lg">信任 (Trust)</h4>
+                                            <p class="text-sm text-slate-400 mt-2">
+                                                始終假設網路已被入侵。僅開放執行當下工作所需的<span class="text-orange-300">最小權限 (Least
+                                                    Privilege)</span>。
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Personal Defense -->
+                            <div class="flex flex-col gap-6">
+                                <!-- Digital Health Checklist -->
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-600 flex-1">
+                                    <h3 class="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-user-md"></i> 數位健康檢查表
+                                    </h3>
+                                    <ul class="space-y-3">
+                                        <li class="flex items-center gap-3 text-slate-300">
+                                            <i class="fas fa-check-square text-green-500"></i>
+                                            <span>更新 OS 與瀏覽器至最新版本</span>
+                                        </li>
+                                        <li class="flex items-center gap-3 text-slate-300">
+                                            <i class="fas fa-check-square text-green-500"></i>
+                                            <span>移除不再使用的軟體與權限</span>
+                                        </li>
+                                        <li class="flex items-center gap-3 text-slate-300">
+                                            <i class="fas fa-check-square text-green-500"></i>
+                                            <span>檢查帳號活動紀錄 (登入地/裝置)</span>
+                                        </li>
+                                        <li class="flex items-center gap-3 text-slate-300">
+                                            <i class="fas fa-check-square text-green-500"></i>
+                                            <span class="text-yellow-400 font-bold">3-2-1 備份</span>
+                                            <span class="text-xs text-slate-500 ml-1">(3份資料, 2種媒體, 1個異地)</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Hygiene -->
+                                <div class="bg-slate-800/80 p-6 rounded-2xl border border-slate-600 flex-1">
+                                    <h3 class="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">
+                                        <i class="fas fa-soap"></i> 個人資安衛生 (Hygiene)
+                                    </h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="bg-slate-900 p-3 rounded-lg text-center">
+                                            <div class="text-3xl mb-2">🤔</div>
+                                            <div class="text-sm font-bold text-white">零信任思維</div>
+                                            <div class="text-xs text-slate-400">保持懷疑，主動查證</div>
+                                        </div>
+                                        <div class="bg-slate-900 p-3 rounded-lg text-center">
+                                            <div class="text-3xl mb-2">🔗</div>
+                                            <div class="text-sm font-bold text-white">連結衛生</div>
+                                            <div class="text-xs text-slate-400">滑鼠懸停預覽 URL</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 7: Incident Response (Updated) -->
+                <div x-show="currentSlide === 8" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="h-full flex flex-col">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-4xl font-bold text-white border-l-8 border-red-500 pl-6">資安應變教戰守則</h2>
+                            <div class="flex bg-slate-800 p-1 rounded-lg">
+                                <button @click="activeResponseTab = 'deepfake'"
+                                    class="px-6 py-2 rounded-md font-bold transition-all"
+                                    :class="activeResponseTab === 'deepfake' ? 'bg-red-600 text-white shadow-lg' :
+                                        'text-slate-400 hover:text-white'">
+                                    Deepfake 詐騙
+                                </button>
+                                <button @click="activeResponseTab = 'ransomware'"
+                                    class="px-6 py-2 rounded-md font-bold transition-all"
+                                    :class="activeResponseTab === 'ransomware' ? 'bg-red-600 text-white shadow-lg' :
+                                        'text-slate-400 hover:text-white'">
+                                    勒索軟體
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Deepfake Content -->
+                        <div x-show="activeResponseTab === 'deepfake'" class="grid grid-cols-3 gap-6 h-full">
+                            <!-- Detect -->
+                            <div class="bg-slate-800 border-t-4 border-yellow-500 p-6 rounded-xl flex flex-col">
+                                <div class="text-6xl text-yellow-500 mb-4"><i class="fas fa-eye"></i></div>
+                                <h3 class="text-2xl font-bold text-white mb-4">1. 識破 (Detect)</h3>
+                                <ul class="space-y-3 text-slate-300 flex-1">
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        面部邊緣模糊、光影不自然</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        眨眼頻率異常或眼神空洞</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        聲音情緒平淡、語調機械化</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        背景出現異常扭曲或變形</li>
+                                </ul>
+                            </div>
+                            <!-- Verify -->
+                            <div class="bg-slate-800 border-t-4 border-orange-500 p-6 rounded-xl flex flex-col">
+                                <div class="text-6xl text-orange-500 mb-4"><i class="fas fa-question-circle"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold text-white mb-4">2. 驗證 (Verify)</h3>
+                                <ul class="space-y-3 text-slate-300 flex-1">
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        詢問「私密問題」(僅彼此知道的事)</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        要求做出特定動作（如揮手擋臉）</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        掛斷重撥! 用已知的聯絡方式回撥</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        堅持要見本人或實體簽核</li>
+                                </ul>
+                            </div>
+                            <!-- Contain -->
+                            <div class="bg-slate-800 border-t-4 border-red-500 p-6 rounded-xl flex flex-col">
+                                <div class="text-6xl text-red-500 mb-4"><i class="fas fa-shield-alt"></i></div>
+                                <h3 class="text-2xl font-bold text-white mb-4">3. 阻斷 (Contain)</h3>
+                                <ul class="space-y-3 text-slate-300 flex-1">
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        暫停所有指示的匯款動作</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        立即通報資安官或 IT 部門</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        修改相關帳號密碼</li>
+                                    <li class="flex items-start gap-2"><i class="fas fa-dot-circle text-xs mt-1"></i>
+                                        保存通話紀錄作為證據</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Ransomware Content -->
+                        <div x-show="activeResponseTab === 'ransomware'"
+                            class="bg-slate-900 border border-red-900/50 p-8 rounded-2xl flex flex-col items-center justify-center h-full relative overflow-hidden">
+                            <div
+                                class="absolute inset-0 bg-[url('https://media.giphy.com/media/26tn33aiTi1jkl6HC/giphy.gif')] opacity-5 bg-cover mix-blend-overlay">
+                            </div>
+
+                            <h3 class="text-3xl font-black text-white mb-10 z-10">勒索軟體緊急應變 <span
+                                    class="text-red-500">S.O.P.</span></h3>
+
+                            <div class="grid grid-cols-2 gap-12 w-full max-w-4xl z-10">
+                                <div
+                                    class="bg-slate-800 p-8 rounded-2xl border-2 border-green-500 transform hover:scale-105 transition-all text-center">
+                                    <div class="text-7xl mb-4 text-green-500"><i class="fas fa-network-wired"></i>
+                                    </div>
+                                    <h4 class="text-2xl font-bold text-white mb-2">1. 立即斷網</h4>
+                                    <p class="text-slate-400">拔除網路線、關閉 Wi-Fi。<br>阻斷病毒橫向擴散至其他主機。</p>
+                                </div>
+
+                                <div
+                                    class="bg-slate-800 p-8 rounded-2xl border-2 border-red-500 transform hover:scale-105 transition-all text-center">
+                                    <div class="text-7xl mb-4 text-red-500"><i class="fas fa-power-off"></i></div>
+                                    <h4 class="text-2xl font-bold text-white mb-2">2. 切勿關機</h4>
+                                    <p class="text-slate-400">保持電源開啟。<br>記憶體 (RAM) 中可能存有解密金鑰或證據。</p>
+                                </div>
+                            </div>
+
+                            <div
+                                class="mt-12 bg-red-900/20 px-8 py-4 rounded-full border border-red-500/50 flex flex-col md:flex-row items-center gap-4 z-10 text-center md:text-left">
+                                <div class="flex items-center gap-4">
+                                    <i class="fas fa-phone-alt text-red-400 animate-pulse text-2xl"></i>
+                                    <div>
+                                        <div class="text-red-100 font-bold text-lg">緊急通報專線 (MIS)</div>
+                                        <div class="text-white text-2xl font-black tracking-widest">分機 171 / 172 / 117
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="hidden md:block w-px h-10 bg-red-500/50 mx-4"></div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-envelope text-red-400"></i>
+                                    <span class="text-red-100 font-mono text-lg">MIS@willingbikes.com</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Slide 9: Health Check (New) -->
+                <div x-show="currentSlide === 9" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="h-full flex flex-col">
+                        <h2
+                            class="text-4xl font-bold text-white mb-8 border-l-8 border-cyan-500 pl-6 flex items-center gap-4">
+                            電腦資安環境健檢
+                            <span
+                                class="text-sm bg-cyan-900/50 text-cyan-200 px-3 py-1 rounded-full border border-cyan-500/30">System
+                                Health Check</span>
+                        </h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 flex-1 items-center">
+
+                            <!-- Left: Checklist -->
+                            <div
+                                class="bg-slate-800/80 p-8 rounded-2xl border border-slate-700 shadow-xl h-full flex flex-col">
+                                <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <i class="fas fa-clipboard-check text-cyan-400"></i> 請勾選符合的項目：
+                                </h3>
+                                <div class="space-y-4 flex-1 overflow-y-auto pr-2">
+                                    <template x-for="item in healthCheck.items" :key="item.id">
+                                        <label
+                                            class="flex items-start gap-4 p-4 rounded-lg border border-slate-600 cursor-pointer transition-all hover:bg-slate-700"
+                                            :class="item.checked ? 'bg-cyan-900/20 border-cyan-500/50' : 'bg-slate-900/50'">
+                                            <div class="relative flex items-center">
+                                                <input type="checkbox" x-model="item.checked"
+                                                    class="peer w-6 h-6 appearance-none border-2 border-slate-500 rounded checked:bg-cyan-500 checked:border-cyan-500 transition-all">
+                                                <i
+                                                    class="fas fa-check text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 pointer-events-none text-xs"></i>
+                                            </div>
+                                            <span class="text-lg text-slate-300 select-none"
+                                                x-text="item.text"></span>
+                                        </label>
+                                    </template>
+                                </div>
+                                <div class="mt-6 pt-6 border-t border-slate-700">
+                                    <button @click="calculateHealth()"
+                                        class="w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                                        :class="healthCheck.submitted ? 'bg-slate-600 text-slate-300' :
+                                            'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:shadow-cyan-500/30'">
+                                        <i class="fas fa-stethoscope mr-2"></i> <span
+                                            x-text="healthCheck.submitted ? '重新計算' : '開始診斷'"></span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Right: Result Display -->
+                            <div class="h-full flex flex-col justify-center items-center text-center relative">
+                                <!-- Default State -->
+                                <div x-show="!healthCheck.submitted" class="space-y-6 opacity-50">
+                                    <div
+                                        class="w-48 h-48 rounded-full border-4 border-slate-700 flex items-center justify-center bg-slate-800">
+                                        <i class="fas fa-user-shield text-6xl text-slate-600"></i>
+                                    </div>
+                                    <p class="text-xl text-slate-400">請完成左側檢核表<br>以評估您的風險指數</p>
+                                </div>
+
+                                <!-- Result State -->
+                                <div x-show="healthCheck.submitted"
+                                    x-transition:enter="transition ease-out duration-500" class="w-full">
+
+                                    <!-- Circular Progress -->
+                                    <div class="relative w-64 h-64 mx-auto mb-8">
+                                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                                            <circle class="text-slate-700 stroke-current" stroke-width="10"
+                                                cx="50" cy="50" r="40" fill="transparent"></circle>
+                                            <circle class="text-cyan-500 progress-ring__circle stroke-current"
+                                                stroke-width="10" stroke-linecap="round" cx="50"
+                                                cy="50" r="40" fill="transparent" :stroke-dasharray="251.2"
+                                                :stroke-dashoffset="251.2 - (251.2 * healthCheck.score / 100)"
+                                                style="transition: stroke-dashoffset 1s ease-in-out; transform: rotate(-90deg); transform-origin: 50% 50%;"
+                                                :class="healthCheck.score === 100 ? 'text-green-500' : (healthCheck.score >=
+                                                    60 ? 'text-yellow-500' : 'text-red-500')">
+                                            </circle>
+                                        </svg>
+                                        <div
+                                            class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+                                            <span class="text-6xl font-black text-white"
+                                                x-text="healthCheck.score"></span>
+                                            <span class="text-sm text-slate-400 uppercase tracking-widest">Score</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Feedback Message -->
+                                    <div class="bg-slate-800/80 p-6 rounded-2xl border"
+                                        :class="healthCheck.score === 100 ?
+                                            'border-green-500/50 shadow-[0_0_30px_rgba(34,197,94,0.2)]' : (healthCheck
+                                                .score >= 60 ? 'border-yellow-500/50' : 'border-red-500/50')">
+
+                                        <template x-if="healthCheck.score === 100">
+                                            <div>
+                                                <h4 class="text-2xl font-bold text-green-400 mb-2"><i
+                                                        class="fas fa-award mr-2"></i>資安模範生</h4>
+                                                <p class="text-slate-300">太棒了！您的電腦環境非常安全，請繼續保持。</p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="healthCheck.score >= 60 && healthCheck.score < 100">
+                                            <div>
+                                                <h4 class="text-2xl font-bold text-yellow-400 mb-2"><i
+                                                        class="fas fa-exclamation-circle mr-2"></i>尚有改善空間</h4>
+                                                <p class="text-slate-300">請參考下方建議，盡快完成設定。</p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="healthCheck.score < 60">
+                                            <div>
+                                                <h4 class="text-2xl font-bold text-red-500 mb-2"><i
+                                                        class="fas fa-radiation mr-2"></i>高風險狀態</h4>
+                                                <p class="text-slate-300">請依照建議採取行動，必要時聯繫 MIS。</p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Improvements List -->
+                                    <div x-show="healthCheck.score < 100" class="mt-6 text-left w-full">
+                                        <h5
+                                            class="font-bold text-white mb-3 text-sm uppercase tracking-wider border-b border-slate-700 pb-2">
+                                            建議改善項目</h5>
+                                        <div class="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                            <template x-for="item in healthCheck.items.filter(i => !i.checked)"
+                                                :key="item.id">
+                                                <div
+                                                    class="flex items-start gap-3 bg-slate-900 border border-slate-700 p-3 rounded hover:bg-slate-800 transition-colors">
+                                                    <i class="fas fa-wrench text-cyan-500 mt-1"></i>
+                                                    <div>
+                                                        <div class="text-white text-sm font-bold" x-text="item.text">
+                                                        </div>
+                                                        <div class="text-cyan-200 text-xs mt-1" x-text="item.advice">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-8">
+                                        <button @click="resetHealth()"
+                                            class="text-slate-500 hover:text-white underline text-sm">重新自我評估</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 10: Conclusion (Final) -->
+                <div x-show="currentSlide === 10" x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    class="w-full max-w-6xl mx-auto h-full flex flex-col justify-center absolute inset-0 p-16">
+                    <div class="text-center space-y-10 max-w-4xl mx-auto">
+                        <i class="fas fa-hand-holding-heart text-6xl text-cyan-400 animate-pulse"></i>
+                        <h2 class="text-5xl font-bold text-white">資安防護，從我做起</h2>
+                        <div
+                            class="bg-slate-800/50 p-8 rounded-xl border border-slate-700 text-left grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-300">
+                            <div><i class="fas fa-check text-green-400 mr-2"></i> 不點擊不明連結</div>
+                            <div><i class="fas fa-check text-green-400 mr-2"></i> 設置高強度密碼</div>
+                            <div><i class="fas fa-check text-green-400 mr-2"></i> 離開座位鎖屏</div>
+                            <div><i class="fas fa-check text-green-400 mr-2"></i> 異常立即通報</div>
+                        </div>
+                        <div class="pt-8 w-full flex justify-center">
+                            <button onclick="alert('恭喜完成課程！')"
+                                class="px-10 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-full font-bold text-white text-lg hover:shadow-[0_0_40px_rgba(6,182,212,0.8)] transition-all">
+                                完成課程
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Previous/Next Controls -->
+            <div class="absolute bottom-8 right-8 flex gap-4 z-50">
+                <button @click="prevSlide()"
+                    class="p-4 rounded-full bg-slate-800 border border-slate-600 text-white hover:bg-cyan-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    :disabled="currentSlide === 0">
+                    <i class="fas fa-chevron-left text-xl"></i>
+                </button>
+                <button @click="nextSlide()"
+                    class="p-4 rounded-full bg-cyan-600 border border-cyan-400 text-white hover:bg-cyan-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    :disabled="currentSlide === 10">
+                    <i class="fas fa-chevron-right text-xl"></i>
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        function presentation() {
+            return {
+                currentSlide: 0,
+                // Interaction Data
+                passwordInput: '',
+                passwordStrength: 0,
+                quizSelected: null,
+                activeResponseTab: 'deepfake',
+                activeSocialTab: 'phishing',
+
+                // Cases Data (New Feature)
+                selectedCase: null,
+                cases: [{
+                        id: 1,
+                        category: '零售業',
+                        color: 'red',
+                        date: '2025.11',
+                        title: '知名大賣場會員個資外洩',
+                        desc: '駭客透過第三方供應商漏洞入侵，竊取超過 200 萬筆會員資料。',
+                        details: '這起事件發生於感恩節購物季前夕，攻擊者利用賣場空調系統供應商的遠端維護憑證進入內網。由於內部網路未進行網段隔離 (Network Segmentation)，駭客輕易橫向移動至會員資料庫，竊取包含姓名、電話、地址及部分信用卡資訊。事件導致該公司股價單週下跌 7%。',
+                        solutions: [
+                            '實施供應商資安風險評估 (Vendor Risk Management)',
+                            '落實最小權限原則，限制第三方遠端存取範圍',
+                            '加強內部網路隔離，避免單點突破全盤皆輸'
+                        ]
+                    },
+                    {
+                        id: 2,
+                        category: 'AI 詐騙',
+                        color: 'purple',
+                        date: '2026.01',
+                        title: 'Deepfake 假冒 CEO 匯款詐騙',
+                        desc: '財務人員遭 AI 變臉變聲的「假 CEO」指示，匯款 2 億元。',
+                        details: '這是一起高度精密的社交工程攻擊。詐騙集團利用公開的 CEO 演講影片訓練 Deepfake 模型，並不僅僅是打電話，而是邀請財務人員參加「視訊會議」。會議中只有受害者是真人，其他與會高層皆為 AI 生成的虛擬影像。受害者在視覺與聽覺的雙重欺騙下，不疑有他進行轉帳。',
+                        solutions: [
+                            '針對大額匯款建立「實體雙重確認」機制 (Out-of-band Verification)',
+                            '教育員工認識 Deepfake 技術特徵（如眨眼不自然、邊緣模糊）',
+                            '建立內部通關密語或多重簽核流程'
+                        ]
+                    },
+                    {
+                        id: 3,
+                        category: '社交工程',
+                        color: 'orange',
+                        date: '2025.08',
+                        title: '能源公司勒索軟體攻擊',
+                        desc: '員工開啟釣魚郵件附件，導致內網遭鎖定，營運停擺 2 週。',
+                        details: '駭客精心設計了一封標題為「2025 半年度績效獎金分配表」的釣魚郵件，確實擊中員工心理。附件是一個帶有惡意巨集的 Excel 檔。員工啟用編輯後，勒索軟體隨即在背景執行並利用 SMB 漏洞感染全公司電腦。由於備份伺服器也連接在同一網域且帳號共用，連備份檔也遭到加密。',
+                        solutions: [
+                            '定期進行釣魚郵件演練，提高員工警覺性',
+                            '落實 3-2-1 備份原則，確保有一份「離線/異地」備份',
+                            '導入 EDR (端點偵測與回應) 系統，即時阻斷可疑行為'
+                        ]
+                    }
+                ],
+
+                // CIA Data (New Feature)
+                selectedCIA: null,
+                ciaItems: [{
+                        id: 'C',
+                        title: '機密性',
+                        enTitle: 'Confidentiality',
+                        icon: 'lock',
+                        color: 'blue',
+                        shortDesc: '確保資料僅授權人員可讀取。',
+                        shortProtection: '加密、權限控管',
+                        longDesc: '機密性 (Confidentiality) 確保資訊不被未經授權的個人、實體或程序存取。透過身分驗證與權限控管，我們確保「只有該看的人才能看」。',
+                        examples: ['信用卡號與密碼加密儲存', '薪資單僅限本人與人資閱覽', '醫療紀錄隱私保護'],
+                        attacks: ['網路竊聽 (Sniffing)', '社交工程竊取帳密', '權限設定錯誤']
+                    },
+                    {
+                        id: 'I',
+                        title: '完整性',
+                        enTitle: 'Integrity',
+                        icon: 'file-signature',
+                        color: 'green',
+                        shortDesc: '確保資料未被竄改或破壞。',
+                        shortProtection: '數位簽章、版控',
+                        longDesc: '完整性 (Integrity) 確保資訊在生命週期中保持準確與完整，未被未經授權地修改或刪除。這是對資料「原汁原味」的保證。',
+                        examples: ['確保轉帳金額未被修改', '軟體安裝檔的雜湊值 (Hash) 驗證', '資料庫交易的一致性 (ACID)'],
+                        attacks: ['中間人攻擊 (MITM) 竄改數據', '惡意軟體注入', 'SQL Injection']
+                    },
+                    {
+                        id: 'A',
+                        title: '可用性',
+                        enTitle: 'Availability',
+                        icon: 'server',
+                        color: 'orange',
+                        shortDesc: '確保服務隨時可用不中斷。',
+                        shortProtection: '備援、DDoS',
+                        longDesc: '可用性 (Availability) 確保授權使用者在需要時，能夠可靠地存取資訊與相關資產。系統必須具備容錯與復原能力，隨時待命。',
+                        examples: ['24/7 網路銀行服務', '備份資料的還原測試', '高可用性 (HA) 系統架構'],
+                        attacks: ['DDoS 阻斷服務攻擊', '勒索軟體加密鎖死檔案', '機房斷電或實體破壞']
+                    }
+                ],
+
+
+                // Phishing Tool Data
+                phishingTool: {
+                    sender: '',
+                    isInternalClaim: false,
+                    subject: '',
+                    body: '',
+                    result: null, // { score: 0-100, risk: 'Low'|'Medium'|'High', messages: [] }
+                },
+
+
+
+                // Health Check Data
+                healthCheck: {
+                    items: [{
+                            id: 1,
+                            text: '作業系統 (Windows) 與瀏覽器已更新至最新版本',
+                            checked: false,
+                            advice: '請執行 Windows Update 並重啟電腦。'
+                        },
+                        {
+                            id: 2,
+                            text: '已安裝防毒軟體 (如 Defender/TrendMicro) 並開啟即時防護',
+                            checked: false,
+                            advice: '請檢查右下角盾牌圖示是否為綠色勾勾。'
+                        },
+                        {
+                            id: 3,
+                            text: '電腦設有登入密碼，且符合複雜度要求',
+                            checked: false,
+                            advice: '請按 Ctrl+Alt+Del 變更密碼 (至少8碼含英數)。'
+                        },
+                        {
+                            id: 4,
+                            text: '離開座位時會習慣鎖定螢幕 (Win+L)',
+                            checked: false,
+                            advice: '養成隨手按 Windows鍵 + L 的好習慣。'
+                        },
+                        {
+                            id: 5,
+                            text: '沒有安裝公司未授權的軟體 (如盜版軟體、遊戲)',
+                            checked: false,
+                            advice: '請自行移除這類軟體，以免遭植入木馬。'
+                        },
+                        {
+                            id: 6,
+                            text: '重要文件已備份至公司伺服器或 OneDrive',
+                            checked: false,
+                            advice: '請將桌面檔案移至 OneDrive 或公司 NAS 資料夾。'
+                        }
+                    ],
+                    score: 0,
+                    submitted: false
+                },
+
+                slideTitles: [
+                    "首頁", "資安重要性", "近期重大案例", "資安核心觀念", "社交工程防範", "釣魚郵件快篩", "密碼安全", "零信任與個人防護", "資安應變守則", "電腦資安健檢",
+                    "結語與承諾"
+                ],
+
+                calculateHealth() {
+                    const checkedCount = this.healthCheck.items.filter(i => i.checked).length;
+                    this.healthCheck.score = Math.round((checkedCount / this.healthCheck.items.length) * 100);
+                    this.healthCheck.submitted = true;
+                },
+                resetHealth() {
+                    this.healthCheck.items.forEach(i => i.checked = false);
+                    this.healthCheck.score = 0;
+                    this.healthCheck.submitted = false;
+                },
+
+                analyzePhishing() {
+                    const data = this.phishingTool;
+                    let score = 0;
+                    let risk = 'Low';
+                    let messages = [];
+
+                    // 1. Sender Check
+                    const safeDomain = 'willingbikes.com';
+                    const senderLower = data.sender.toLowerCase();
+
+                    if (data.isInternalClaim) {
+                        if (senderLower.endsWith('@' + safeDomain)) {
+                            score += 0;
+                            messages.push({
+                                type: 'success',
+                                text: '網域驗證正確：確實為公司內部信箱'
+                            });
+                        } else {
+                            score += 50;
+                            messages.push({
+                                type: 'danger',
+                                text: '嚴重警告：聲稱內部郵件但非公司網域！'
+                            });
+                        }
+                    } else {
+                        if (senderLower.endsWith('@gmail.com') || senderLower.endsWith('@yahoo.com') || senderLower
+                            .endsWith('@hotmail.com')) {
+                            score += 20;
+                            messages.push({
+                                type: 'warning',
+                                text: '注意：使用免費公用信箱，公務往來需再三確認'
+                            });
+                        } else if (senderLower && !senderLower.includes('@')) {
+                            score += 10;
+                            messages.push({
+                                type: 'warning',
+                                text: '格式錯誤：Email 格式不正確'
+                            });
+                        }
+                    }
+
+                    // 2. Keyword Check (Subject + Body)
+                    const urgentKeywords = ['緊急', '凍結', '停用', '立即', 'verify', 'suspend', 'urgent', 'payment', '轉帳', '匯款'];
+                    const content = (data.subject + ' ' + data.body).toLowerCase();
+
+                    let foundKeywords = [];
+                    urgentKeywords.forEach(kw => {
+                        if (content.includes(kw)) foundKeywords.push(kw);
+                    });
+
+                    if (foundKeywords.length > 0) {
+                        score += 30;
+                        messages.push({
+                            type: 'warning',
+                            text: `發現急迫/敏感關鍵字：${foundKeywords.join(', ')}`
+                        });
+                    }
+
+                    // 3. Link Check (Simple simulation)
+                    if (data.body.includes('http://') || data.body.includes('bit.ly') || data.body.includes('.xyz') || data
+                        .body.includes('.top')) {
+                        score += 30;
+                        messages.push({
+                            type: 'warning',
+                            text: '發現可疑連結特徵 (非 HTTPS 或高風險頂級網域)'
+                        });
+                    }
+
+                    // Calculate Result
+                    if (score >= 50) {
+                        risk = 'High';
+                    } else if (score >= 20) {
+                        risk = 'Medium';
+                    } else {
+                        risk = 'Low';
+                    }
+
+                    this.phishingTool.result = {
+                        score,
+                        risk,
+                        messages
+                    };
+                },
+
+                goToSlide(index) {
+                    this.currentSlide = index;
+                    this.selectedCase = null; // Reset selection on change
+                },
+                nextSlide() {
+                    if (this.currentSlide < this.slideTitles.length - 1) {
+                        this.currentSlide++;
+                        this.selectedCase = null;
+                    }
+                },
+                prevSlide() {
+                    if (this.currentSlide > 0) {
+                        this.currentSlide--;
+                        this.selectedCase = null;
+                    }
+                },
+
+                checkStrength() {
+                    const pwd = this.passwordInput;
+                    let score = 0;
+                    if (pwd.length > 8) score++;
+                    if (pwd.length >= 12) score++;
+                    if (/[A-Z]/.test(pwd)) score++;
+                    if (/[0-9]/.test(pwd)) score++;
+                    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+                    this.passwordStrength = score;
+                },
+                getStrengthColor(score) {
+                    if (score <= 1) return 'text-red-500';
+                    if (score === 2) return 'text-red-400';
+                    if (score === 3) return 'text-yellow-500';
+                    return 'text-green-500';
+                },
+                getStrengthBarClass(score) {
+                    if (score <= 1) return 'bg-red-500 w-1/4';
+                    if (score === 2) return 'bg-red-400 w-2/4';
+                    if (score === 3) return 'bg-yellow-400 w-3/4';
+                    if (score >= 4) return 'bg-green-500 w-full';
+                    return 'w-0';
+                },
+                init() {
+                    window.addEventListener('keydown', (e) => {
+                        if (e.key === 'ArrowRight' || e.key === 'Space') this.nextSlide();
+                        if (e.key === 'ArrowLeft') this.prevSlide();
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

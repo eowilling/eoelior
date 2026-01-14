@@ -21,7 +21,7 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold text-gray-800">轉盤設定</h1>
             <div class="flex gap-4">
-                <a href="buyROnobuy.html" class="text-blue-600 hover:text-blue-800 underline">返回轉盤</a>
+                <a href="index.html" class="text-blue-600 hover:text-blue-800 underline">返回轉盤</a>
             </div>
         </div>
 
@@ -29,7 +29,7 @@
             <p class="text-sm text-blue-800">
                 <strong>說明：</strong><br>
                 • <strong>視覺面積</strong>：轉盤上顯示的扇區大小比例<br>
-                • <strong>自動計算</strong>：調整任一選項的百分比時，其他選項會自動按比例調整，總和保持 100%<br>
+                • 調整百分比時，請確保總和為 100%<br>
             </p>
         </div>
 
@@ -151,13 +151,22 @@
             // 暫時標記為儲存中，避免觸發同步檢查
             isEditing = true;
 
-            localStorage.setItem('wheelConfig', JSON.stringify(configToSave));
+            // 確保配置格式正確
+            const configToSaveStr = JSON.stringify(configToSave);
+            localStorage.setItem('wheelConfig', configToSaveStr);
             config = configToSave; // 更新當前配置
 
-            // 觸發自定義事件以在同一頁面內同步（但不重新渲染）
+            // 觸發自定義事件以在同一頁面內同步
+            // 使用 CustomEvent 而不是 StorageEvent，因為 StorageEvent 在同頁面內可能不會觸發
+            window.dispatchEvent(new CustomEvent('wheelConfigUpdated', {
+                detail: configToSave
+            }));
+
+            // 也觸發 storage 事件（用於跨標籤頁同步）
             window.dispatchEvent(new StorageEvent('storage', {
                 key: 'wheelConfig',
-                newValue: JSON.stringify(configToSave),
+                newValue: configToSaveStr,
+                oldValue: localStorage.getItem('wheelConfig'),
                 storageArea: localStorage
             }));
 
@@ -167,6 +176,8 @@
             setTimeout(() => {
                 isEditing = false;
             }, 500);
+
+            console.log('✅ 配置已保存到 localStorage');
 
             alert('設定已儲存！');
         }
@@ -297,12 +308,10 @@
                 updatePreview();
             });
 
-            // 視覺面積輸入 - 自動按比例調整其他選項
+            // 視覺面積輸入 - 僅更新預覽，不自動調整
             div.querySelector('.segment-visual').addEventListener('input', (e) => {
                 markEditing(); // 標記為正在編輯
-                const changedIndex = parseInt(div.dataset.index);
-                const newValue = parseFloat(e.target.value) || 0;
-                autoAdjustPercentages('visual', changedIndex, newValue);
+                updateConfigFromDOM();
                 updatePreview();
             });
 
@@ -522,6 +531,19 @@
             }, 1000);
         });
 
+        // 確保配置已保存（在返回轉盤前）
+        function ensureConfigSaved() {
+            updateConfigFromDOM();
+            saveConfig(config);
+            console.log('💾 確保配置已保存');
+        }
+
+        // 返回轉盤連結：點擊時自動保存配置
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            ensureConfigSaved();
+            // 允許正常跳轉
+        });
+
         // 儲存設定（只更新視覺面積，保留真實機率）
         document.getElementById('saveBtn').addEventListener('click', () => {
             // 先載入現有配置，保留真實機率
@@ -655,7 +677,7 @@
                     const currentUrlObj = new URL(window.location.href);
                     // 獲取目錄路徑
                     const pathParts = currentUrlObj.pathname.split('/');
-                    pathParts[pathParts.length - 1] = 'buyROnobuy.html'; // 替換最後一個文件名
+                    pathParts[pathParts.length - 1] = 'index.html'; // 替換最後一個文件名
                     currentUrlObj.pathname = pathParts.join('/');
                     // 清除現有的查詢參數，添加新的配置參數
                     currentUrlObj.search = '';
@@ -665,7 +687,7 @@
                     // 方法2：降級方案（兼容舊瀏覽器）
                     const currentPath = window.location.pathname;
                     const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-                    const baseUrl = window.location.origin + dirPath + 'buyROnobuy.html';
+                    const baseUrl = window.location.origin + dirPath + 'index.html';
                     shareUrl = `${baseUrl}?c=${configBase64}`;
                 }
 
