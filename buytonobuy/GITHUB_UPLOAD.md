@@ -21,12 +21,15 @@
 ### 方法 1: 使用 Git 命令列（推薦）
 
 #### 步驟 1: 檢查狀態
+
 ```bash
 git status
 ```
 
 #### 步驟 2: 確認要提交的檔案
+
 確認以下檔案**不包含**敏感資訊：
+
 - ✅ `buytonobuy/index.html` - 已使用外部配置
 - ✅ `buytonobuy/firebase-config.example.js` - 僅範例，不含真實金鑰
 - ✅ `buytonobuy/FIREBASE_SETUP.md` - 文件
@@ -34,6 +37,7 @@ git status
 - ✅ `buytonobuy/TEST_CHECKLIST.md` - 文件
 
 #### 步驟 3: 加入要提交的檔案
+
 ```bash
 # 加入修改的檔案
 git add .gitignore
@@ -50,6 +54,7 @@ git add buytonobuy/firebase-config.example.js
 ```
 
 #### 步驟 4: 提交變更
+
 ```bash
 git commit -m "feat: 新增 Firebase 雲端同步功能
 
@@ -61,6 +66,7 @@ git commit -m "feat: 新增 Firebase 雲端同步功能
 ```
 
 #### 步驟 5: 推送到 GitHub
+
 ```bash
 git push origin main
 ```
@@ -83,9 +89,10 @@ git push origin main
    - ❌ **不要勾選** `firebase-config.js` 或 `irebase-config.js`
 
 4. **填寫提交訊息**
+
    ```
    feat: 新增 Firebase 雲端同步功能
-   
+
    - 整合 Firebase Firestore 用於轉盤配置分享
    - 新增外部配置注入機制
    - 新增雲端分享連結功能
@@ -130,21 +137,25 @@ git check-ignore -v buytonobuy/irebase-config.js
 ## 📝 提交訊息範例
 
 ### 功能新增
+
 ```
 feat: 新增 Firebase 雲端同步功能
 ```
 
 ### 錯誤修正
+
 ```
 fix: 修正 Firebase 認證錯誤處理
 ```
 
 ### 文件更新
+
 ```
 docs: 新增 Firebase 設定指南
 ```
 
 ### 安全性改進
+
 ```
 security: 將 Firebase 配置移至外部檔案
 ```
@@ -156,17 +167,19 @@ security: 將 Firebase 配置移至外部檔案
 ### 緊急處理步驟
 
 1. **立即撤銷最後一次提交**（如果還沒推送）
+
    ```bash
    git reset --soft HEAD~1
    ```
 
 2. **如果已經推送，需要從歷史中移除**
+
    ```bash
    # 從 Git 歷史中移除檔案
    git filter-branch --force --index-filter \
      "git rm --cached --ignore-unmatch buytonobuy/firebase-config.js" \
      --prune-empty --tag-name-filter cat -- --all
-   
+
    # 強制推送（危險操作，請謹慎）
    git push origin --force --all
    ```
