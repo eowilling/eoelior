@@ -1,7 +1,0 @@
-{
-  "script_created": "cursor_auto_fix.bat",
-  "fixes_module": true,
-  "enables_pro": true,
-  "auto_restart": true,
-  "usage": "双击cursor_auto_fix.bat即可自动修复"
-}
