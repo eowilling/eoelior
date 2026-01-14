@@ -64,9 +64,9 @@
             <h2 id="wheelTitle" class="text-3xl font-bold mb-8 text-center cursor-pointer hover:text-indigo-400 transition-colors" title="雙擊進入完整權限後台">命運輪盤</h2>
             <p id="wheelDescription" class="text-center text-slate-400 mb-8" style="display: none;"></p>
 
-            <div class="relative w-full max-w-[320px] aspect-square mx-auto mb-8">
+            <div class="relative w-full max-w-[600px] aspect-square mx-auto mb-8">
                 <div class="pointer"></div>
-                <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
+                <canvas id="wheelCanvas" width="800" height="800" class="w-full h-full"></canvas>
             </div>
 
             <div class="flex flex-col items-center space-y-4">
@@ -645,10 +645,11 @@
         // 繪製轉盤
         function drawWheel() {
             const ctx = document.getElementById('wheelCanvas').getContext('2d');
-            ctx.clearRect(0, 0, 400, 400);
-            const centerX = 200;
-            const centerY = 200;
-            const radius = 190;
+            const canvas = ctx.canvas;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) * 0.95;
             let angle = 0;
 
             // 繪製外圈陰影（整體轉盤陰影）
