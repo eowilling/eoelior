@@ -9,35 +9,111 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        #wheelCanvas { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border-radius: 9999px; transition: transform 5000ms cubic-bezier(0.17, 0.67, 0.12, 0.99); }
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #fff; z-index: 20; }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        #wheelCanvas {
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4), 0 0 0 4px rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+            transition: transform 3000ms cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent);
+        }
+        .pointer {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 38px solid #ffffff;
+            z-index: 20;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+        }
+        .pointer::before {
+            content: '';
+            position: absolute;
+            top: -38px;
+            left: -14px;
+            width: 0;
+            height: 0;
+            border-left: 14px solid transparent;
+            border-right: 14px solid transparent;
+            border-top: 24px solid #f1f5f9;
+            z-index: 1;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans">
 
     <nav class="absolute top-0 w-full p-6 flex justify-between items-center">
         <a href="../index.html" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left"></i> 回玩具盒子</a>
-        <div id="dbStatus" class="text-[10px] text-slate-500">未連線</div>
+        <div class="flex items-center gap-4">
+            <a href="admin.html" class="text-slate-400 hover:text-white text-sm">後台管理</a>
+            <div id="dbStatus" class="text-[10px] text-slate-500">未連線</div>
+        </div>
     </nav>
 
-    <div class="max-w-4xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
-        <div class="lg:col-span-2 glass-card p-8 rounded-3xl text-center">
-            <h2 id="wheelTitle" class="text-3xl font-bold mb-8">命運輪盤</h2>
+    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
+        <!-- 左側：轉盤區域 -->
+        <div class="lg:col-span-2 glass-card p-8 rounded-3xl">
+            <h2 id="wheelTitle" class="text-3xl font-bold mb-8 text-center cursor-pointer hover:text-indigo-400 transition-colors" title="雙擊進入完整權限後台">命運輪盤</h2>
+            <p id="wheelDescription" class="text-center text-slate-400 mb-8" style="display: none;"></p>
+
             <div class="relative w-full max-w-[320px] aspect-square mx-auto mb-8">
                 <div class="pointer"></div>
                 <canvas id="wheelCanvas" width="400" height="400" class="w-full h-full"></canvas>
             </div>
-            <button id="spinBtn" class="bg-indigo-600 px-12 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">開始旋轉</button>
-            <p id="resultDisplay" class="mt-4 text-indigo-300 font-bold h-6"></p>
+
+            <div class="flex flex-col items-center space-y-4">
+                <button id="spinBtn" class="bg-indigo-600 px-12 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">開始旋轉</button>
+                <p id="resultDisplay" class="mt-4 text-indigo-300 font-bold h-6"></p>
+            </div>
+
+            <!-- 中獎機率表格 -->
+            <div class="mt-8 pt-6 border-t border-slate-700">
+                <h3 class="text-lg font-semibold text-slate-300 mb-4 text-center">中獎機率</h3>
+                <div class="overflow-x-auto">
+                    <table id="optionsDisplay" class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800/50">
+                                <th class="border border-slate-600 px-4 py-2 text-left text-slate-300">選項</th>
+                                <th class="border border-slate-600 px-4 py-2 text-center text-slate-300">中獎機率</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 選項將動態顯示在這裡 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
-        <div class="glass-card p-6 rounded-3xl space-y-4">
-            <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest">雲端同步分享</h3>
-            <button id="cloudShareBtn" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">生成分享連結</button>
-            <div id="shareArea" class="hidden space-y-2">
-                <input type="text" id="shareUrlInput" readonly class="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300 focus:outline-none">
-                <button id="copyBtn" class="w-full bg-indigo-600/20 text-indigo-300 py-2 rounded-lg text-[10px] hover:bg-indigo-600/40">複製連結</button>
+        <!-- 右側：記錄明細和雲端分享 -->
+        <div class="space-y-6">
+            <!-- 轉盤記錄 -->
+            <div class="glass-card p-6 rounded-3xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-slate-300">轉盤記錄</h3>
+                    <button id="resetHistoryBtn" class="px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">重置</button>
+                </div>
+                <div id="historyDisplay" class="space-y-2 max-h-[400px] overflow-y-auto">
+                    <p class="text-slate-500 text-sm text-center py-4">尚無記錄</p>
+                </div>
+            </div>
+
+            <!-- 雲端同步分享 -->
+            <div class="glass-card p-6 rounded-3xl space-y-4">
+                <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest">雲端同步分享</h3>
+                <button id="cloudShareBtn" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">生成分享連結</button>
+                <div id="shareArea" class="hidden space-y-2">
+                    <input type="text" id="shareUrlInput" readonly class="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300 focus:outline-none">
+                    <button id="copyBtn" class="w-full bg-indigo-600/20 text-indigo-300 py-2 rounded-lg text-[10px] hover:bg-indigo-600/40">複製連結</button>
+                </div>
             </div>
         </div>
     </div>
@@ -101,14 +177,288 @@
         // ==========================================
         // 🎡 轉盤核心邏輯
         // ==========================================
-        let config = {
+
+        // 預設配置
+        const defaultConfig = {
             title: "命運輪盤",
+            description: "",
             segments: [
                 {label: "買", color: "#10b981", visualPercent: 50, realPercent: 80},
                 {label: "不買", color: "#ef4444", visualPercent: 50, realPercent: 20}
             ]
         };
+
+        // 從 URL 參數讀取配置（支援後台分享連結）
+        function loadConfigFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const configParam = urlParams.get('c') || urlParams.get('config');
+
+            if (configParam) {
+                try {
+                    // Base64 轉 UTF-8 的函數
+                    function base64ToUtf8(base64Str) {
+                        const normalized = base64Str.replace(/-/g, '+').replace(/_/g, '/');
+                        const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+                        try {
+                            const binaryString = atob(padded);
+                            const bytes = new Uint8Array(binaryString.length);
+                            for (let i = 0; i < binaryString.length; i++) {
+                                bytes[i] = binaryString.charCodeAt(i);
+                            }
+                            const decoder = new TextDecoder('utf-8');
+                            return decoder.decode(bytes);
+                        } catch (e) {
+                            try {
+                                return decodeURIComponent(escape(atob(padded)));
+                            } catch (e2) {
+                                return atob(padded);
+                            }
+                        }
+                    }
+
+                    const configJson = base64ToUtf8(configParam);
+                    const sharedConfig = JSON.parse(configJson);
+
+                    // 支援緊湊格式和完整格式
+                    const config = {
+                        title: sharedConfig.t || sharedConfig.title || defaultConfig.title,
+                        description: sharedConfig.d || sharedConfig.description || defaultConfig.description,
+                        segments: (sharedConfig.s || sharedConfig.segments || []).map(seg => ({
+                            label: seg.l || seg.label,
+                            color: seg.c || seg.color,
+                            visualPercent: seg.v || seg.visualPercent,
+                            realPercent: seg.r !== undefined ? seg.r : (seg.v || seg.visualPercent || seg.realPercent || 50)
+                        }))
+                    };
+
+                    // 保存到 localStorage
+                    saveConfig(config);
+                    return config;
+                } catch (e) {
+                    console.error('從 URL 載入配置失敗，使用預設值', e);
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // 從 localStorage 載入配置
+        function loadConfig() {
+            // 優先從 URL 參數讀取
+            const urlConfig = loadConfigFromUrl();
+            if (urlConfig) {
+                return urlConfig;
+            }
+
+            // 否則從 localStorage 讀取
+            const saved = localStorage.getItem('wheelConfig');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('載入配置失敗，使用預設值', e);
+                }
+            }
+            return defaultConfig;
+        }
+
+        // 儲存配置
+        function saveConfig(config) {
+            localStorage.setItem('wheelConfig', JSON.stringify(config));
+        }
+
+        // 載入配置
+        let config = loadConfig();
         let currentRotation = 0;
+
+        // 更新標題和說明顯示
+        function updateTitleAndDescription() {
+            const titleElement = document.getElementById('wheelTitle');
+            const descriptionElement = document.getElementById('wheelDescription');
+
+            if (titleElement) {
+                titleElement.textContent = config.title || '命運輪盤';
+            }
+
+            if (descriptionElement) {
+                if (config.description && config.description.trim()) {
+                    descriptionElement.textContent = config.description;
+                    descriptionElement.style.display = 'block';
+                } else {
+                    descriptionElement.style.display = 'none';
+                }
+            }
+        }
+
+        // 更新選項顯示（表格格式）
+        function updateOptionsDisplay() {
+            const optionsDisplay = document.getElementById('optionsDisplay');
+            if (!optionsDisplay) return;
+
+            let html = '';
+            config.segments.forEach(segment => {
+                html += `
+                    <tr>
+                        <td class="border border-slate-600 px-4 py-2">
+                            <span class="inline-block px-3 py-1 rounded text-white font-semibold text-sm" style="background-color: ${segment.color};">
+                                ${segment.label}
+                            </span>
+                        </td>
+                        <td class="border border-slate-600 px-4 py-2 text-center font-semibold text-slate-300">
+                            ${segment.visualPercent.toFixed(1)}%
+                        </td>
+                    </tr>
+                `;
+            });
+            const tbody = optionsDisplay.querySelector('tbody');
+            if (tbody) {
+                tbody.innerHTML = html;
+            }
+        }
+
+        // ==========================================
+        // 📝 歷史記錄功能
+        // ==========================================
+
+        // 載入歷史記錄
+        function loadHistory() {
+            const saved = localStorage.getItem('wheelHistory');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('載入歷史記錄失敗', e);
+                }
+            }
+            return [];
+        }
+
+        // 儲存歷史記錄
+        function saveHistory(history) {
+            localStorage.setItem('wheelHistory', JSON.stringify(history));
+        }
+
+        // 添加記錄
+        function addHistoryRecord(label, color) {
+            const history = loadHistory();
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            const dateStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+
+            history.unshift({
+                label: label,
+                color: color,
+                time: timeStr,
+                date: dateStr,
+                timestamp: now.getTime(),
+                protected: false
+            });
+
+            // 最多保留 100 筆記錄（不包括受保護的）
+            if (history.length > 100) {
+                for (let i = history.length - 1; i >= 0; i--) {
+                    if (!history[i].protected) {
+                        history.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+
+            saveHistory(history);
+            renderHistory();
+        }
+
+        // 渲染歷史記錄
+        function renderHistory() {
+            const history = loadHistory();
+            const historyDisplay = document.getElementById('historyDisplay');
+
+            if (history.length === 0) {
+                historyDisplay.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">尚無記錄</p>';
+                return;
+            }
+
+            let html = '';
+            history.forEach((record, index) => {
+                const protectedClass = record.protected ? 'bg-yellow-900/20 border-yellow-600' : '';
+                const protectIcon = record.protected ? '✓' : '○';
+                const protectColor = record.protected ? 'text-green-400' : 'text-slate-400';
+                const deleteButtonClass = record.protected ? 'text-slate-500 cursor-not-allowed' : 'text-red-400 hover:text-red-300 hover:bg-red-900/20';
+
+                html += `
+                    <div class="p-3 border border-slate-600 rounded-lg hover:bg-slate-800/50 transition ${protectedClass}" data-index="${index}">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-block px-3 py-1 rounded text-white font-semibold text-sm" style="background-color: ${record.color};">
+                                ${record.label}
+                            </span>
+                            <span class="text-xs text-slate-400">${record.date} ${record.time}</span>
+                        </div>
+                        <div class="flex items-center justify-end gap-2 mt-2">
+                            <button class="protect-btn px-2 py-1 text-sm rounded transition ${protectColor} hover:bg-slate-700"
+                                    data-index="${index}"
+                                    title="${record.protected ? '取消保護' : '保護此記錄'}">
+                                ${protectIcon}
+                            </button>
+                            <button class="delete-btn px-2 py-1 text-sm rounded transition ${deleteButtonClass}"
+                                    data-index="${index}"
+                                    ${record.protected ? 'disabled title="受保護的記錄無法刪除"' : 'title="刪除此記錄"'}>
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            historyDisplay.innerHTML = html;
+
+            // 綁定事件
+            historyDisplay.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.dataset.index);
+                    deleteHistoryRecord(index);
+                });
+            });
+
+            historyDisplay.querySelectorAll('.protect-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.dataset.index);
+                    toggleProtectRecord(index);
+                });
+            });
+        }
+
+        // 刪除單筆記錄
+        function deleteHistoryRecord(index) {
+            const history = loadHistory();
+            if (index >= 0 && index < history.length) {
+                if (history[index].protected) {
+                    alert('此記錄已受保護，無法刪除！');
+                    return;
+                }
+                if (confirm('確定要刪除此記錄嗎？')) {
+                    history.splice(index, 1);
+                    saveHistory(history);
+                    renderHistory();
+                }
+            }
+        }
+
+        // 切換保護狀態
+        function toggleProtectRecord(index) {
+            const history = loadHistory();
+            if (index >= 0 && index < history.length) {
+                history[index].protected = !history[index].protected;
+                saveHistory(history);
+                renderHistory();
+            }
+        }
+
+        // 重置歷史記錄
+        function resetHistory() {
+            if (confirm('確定要清除所有轉盤記錄嗎？\n（包括受保護的記錄也會被清除）')) {
+                localStorage.removeItem('wheelHistory');
+                renderHistory();
+            }
+        }
 
         // 更新連線狀態顯示
         function updateDbStatus(status, text) {
@@ -152,12 +502,16 @@
                                     doc(db, 'artifacts', APP_ID, 'public', 'data', 'shared_wheels', shareId)
                                 );
                                 if (snap.exists()) {
-                                    config = snap.data();
-                                    document.getElementById('wheelTitle').innerText = config.title || '命運輪盤';
+                                    const firebaseConfig = snap.data();
+                                    config = firebaseConfig;
+                                    // 保存到 localStorage，以便之後也能使用
+                                    saveConfig(config);
+                                    updateTitleAndDescription();
+                                    updateOptionsDisplay();
                                     drawWheel();
-                                    console.log('✅ 分享配置載入成功');
+                                    console.log('✅ Firebase 分享配置載入成功');
                                 } else {
-                                    console.warn('⚠️ 分享配置不存在');
+                                    console.warn('⚠️ Firebase 分享配置不存在');
                                 }
                             } catch (e) {
                                 console.error('❌ 載入分享配置失敗:', e);
@@ -240,8 +594,10 @@
 
         // 初始化轉盤
         function init() {
-            document.getElementById('wheelTitle').innerText = config.title;
+            updateTitleAndDescription();
+            updateOptionsDisplay();
             drawWheel();
+            renderHistory();
 
             // 如果 Firebase 可用，初始化連線
             if (firebaseEnabled) {
@@ -249,30 +605,180 @@
             } else {
                 updateDbStatus('disabled', '未啟用');
             }
+
+            // 綁定重置按鈕
+            document.getElementById('resetHistoryBtn').onclick = resetHistory;
+
+            // 隱藏觸發：雙擊標題進入完整權限後台（adminplus）
+            const wheelTitle = document.getElementById('wheelTitle');
+            if (wheelTitle) {
+                let clickCount = 0;
+                let clickTimer;
+                wheelTitle.addEventListener('click', function() {
+                    clickCount++;
+                    if (clickCount === 1) {
+                        clickTimer = setTimeout(function() {
+                            clickCount = 0;
+                        }, 300);
+                    } else if (clickCount === 2) {
+                        clearTimeout(clickTimer);
+                        clickCount = 0;
+                        window.location.href = 'adminplus.html';
+                    }
+                });
+            }
+        }
+
+        // 計算顏色的亮度（用於決定文字顏色）
+        function getLuminance(color) {
+            // 將 hex 轉換為 RGB
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16) / 255;
+            const g = parseInt(hex.substr(2, 2), 16) / 255;
+            const b = parseInt(hex.substr(4, 2), 16) / 255;
+
+            // 計算相對亮度
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            return luminance;
         }
 
         // 繪製轉盤
         function drawWheel() {
             const ctx = document.getElementById('wheelCanvas').getContext('2d');
-            ctx.clearRect(0,0,400,400);
+            ctx.clearRect(0, 0, 400, 400);
+            const centerX = 200;
+            const centerY = 200;
+            const radius = 190;
             let angle = 0;
-            config.segments.forEach(seg => {
+
+            // 繪製外圈陰影（整體轉盤陰影）
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 5;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'transparent';
+            ctx.fill();
+            ctx.restore();
+
+            config.segments.forEach((seg, index) => {
                 const arc = (seg.visualPercent / 100) * Math.PI * 2;
+                const midAngle = angle + arc / 2;
+                const startAngle = angle;
+                const endAngle = angle + arc;
+
+                // 創建漸變效果（從中心到邊緣）
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, radius * 0.3,
+                    centerX, centerY, radius
+                );
+
+                // 根據顏色創建漸變
+                const baseColor = seg.color;
+                const hex = baseColor.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+
+                // 中心較亮，邊緣較暗
+                gradient.addColorStop(0, `rgba(${Math.min(255, r + 40)}, ${Math.min(255, g + 40)}, ${Math.min(255, b + 40)}, 1)`);
+                gradient.addColorStop(0.7, baseColor);
+                gradient.addColorStop(1, `rgba(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)}, 1)`);
+
+                // 繪製扇區
                 ctx.beginPath();
-                ctx.moveTo(200,200);
-                ctx.arc(200,200,190,angle,angle+arc);
-                ctx.fillStyle = seg.color;
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = gradient;
                 ctx.fill();
+
+                // 繪製扇區邊界線（白色分隔線，更清晰）
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // 繪製內圈高光效果（讓轉盤更有立體感）
+                const highlightRadius = radius * 0.85;
+                const highlightStartX = centerX + Math.cos(startAngle) * highlightRadius;
+                const highlightStartY = centerY + Math.sin(startAngle) * highlightRadius;
+                const highlightEndX = centerX + Math.cos(endAngle) * highlightRadius;
+                const highlightEndY = centerY + Math.sin(endAngle) * highlightRadius;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(highlightStartX, highlightStartY);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 計算文字位置（在扇區中心，距離中心 70% 半徑）
+                const textRadius = radius * 0.70;
+                const textX = centerX + Math.cos(midAngle) * textRadius;
+                const textY = centerY + Math.sin(midAngle) * textRadius;
+
+                // 根據背景顏色決定文字顏色與描邊顏色
+                const luminance = getLuminance(seg.color);
+                const isLightBackground = luminance > 0.5;
+                const textColor = isLightBackground ? '#1a1a1a' : '#FFFFFF';
+                const strokeColor = isLightBackground ? '#FFFFFF' : 'rgba(0,0,0,0.8)';
+
                 ctx.save();
-                ctx.translate(200,200);
-                ctx.rotate(angle+arc/2);
-                ctx.textAlign="right";
-                ctx.fillStyle="white";
-                ctx.font="bold 16px Inter";
-                ctx.fillText(seg.label, 170, 5);
+                ctx.translate(textX, textY);
+                ctx.rotate(midAngle + Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // 清除陰影設定
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+
+                // 繪製文字描邊（高對比描邊，確保清晰度）
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 3; // 調整為 3px，避免中文字糊掉
+                ctx.lineJoin = 'round';
+                ctx.font = 'bold 26px "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif';
+                ctx.strokeText(seg.label, 0, 0);
+
+                // 繪製文字
+                ctx.fillStyle = textColor;
+                ctx.fillText(seg.label, 0, 0);
+
                 ctx.restore();
                 angle += arc;
             });
+
+            // 繪製中心裝飾圓（多層次設計）
+            // 外圈
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.18, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 內圈（裝飾）
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.12, 0, 2 * Math.PI);
+            const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 0.12);
+            centerGradient.addColorStop(0, '#f8f9fa');
+            centerGradient.addColorStop(1, '#e9ecef');
+            ctx.fillStyle = centerGradient;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 中心點
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = '#374151';
+            ctx.fill();
         }
 
         // 旋轉按鈕事件
@@ -287,14 +793,38 @@
             let start = 0;
             for(let i=0; i<selected; i++) start += (config.segments[i].visualPercent/100)*360;
             const mid = start + (seg.visualPercent/100)*180;
-            const target = (270 - mid + 360) % 360;
-            const final = currentRotation + (10 * 360) + target - (currentRotation % 360);
-            document.getElementById('wheelCanvas').style.transform = `rotate(${final}deg)`;
+
+            // 固定旋轉參數
+            const FIXED_ROTATIONS = 10; // 固定轉 10 圈
+            const FIXED_DURATION = 3000; // 固定 3 秒
+
+            // 計算目標角度（指針在頂部，所以目標是讓選項中心對準指針）
+            // 指針在 270 度位置（頂部），所以目標角度 = 270 - 選項中心角度
+            const targetAngle = (270 - mid + 360) % 360;
+
+            // 標準化當前角度到 0-360 範圍
+            const normalizedCurrent = ((currentRotation % 360) + 360) % 360;
+
+            // 計算需要旋轉的角度（確保順時針方向）
+            let rotationNeeded = targetAngle - normalizedCurrent;
+            if (rotationNeeded < 0) {
+                rotationNeeded += 360; // 確保是正數（順時針）
+            }
+
+            // 固定方向：總是順時針旋轉固定圈數
+            const final = currentRotation + (FIXED_ROTATIONS * 360) + rotationNeeded;
+
+            // 設定固定的過渡時間和緩動函數（確保每次旋轉速度一致）
+            const wheelCanvas = document.getElementById('wheelCanvas');
+            wheelCanvas.style.transition = `transform ${FIXED_DURATION}ms cubic-bezier(0.17, 0.67, 0.12, 0.99)`;
+            wheelCanvas.style.transform = `rotate(${final}deg)`;
             currentRotation = final;
             document.getElementById('resultDisplay').innerText = "旋轉中...";
             setTimeout(() => {
                 document.getElementById('resultDisplay').innerText = "🎉 結果：" + seg.label;
-            }, 5000);
+                // 添加歷史記錄
+                addHistoryRecord(seg.label, seg.color);
+            }, FIXED_DURATION);
         };
 
         // 雲端分享功能
@@ -336,6 +866,54 @@
             btn.innerText = '已複製！';
             setTimeout(() => { btn.innerText = originalText; }, 2000);
         };
+
+        // 重新載入配置並更新轉盤
+        function reloadConfig() {
+            const newConfig = loadConfig();
+            const configChanged = JSON.stringify(newConfig) !== JSON.stringify(config);
+
+            if (configChanged) {
+                console.log('🔄 檢測到配置變化，重新載入...');
+                config = newConfig;
+                updateTitleAndDescription();
+                updateOptionsDisplay();
+                drawWheel();
+            }
+        }
+
+        // 監聽配置變化（當後台更新配置時 - 跨標籤頁）
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'wheelConfig') {
+                console.log('📦 收到 storage 事件，配置已更新');
+                reloadConfig();
+            }
+        });
+
+        // 監聽自定義配置更新事件（同頁面內更新）
+        window.addEventListener('wheelConfigUpdated', (e) => {
+            console.log('🔄 收到配置更新事件');
+            reloadConfig();
+        });
+
+        // 定期檢查配置變化（同頁面內更新）
+        setInterval(() => {
+            reloadConfig();
+        }, 300); // 每 300ms 檢查一次
+
+        // 當頁面重新可見時（從後台返回），立即檢查配置
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // 頁面變為可見時，立即重新載入配置
+                console.log('👁️ 頁面可見，檢查配置更新...');
+                reloadConfig();
+            }
+        });
+
+        // 當頁面獲得焦點時（切換標籤頁返回），立即檢查配置
+        window.addEventListener('focus', () => {
+            console.log('🎯 頁面獲得焦點，檢查配置更新...');
+            reloadConfig();
+        });
 
         // 啟動應用程式
         init();
