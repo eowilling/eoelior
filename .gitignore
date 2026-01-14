@@ -1,6 +1,12 @@
 talk talk
 CWyaX2Ne9GbSMmrcYdxHk
 .gitignore
+
+# Firebase 配置檔案（包含敏感資訊）
+buytonobuy/firebase-config.js
+**/firebase-config.js
+buytonobuy/irebase-config.js
+**/irebase-config.js
 CWyaX2Ne9GbSMmrcYdxHk/analyze_error_log.py
 CWyaX2Ne9GbSMmrcYdxHk/cursor_auto_fix.bat
 CWyaX2Ne9GbSMmrcYdxHk/cursor_pro_bypass_info.json
