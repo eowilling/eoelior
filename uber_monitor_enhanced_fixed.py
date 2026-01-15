@@ -445,7 +445,7 @@ class OrderInfoExtractor:
         
         # 狀態映射（按優先級排序）
         status_patterns = [
-            ('delivered', ['已送達', 'delivered', '已完成', '訂單完成']),
+            ('delivered', ['已送達', 'delivered', '已完成', '訂單完成', '好好享用', 'enjoy your', '享用您訂購']),
             ('delivering', ['配送中', '正在前往', 'delivering', 'on the way', '外送中']),
             ('ready', ['已準備好', '準備完成', 'ready for pickup', 'ready for delivery', '正在領取', 'picking up']),
             ('preparing', ['製作中', '準備中', 'preparing', 'preparing your order']),

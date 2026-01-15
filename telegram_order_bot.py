@@ -425,9 +425,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"✅ *訂單追蹤已啟動!*\n\n"
             f"📦 訂單 ID: `{order_id[:8]}...`\n"
             f"⏰ 檢查間隔: 30 秒\n\n"
-            f"正在檢測當前狀態,請稍候...",
+            f"正在抓取訂單資訊...",
             parse_mode='Markdown'
         )
+        
+        # 🆕 立即執行一次檢查，發送詳細通知
+        try:
+            monitor = order_manager.monitors[chat_id][order_id]
+            await monitor.check_status()
+        except Exception as e:
+            logger.error(f"首次檢查失敗: {e}")
         
     except ValueError as e:
         await update.message.reply_text(f"❌ {str(e)}")
