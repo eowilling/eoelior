@@ -1,1 +1,1 @@
-web: python telegram_order_bot.py
+worker: python telegram_order_bot.py
