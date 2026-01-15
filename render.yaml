@@ -1,0 +1,11 @@
+services:
+  - type: worker
+    name: uber-eats-bot
+    env: python
+    buildCommand: ./render-build.sh
+    startCommand: python telegram_order_bot.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.7
