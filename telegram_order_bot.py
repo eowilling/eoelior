@@ -15,13 +15,14 @@ from typing import Dict, Optional
 import logging
 
 # Telegram Bot
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
     filters,
-    ContextTypes
+    ContextTypes,
+    CallbackQueryHandler
 )
 
 # 現有的監控器
@@ -174,7 +175,7 @@ class TelegramOrderMonitor(UberEatsOrderMonitor):
         }
     
     async def send_telegram_notification(self, status_info: Dict):
-        """發送 Telegram 通知"""
+        """發送 Telegram 通知 (增強版)"""
         status = status_info.get('status')
         if not status:
             return
@@ -182,44 +183,73 @@ class TelegramOrderMonitor(UberEatsOrderMonitor):
         emoji = self.status_emoji.get(status, '📢')
         status_name = self.status_names.get(status, status)
         
+        # 提取詳細資訊
+        restaurant = status_info.get('restaurant')
+        items = status_info.get('items', [])
+        amount = status_info.get('total_amount')
+        delivery_person = status_info.get('delivery_person')
+        eta = status_info.get('eta_minutes')
+        
         # 判斷是否為首次檢測
         is_first = len(self.history) == 1
         
         if is_first:
-            message = (
-                f"{emoji} *訂單追蹤已啟動*\n\n"
-                f"📦 訂單 ID: `{self.order_id[:8]}...`\n"
-                f"📍 當前狀態: *{status_name}*\n"
-                f"⏰ 檢查間隔: {self.check_interval} 秒\n\n"
-                f"我會在狀態變化時通知您!"
-            )
+            header = f"{emoji} *訂單追蹤已啟動*"
+            desc = f"📍 當前狀態: *{status_name}*"
         else:
-            # 狀態變化通知
             prev_status = self.history[-2]['status'] if len(self.history) > 1 else None
             prev_name = self.status_names.get(prev_status, prev_status) if prev_status else '未知'
-            
-            message = (
-                f"{emoji} *訂單狀態更新*\n\n"
-                f"📦 訂單 ID: `{self.order_id[:8]}...`\n"
-                f"📊 狀態變化: {prev_name} → *{status_name}*\n"
-                f"🕐 更新時間: {datetime.now().strftime('%H:%M:%S')}\n"
-            )
-            
-            # 特殊狀態的額外訊息
-            if status == 'delivered':
-                message += "\n🎊 您的餐點已送達,請享用!"
-            elif status == 'delivering':
-                message += "\n🚗 外送員正在前往您的位置"
-            elif status == 'ready':
-                message += "\n🍔 餐點已完成,外送員即將取餐"
+            header = f"{emoji} *訂單狀態更新*"
+            desc = f"📊 狀態變化: {prev_name} → *{status_name}*"
+
+        message = (
+            f"{header}\n\n"
+            f"📦 訂單 ID: `{self.order_id[:8]}...`\n"
+            f"{desc}\n"
+        )
+
+        # 顯示餐廳資訊
+        if restaurant:
+            message += f"🏪 餐廳: *{restaurant}*\n"
+
+        # 顯示明細與金額
+        if items:
+            message += "\n📝 *餐點明細:*\n"
+            for item in items[:8]: # 限制顯示數量避免訊息過長
+                message += f"• {item}\n"
+            if len(items) > 8:
+                message += f"• ...及其他 {len(items)-8} 項\n"
+        
+        if amount:
+            message += f"💰 總金額: *{amount}*\n"
+
+        # 顯示外送員與預計時間
+        if delivery_person:
+            message += f"👤 外送員: *{delivery_person}*\n"
+        
+        if eta:
+            message += f"⏱️ 預計抵達: *{eta} 分鐘*\n"
+
+        message += f"\n🕐 更新時間: {datetime.now().strftime('%H:%M:%S')}\n"
+        
+        # 特殊狀態的額外訊息
+        if status == 'delivered':
+            message += "\n🎊 您的餐點已送達,請享用! 🍽️"
+        elif status == 'delivering':
+            message += "\n🚗 外送員正在前往您的位置"
+        
+        # 加入停止按鈕
+        keyboard = [[InlineKeyboardButton("🛑 停止追蹤此訂單", callback_data=f"stop_{self.order_id[:8]}")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         
         try:
             await self.bot.send_message(
                 chat_id=self.chat_id,
                 text=message,
-                parse_mode='Markdown'
+                parse_mode='Markdown',
+                reply_markup=reply_markup
             )
-            logger.info(f"已發送通知給用戶 {self.chat_id}: {status_name}")
+            logger.info(f"已發送增強通知與按鈕給用戶 {self.chat_id}: {status_name}")
         except Exception as e:
             logger.error(f"發送 Telegram 通知失敗: {e}")
     
@@ -318,77 +348,58 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
-    message = "📊 *您目前追蹤的訂單:*\n\n"
-    
-    for i, (order_id, monitor) in enumerate(orders.items(), 1):
-        status = monitor.last_status or '檢測中'
-        status_name = monitor.status_names.get(status, status)
-        emoji = monitor.status_emoji.get(status, '📦')
+        # 為每一筆訂單加入停止按鈕
+        keyboard = [[InlineKeyboardButton(f"🛑 停止訂單 {order_id[:8]}", callback_data=f"stop_{order_id[:8]}")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # 計算追蹤時長
-        if monitor.history:
-            start_time = datetime.fromisoformat(monitor.history[0]['timestamp'])
-            duration = datetime.now() - start_time
-            duration_str = f"{int(duration.total_seconds() / 60)} 分鐘"
-        else:
-            duration_str = "剛開始"
-        
-        message += (
-            f"{i}️⃣ *訂單* `{order_id[:8]}...`\n"
-            f"   {emoji} 狀態: *{status_name}*\n"
-            f"   ⏱️ 追蹤時長: {duration_str}\n"
-            f"   🔄 檢查次數: {len(monitor.history)}\n\n"
-        )
-    
-    message += f"💡 使用 `/stop 訂單ID前8碼` 停止追蹤"
-    
-    await update.message.reply_text(message, parse_mode='Markdown')
+        await update.message.reply_text(message_chunk, parse_mode='Markdown', reply_markup=reply_markup)
+
+    # 最後一段提示訊息
+    await update.message.reply_text("💡 您可以隨時點擊下方的按鈕或直接傳送新網址以添加訂單。")
 
 async def stop_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """處理 /stop 指令"""
+    """處理 /stop 指令 (按鈕化)"""
     chat_id = update.effective_chat.id
-    
-    if not context.args:
-        await update.message.reply_text(
-            "❌ 請指定要停止的訂單 ID\n\n"
-            "用法: `/stop 訂單ID前8碼`\n"
-            "範例: `/stop 04ed23d9`\n\n"
-            "使用 `/status` 查看所有訂單",
-            parse_mode='Markdown'
-        )
-        return
-    
-    order_id_prefix = context.args[0]
     orders = order_manager.get_user_orders(chat_id)
     
-    # 尋找匹配的訂單
-    matched_order = None
-    for order_id in orders.keys():
-        if order_id.startswith(order_id_prefix):
-            matched_order = order_id
-            break
-    
-    if not matched_order:
-        await update.message.reply_text(
-            f"❌ 找不到訂單 `{order_id_prefix}...`\n\n"
-            f"使用 `/status` 查看所有追蹤中的訂單",
-            parse_mode='Markdown'
-        )
+    if not orders:
+        await update.message.reply_text("📭 您目前沒有追蹤任何訂單。")
         return
+
+    keyboard = []
+    for order_id, monitor in orders.items():
+        restaurant = monitor.order_info.get('restaurant', '未知')
+        keyboard.append([InlineKeyboardButton(f"🛑 停止 {restaurant} ({order_id[:8]})", callback_data=f"stop_{order_id[:8]}")])
     
-    # 停止追蹤
-    success = await order_manager.stop_order(chat_id, matched_order)
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("請選擇要停止追蹤的訂單：", reply_markup=reply_markup)
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """處理按鈕點擊事件"""
+    query = update.callback_query
+    await query.answer()
     
-    if success:
-        await update.message.reply_text(
-            f"✅ 已停止追蹤訂單 `{matched_order[:8]}...`",
-            parse_mode='Markdown'
-        )
-    else:
-        await update.message.reply_text(
-            f"❌ 停止追蹤失敗",
-            parse_mode='Markdown'
-        )
+    chat_id = update.effective_chat.id
+    data = query.data
+    
+    if data.startswith("stop_"):
+        order_id_prefix = data.split("_")[1]
+        orders = order_manager.get_user_orders(chat_id)
+        
+        matched_order = None
+        for order_id in orders.keys():
+            if order_id.startswith(order_id_prefix):
+                matched_order = order_id
+                break
+        
+        if matched_order:
+            success = await order_manager.stop_order(chat_id, matched_order)
+            if success:
+                await query.edit_message_text(f"✅ 已停止追蹤訂單 `{matched_order[:8]}...`")
+            else:
+                await query.edit_message_text("❌ 停止失敗")
+        else:
+            await query.edit_message_text("❌ 找不到該訂單或已自動停止")
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """處理一般訊息(訂單 URL)"""
@@ -461,6 +472,9 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("status", status_command))
     application.add_handler(CommandHandler("stop", stop_command))
+    
+    # 註冊按鈕處理器
+    application.add_handler(CallbackQueryHandler(button_handler))
     
     # 註冊訊息處理器
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))

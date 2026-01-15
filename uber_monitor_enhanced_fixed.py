@@ -416,6 +416,154 @@ class PushNotificationManager:
         return results
 
 
+# ==================== 訂單資訊提取器 ====================
+
+class OrderInfoExtractor:
+    """從頁面提取完整訂單資訊"""
+    
+    def __init__(self):
+        pass
+    
+    def extract_all_info(self, html_content: str) -> Dict:
+        """提取所有訂單資訊"""
+        info = {
+            'status': self._extract_status(html_content),
+            'items': self._extract_items(html_content),
+            'total_amount': self._extract_amount(html_content),
+            'restaurant': self._extract_restaurant(html_content),
+            'delivery_person': self._extract_delivery_person(html_content),
+            'eta_minutes': self._extract_eta_minutes(html_content),
+            'estimated_time': self._extract_estimated_time(html_content),
+            'latest_time': self._extract_latest_time(html_content),
+            'timestamp': datetime.now().isoformat()
+        }
+        return info
+    
+    def _extract_status(self, html: str) -> Optional[str]:
+        """提取訂單狀態"""
+        html_lower = html.lower()
+        
+        # 狀態映射（按優先級排序）
+        status_patterns = [
+            ('delivered', ['已送達', 'delivered', '已完成', '訂單完成']),
+            ('delivering', ['配送中', '正在前往', 'delivering', 'on the way', '外送中']),
+            ('ready', ['已準備好', '準備完成', 'ready for pickup', 'ready for delivery', '正在領取', 'picking up']),
+            ('preparing', ['製作中', '準備中', 'preparing', 'preparing your order']),
+            ('searching_driver', ['尋找', '正在尋找其他外送人員', '不好意思', 'looking for']),
+            ('confirmed', ['confirmed', '確認', '已確認', '訂單已確認']),
+            ('cancelled', ['cancelled', '已取消', '取消']),
+        ]
+        
+        for status_key, keywords in status_patterns:
+            for keyword in keywords:
+                if keyword in html_lower:
+                    return status_key
+        
+        return None
+    
+    def _extract_items(self, html: str) -> List[str]:
+        """提取訂單商品"""
+        items = []
+        
+        # 嘗試不同的匹配模式 (優化版)
+        patterns = [
+            r'div[^>]*>\s*([^<]+(?:豆腐|麵|飯|飲|堡|雞|肉|菜|湯|冰)[^<]*)',
+            r'span[^>]*>\s*([^<]+(?:豆腐|麵|飯|飲|堡|雞|肉|菜|湯|冰)[^<]*)',
+            r'aria-label="([^"]+)"' # 部份結構在標籤中
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, html, re.IGNORECASE)
+            for match in matches:
+                cleaned = match.strip()
+                # 排除長度過短或不相關的文字
+                if 2 < len(cleaned) < 50 and not any(x in cleaned for x in ['Uber', '隱私', '登入', '購物車', '我的']):
+                    if cleaned not in items:
+                        items.append(cleaned)
+        
+        return items
+    
+    def _extract_amount(self, html: str) -> Optional[str]:
+        """提取訂單金額"""
+        # 匹配金額格式：$129.00, NT$129, 129元
+        patterns = [
+            r'\$\s*(\d+[.,]\d{2})', # $129.00
+            r'NT\$\s*(\d+)',
+            r'(\d+)\s*元',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, html)
+            if match:
+                return f"${match.group(1)}"
+        
+        return None
+    
+    def _extract_restaurant(self, html: str) -> Optional[str]:
+        """提取店家名稱"""
+        patterns = [
+            r'<h[1-3][^>]*>([^<]+)</h', # 標題通常是店名
+            r'aria-label="([^"]+)"', 
+        ]
+        
+        # 排除已知的非店名標題
+        for pattern in patterns:
+            match = re.search(pattern, html)
+            if match:
+                name = match.group(1).strip()
+                if 2 < len(name) < 40 and "訂單" not in name:
+                    return name
+        
+        return None
+    
+    def _extract_delivery_person(self, html: str) -> Optional[str]:
+        """提取外送員名稱"""
+        patterns = [
+            r'([\u4e00-\u9fa5]{2,})\s*已取餐',
+            r'([\u4e00-\u9fa5]{2,})\s*正在前往',
+            r'外送[員人][：:]?\s*([\u4e00-\u9fa5]{2,4})',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, html)
+            if match:
+                return match.group(1).strip()
+        
+        return None
+    
+    def _extract_eta_minutes(self, html: str) -> Optional[int]:
+        """提取預估剩餘時間"""
+        patterns = [
+            r'(\d+)\s*分鐘後抵達',
+            r'(\d+)\s*分鐘',
+            r'預計時間\s*(\d+)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, html)
+            if match:
+                return int(match.group(1))
+        
+        return None
+    
+    def _extract_estimated_time(self, html: str) -> Optional[str]:
+        """提取預估送達時刻"""
+        patterns = [
+            r'(\d{1,2}:\d{2}\s*[AP]M)',
+            r'(\d{1,2}:\d{2})',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, html)
+            if match:
+                return match.group(1)
+        return None
+
+    def _extract_latest_time(self, html: str) -> Optional[str]:
+        """提取最晚送達時刻"""
+        match = re.search(r'最晚[送抵]{1,2}達?時間[：:]?\s*(\d{1,2}:\d{2}\s*[AP]M?)', html)
+        return match.group(1) if match else None
+
+
 # ==================== 訂單監控器 ====================
 
 class UberEatsOrderMonitor:
@@ -429,6 +577,8 @@ class UberEatsOrderMonitor:
         self.last_status = None
         self.history = []
         self.running = False
+        self.extractor = OrderInfoExtractor()
+        self.order_info = {} # 儲存當前完整資訊
         
         # 訂單狀態映射
         self.status_mapping = {
@@ -494,22 +644,35 @@ class UberEatsOrderMonitor:
         return mock_html
     
     async def _get_page_content(self) -> Optional[str]:
-        """獲取頁面內容"""
+        """獲取頁面內容 (低記憶體優化版)"""
         if self.use_mock or not PLAYWRIGHT_AVAILABLE:
             print("📝 使用模擬數據進行測試...")
             return self._get_mock_html()
         
         try:
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
+                # 針對 GCE e2-micro (低 RAM) 優化啟動參數
+                browser = await p.chromium.launch(
+                    headless=True,
+                    args=[
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-accelerated-2d-canvas',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--single-process', # 減少進程數量
+                        '--disable-gpu'
+                    ]
+                )
                 context = await browser.new_context(
-                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 )
                 page = await context.new_page()
                 
-                # 使用 domcontentloaded 代替 networkidle,更快且不易超時
-                await page.goto(self.order_url, wait_until='domcontentloaded', timeout=60000)
-                # 等待頁面內容載入
+                # 設定較短的導航超時
+                await page.goto(self.order_url, wait_until='domcontentloaded', timeout=45000)
+                # 等待內容載入
                 await page.wait_for_timeout(5000)
                 
                 content = await page.content()
@@ -518,53 +681,56 @@ class UberEatsOrderMonitor:
                 return content
                 
         except Exception as e:
-            print(f"❌ 獲取頁面內容時發生錯誤: {e}")
+            print(f"❌ 獲取頁面內容失敗 (可能逾時或記憶體不足): {e}")
             return None
     
     async def check_status(self) -> Dict:
-        """檢查當前訂單狀態"""
-        print(f"\n🔍 檢查訂單狀態: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        """檢查當前訂單狀態與詳細資訊 (加入逾時保護)"""
+        print(f"\n🔍 檢查訂單狀態: {datetime.now().strftime('%H:%M:%S')}")
         
-        html_content = await self._get_page_content()
+        try:
+            # 加入 90 秒總體超時保護，防止單次檢查卡死整個 Bot
+            html_content = await asyncio.wait_for(self._get_page_content(), timeout=90.0)
+        except asyncio.TimeoutError:
+            print("⚠️ 檢查訂單超時 (90s)，將在下次循環重試")
+            return {'success': False, 'error': '檢查逾時'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
         
         if not html_content:
             return {'success': False, 'error': '無法獲取頁面內容'}
         
-        status_info = await self._extract_status_from_html(html_content)
+        # ... (其餘邏輯與之前更新的一致)
+        new_info = self.extractor.extract_all_info(html_content)
+        status = new_info.get('status')
         
-        # 🆕 檢測是否為首次檢查
         is_first_check = self.last_status is None
-        status_changed = False
+        status_changed = (self.last_status != status)
         
-        if self.last_status != status_info['status']:
-            status_changed = True
+        if status_changed or is_first_check:
+            self.history.append(new_info)
+            self.last_status = status
+            self.order_info = new_info
             
-            if is_first_check:
-                print(f"🔔 首次檢測到訂單狀態: {status_info['status']}")
-            else:
-                print(f"📊 狀態變化: {self.last_status} → {status_info['status']}")
-            
-            self.history.append(status_info)
-            self.last_status = status_info['status']
-            
-            # 🆕 首次檢測或狀態變化都觸發通知
             notify_on_first = self.config.get('monitoring', {}).get('notify_on_first_check', True)
             should_notify = status_changed or (is_first_check and notify_on_first)
             
             if should_notify and self.status_callbacks:
                 for callback in self.status_callbacks:
                     try:
-                        await callback(status_info)
+                        await callback(new_info)
                     except Exception as e:
                         print(f"❌ 執行回調函數時發生錯誤: {e}")
         else:
-            print(f"✓ 狀態無變化: {status_info['status']}")
+            if not self.order_info.get('items') and new_info.get('items'):
+                self.order_info.update(new_info)
+            print(f"✓ 狀態無變化: {status}")
         
         return {
             'success': True,
-            'current_status': status_info,
+            'current_status': new_info,
             'status_changed': status_changed,
-            'is_first_check': is_first_check,  # 🆕 返回是否為首次檢測
+            'is_first_check': is_first_check,
             'history': self.history
         }
     
