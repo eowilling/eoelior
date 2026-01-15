@@ -183,15 +183,47 @@ class TelegramOrderMonitor(UberEatsOrderMonitor):
         emoji = self.status_emoji.get(status, '📢')
         status_name = self.status_names.get(status, status)
         
+        # 判斷是否為首次檢測
+        is_first = len(self.history) == 1
+        
+        # 🆕 已送達狀態的特殊處理 - 簡潔的祝福訊息
+        if status == 'delivered':
+            if is_first:
+                message = (
+                    f"🎊 *訂單已完成!*\n\n"
+                    f"📦 訂單 ID: `{self.order_id[:8]}...`\n"
+                    f"🍽️ *祝您用餐愉快！*\n\n"
+                    f"🕐 送達時間: {datetime.now().strftime('%H:%M:%S')}\n\n"
+                    f"✨ 該訂單已自動停止追蹤。"
+                )
+            else:
+                message = (
+                    f"🎊 *餐點已送達!*\n\n"
+                    f"📦 訂單 ID: `{self.order_id[:8]}...`\n"
+                    f"🍽️ *祝您用餐愉快！*\n\n"
+                    f"🕐 送達時間: {datetime.now().strftime('%H:%M:%S')}\n\n"
+                    f"✨ 該訂單已自動停止追蹤。"
+                )
+            
+            # 已送達不顯示停止按鈕
+            try:
+                await self.bot.send_message(
+                    chat_id=self.chat_id,
+                    text=message,
+                    parse_mode='Markdown'
+                )
+                logger.info(f"已發送完成通知給用戶 {self.chat_id}")
+            except Exception as e:
+                logger.error(f"發送 Telegram 通知失敗: {e}")
+            return
+        
+        # 以下是非已送達狀態的處理，顯示完整資訊
         # 提取詳細資訊
         restaurant = status_info.get('restaurant')
         items = status_info.get('items', [])
         amount = status_info.get('total_amount')
         delivery_person = status_info.get('delivery_person')
         eta = status_info.get('eta_minutes')
-        
-        # 判斷是否為首次檢測
-        is_first = len(self.history) == 1
         
         if is_first:
             header = f"{emoji} *訂單追蹤已啟動*"
@@ -233,9 +265,7 @@ class TelegramOrderMonitor(UberEatsOrderMonitor):
         message += f"\n🕐 更新時間: {datetime.now().strftime('%H:%M:%S')}\n"
         
         # 特殊狀態的額外訊息
-        if status == 'delivered':
-            message += "\n🎊 您的餐點已送達,請享用! 🍽️"
-        elif status == 'delivering':
+        if status == 'delivering':
             message += "\n🚗 外送員正在前往您的位置"
         
         # 加入停止按鈕
@@ -252,6 +282,7 @@ class TelegramOrderMonitor(UberEatsOrderMonitor):
             logger.info(f"已發送增強通知與按鈕給用戶 {self.chat_id}: {status_name}")
         except Exception as e:
             logger.error(f"發送 Telegram 通知失敗: {e}")
+
     
     async def start_monitoring(self, max_checks: int = None):
         """開始監控(覆寫以移除終端輸出)"""
