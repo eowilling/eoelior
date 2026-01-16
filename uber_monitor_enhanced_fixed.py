@@ -443,9 +443,9 @@ class OrderInfoExtractor:
         """提取訂單狀態"""
         html_lower = html.lower()
         
-        # 狀態映射（按優先級排序）
+        # 狀態映射（按優先級排序）- 移除過於寬泛的關鍵字
         status_patterns = [
-            ('delivered', ['已送達', 'delivered', '已完成', '訂單完成', '好好享用', 'enjoy your', '享用您訂購']),
+            ('delivered', ['已送達', 'delivered', '已完成', '訂單完成']),
             ('delivering', ['配送中', '正在前往', 'delivering', 'on the way', '外送中']),
             ('ready', ['已準備好', '準備完成', 'ready for pickup', 'ready for delivery', '正在領取', 'picking up']),
             ('preparing', ['製作中', '準備中', 'preparing', 'preparing your order']),
