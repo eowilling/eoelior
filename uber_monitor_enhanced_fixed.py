@@ -644,7 +644,7 @@ class UberEatsOrderMonitor:
         return mock_html
     
     async def _get_page_content(self) -> Optional[str]:
-        """獲取頁面內容 (低記憶體優化版)"""
+        """獲取頁面內容 (低記憶體優化版 + 只抓取可見文字)"""
         if self.use_mock or not PLAYWRIGHT_AVAILABLE:
             print("📝 使用模擬數據進行測試...")
             return self._get_mock_html()
@@ -675,10 +675,12 @@ class UberEatsOrderMonitor:
                 # 等待內容載入
                 await page.wait_for_timeout(5000)
                 
-                content = await page.content()
+                # 🆕 重點：只抓取可見文字，過濾 script/meta 標籤
+                visible_text = await page.evaluate('document.body.innerText')
+                
                 await browser.close()
                 
-                return content
+                return visible_text
                 
         except Exception as e:
             print(f"❌ 獲取頁面內容失敗 (可能逾時或記憶體不足): {e}")
