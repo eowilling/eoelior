@@ -975,8 +975,8 @@ export default function App() {
             <Button
               onClick={executeDraw}
               disabled={
-                remaining === 0 ||
-                drawQuantity === 0 ||
+                remaining <= 0 ||
+                drawQuantity <= 0 ||
                 drawQuantity > remaining ||
                 availableTickets.length < drawQuantity
               }
@@ -991,46 +991,93 @@ export default function App() {
   };
 
   const DrawingScreen = () => (
-    <div className="h-full flex flex-col items-center justify-center relative bg-slate-950 overflow-hidden">
-      <div className="absolute inset-0 bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-900/30 via-slate-950 to-slate-950"></div>
-        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
+    <div className="h-full flex flex-col items-center justify-center relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
+      {/* 背景特效 */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(6,182,212,0.1),transparent_70%)]"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
       </div>
-      <div className="relative z-10 flex-shrink-0 pt-10 pb-6">
-        <h2 className="text-5xl text-cyan-500 font-black tracking-[0.3em] animate-pulse drop-shadow-[0_0_20px_rgba(6,182,212,0.8)]">
-          🎊 DRAWING... 🎊
+
+      {/* 頂部文字 */}
+      <div className="relative z-10 flex-shrink-0 pt-8 pb-12">
+        <h2 className="text-6xl font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 drop-shadow-[0_0_30px_rgba(6,182,212,0.6)] animate-pulse">
+          ⚡ DRAWING ⚡
         </h2>
+        <div className="mt-2 h-1 w-64 mx-auto bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
       </div>
-      <div className="relative z-10 flex-1 w-full overflow-y-auto px-4 pb-20 scrollbar-none flex flex-col items-center justify-center">
-        <div className="flex flex-wrap justify-center gap-8 max-w-6xl">
+
+      {/* 號碼卡片容器 */}
+      <div className="relative z-10 flex-1 w-full overflow-y-auto px-4 pb-20 flex flex-col items-center justify-center">
+        <div className="flex flex-wrap justify-center gap-8 max-w-7xl">
           {currentWinners && currentWinners.length > 0 ? (
             currentWinners.map((w, i) => (
               <div
                 key={i}
-                className={`
-                  w-72 h-72 bg-gradient-to-br from-slate-800 to-slate-900 border-4 rounded-3xl flex items-center justify-center shadow-2xl backdrop-blur-xl transition-all duration-300
-                  ${w.locked ? 'border-yellow-400/90 shadow-[0_0_80px_rgba(234,179,8,0.6)] animate-drop-in scale-105 bg-gradient-to-br from-yellow-900/20 to-slate-900' : 'border-cyan-400/50 shadow-[0_0_40px_rgba(6,182,212,0.4)] animate-bounce text-cyan-300'}
-              `}
-                style={
-                  w.locked
-                    ? {
-                      animationDelay: `${i * 0.1}s`,
-                    }
-                    : {
-                      animationDuration: '0.4s',
-                      animationDelay: `${i * 0.05}s`,
-                    }
-                }>
-                <span
-                  className={`text-9xl font-black font-mono tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,1)] transition-colors duration-300 ${w.locked ? 'text-yellow-300' : 'text-cyan-100'}`}>
-                  {w.number}
-                </span>
+                className="relative group">
+                {/* 外層光環效果 */}
+                <div className={`absolute -inset-4 rounded-3xl blur opacity-0 transition-opacity duration-500 ${w.locked ? 'opacity-100 animate-pulse' : ''} ${w.locked ? 'bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-600' : 'bg-gradient-to-r from-cyan-400 to-blue-600'}`}></div>
+
+                {/* 卡片主體 */}
+                <div
+                  className={`relative w-80 h-80 rounded-3xl flex items-center justify-center font-mono overflow-hidden transition-all duration-300
+                    ${w.locked 
+                      ? 'border-4 border-yellow-300/80 shadow-[0_0_100px_rgba(250,204,21,0.8),inset_0_0_50px_rgba(250,204,21,0.2)] bg-gradient-to-br from-slate-800 via-yellow-900/30 to-slate-900' 
+                      : 'border-4 border-cyan-400/50 shadow-[0_0_60px_rgba(6,182,212,0.5),inset_0_0_30px_rgba(6,182,212,0.1)] bg-gradient-to-br from-slate-900 to-slate-950'
+                    }`}
+                  style={
+                    w.locked
+                      ? {
+                        animationDelay: `${i * 0.15}s`,
+                      }
+                      : {
+                        animationDuration: '0.3s',
+                        animationDelay: `${i * 0.04}s`,
+                      }
+                  }>
+                  {/* 內層邊框 */}
+                  <div className="absolute inset-2 rounded-2xl border border-cyan-400/30 pointer-events-none"></div>
+
+                  {/* 號碼顯示 */}
+                  <div className="relative z-20 text-center">
+                    <div className="text-9xl font-black tracking-tighter drop-shadow-[0_0_50px_rgba(255,255,255,0.8)] transition-colors duration-300">
+                      <span className={w.locked ? 'text-yellow-200' : 'text-cyan-100'}>
+                        {w.number}
+                      </span>
+                    </div>
+                    <div className="mt-4 text-cyan-400/80 text-lg font-bold tracking-widest">
+                      {w.locked ? '🎊 LOCKED 🎊' : '🎲 SPINNING 🎲'}
+                    </div>
+                  </div>
+
+                  {/* 動畫層 */}
+                  {!w.locked && (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-b from-cyan-400/5 via-transparent to-blue-400/5 animate-pulse"></div>
+                      <div className="absolute inset-0 animate-spin" style={{animationDuration: '2s', animationDirection: 'reverse'}}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent"></div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* 鎖定效果 */}
+                  {w.locked && (
+                    <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/20 via-transparent to-amber-400/20 animate-pulse"></div>
+                  )}
+                </div>
               </div>
             ))
           ) : (
-            <div className="text-2xl text-slate-500 animate-pulse">準備中...</div>
+            <div className="text-3xl text-cyan-400 font-bold animate-pulse drop-shadow-[0_0_20px_rgba(6,182,212,0.8)]">
+              準備中...
+            </div>
           )}
         </div>
+      </div>
+
+      {/* 底部信息 */}
+      <div className="absolute bottom-8 left-0 right-0 text-center text-cyan-400/60 text-sm font-mono tracking-widest">
+        <div className="animate-pulse">正在進行開獎動畫...</div>
       </div>
     </div>
   );
