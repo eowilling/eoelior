@@ -551,6 +551,7 @@ export default function App() {
     batch.update(prizeRef, { winners: updatedWinners });
     await batch.commit();
 
+    console.log('開始動畫，抽獎數量:', drawQuantity, '中獎者:', winnerNumbers);
     setDisplayStage('drawing');
     setShowConfetti(false);
 
@@ -590,7 +591,14 @@ export default function App() {
     clearInterval(spinInterval);
     await delay(1000);
 
-    setCurrentWinners(winners);
+    // 將 winners 轉換為正確的格式
+    const finalWinners = winners.map((w) => ({
+      number: w.number,
+      locked: true,
+    }));
+    setCurrentWinners(finalWinners);
+
+    console.log('動畫完成，切換到結果頁面');
     setDisplayStage('result');
     setShowConfetti(true);
   };
@@ -649,7 +657,10 @@ export default function App() {
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {grandPrizes.map((p) => {
-                  const remaining = p.quantity - (p.winners?.length || 0);
+                  const remaining = Math.max(
+                    0,
+                    p.quantity - (p.winners?.length || 0),
+                  );
                   const isDone = remaining === 0;
                   return (
                     <div
@@ -700,7 +711,10 @@ export default function App() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {normalPrizes.map((p, index) => {
-              const remaining = p.quantity - (p.winners?.length || 0);
+              const remaining = Math.max(
+                0,
+                p.quantity - (p.winners?.length || 0),
+              );
               const isDone = remaining === 0;
               const originalIndex = prizes.findIndex(
                 (orig) => orig.id === p.id,
@@ -777,7 +791,7 @@ export default function App() {
       </div>
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto content-start pb-20">
         {prizes.map((p) => {
-          const remaining = p.quantity - (p.winners?.length || 0);
+          const remaining = Math.max(0, p.quantity - (p.winners?.length || 0));
           const isDone = remaining === 0;
           const isGrand = p.isGrandPrize;
           return (
@@ -828,7 +842,10 @@ export default function App() {
   const ConfigQtyScreen = () => {
     const prize = prizes.find((p) => p.id === selectedPrizeId);
     if (!prize) return null;
-    const remaining = prize.quantity - (prize.winners?.length || 0);
+    const remaining = Math.max(
+      0,
+      prize.quantity - (prize.winners?.length || 0),
+    );
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 relative">
         <Button
@@ -869,15 +886,18 @@ export default function App() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setDrawQuantity(Math.max(1, drawQuantity - 1))}
-                  className="w-10 h-10 rounded-full bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center text-xl font-bold">
+                  disabled={drawQuantity <= 1}
+                  className="w-10 h-10 rounded-full bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center text-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed">
                   -
                 </button>
                 <input
                   type="number"
                   value={drawQuantity}
+                  min="1"
+                  max={remaining}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0;
-                    setDrawQuantity(Math.min(val, remaining));
+                    setDrawQuantity(Math.max(1, Math.min(val, remaining)));
                   }}
                   className="w-32 bg-slate-950 border-2 border-cyan-500/50 rounded-lg text-4xl text-center py-2 text-white font-mono focus:outline-none focus:border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)]"
                 />
@@ -885,7 +905,8 @@ export default function App() {
                   onClick={() =>
                     setDrawQuantity(Math.min(remaining, drawQuantity + 1))
                   }
-                  className="w-10 h-10 rounded-full bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center text-xl font-bold">
+                  disabled={drawQuantity >= remaining}
+                  className="w-10 h-10 rounded-full bg-slate-800 text-white hover:bg-slate-700 flex items-center justify-center text-xl font-bold disabled:opacity-30 disabled:cursor-not-allowed">
                   +
                 </button>
               </div>
@@ -902,14 +923,33 @@ export default function App() {
               </button>
             ))}
           </div>
+          {remaining === 0 && (
+            <div className="mb-4 p-4 bg-red-900/20 border border-red-500/50 rounded-xl text-red-400 text-center">
+              <AlertTriangle className="w-5 h-5 inline mr-2" />
+              此獎項已無剩餘名額，無法進行抽獎
+            </div>
+          )}
+          {drawQuantity > remaining && remaining > 0 && (
+            <div className="mb-4 p-4 bg-yellow-900/20 border border-yellow-500/50 rounded-xl text-yellow-400 text-center">
+              <AlertTriangle className="w-5 h-5 inline mr-2" />
+              抽獎數量超過剩餘名額，請調整數量
+            </div>
+          )}
           <div className="flex gap-4">
             <button
               onClick={() => setDrawQuantity(remaining)}
-              className="flex-1 bg-purple-900/50 hover:bg-purple-800/80 border border-purple-500/50 text-purple-300 py-4 rounded-xl font-bold tracking-widest text-lg transition-all">
+              disabled={remaining === 0}
+              className="flex-1 bg-purple-900/50 hover:bg-purple-800/80 border border-purple-500/50 text-purple-300 py-4 rounded-xl font-bold tracking-widest text-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed">
               ALL IN (梭哈 {remaining})
             </button>
             <Button
               onClick={executeDraw}
+              disabled={
+                remaining === 0 ||
+                drawQuantity === 0 ||
+                drawQuantity > remaining ||
+                availableTickets.length < drawQuantity
+              }
               size="lg"
               className="flex-[2] bg-gradient-to-r from-cyan-600 to-blue-600 hover:scale-105 transform transition-transform shadow-[0_0_40px_rgba(8,145,178,0.5)]">
               <Play fill="currentColor" className="w-6 h-6 mr-2" /> 開始抽獎
