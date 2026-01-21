@@ -555,11 +555,16 @@ export default function App() {
     setDisplayStage('drawing');
     setShowConfetti(false);
 
+    // 初始化動畫狀態
     let animatingWinners = Array.from({ length: drawQuantity }, () => ({
       number: '000',
       locked: false,
     }));
     setCurrentWinners(animatingWinners);
+
+    // 等待畫面切換完成後再開始動畫
+    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+    await delay(100);
 
     const spinInterval = setInterval(() => {
       setCurrentWinners((prev) =>
@@ -575,7 +580,6 @@ export default function App() {
       );
     }, 50);
 
-    const delay = (ms) => new Promise((r) => setTimeout(r, ms));
     await delay(1500);
 
     for (let i = 0; i < winners.length; i++) {
