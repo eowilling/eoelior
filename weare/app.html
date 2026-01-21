@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>尾牙抽獎系統 v2</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    
+    window.firebaseModules = {
+      initializeApp,
+      getAuth,
+      signInAnonymously,
+      onAuthStateChanged,
+      getFirestore,
+      collection,
+      doc,
+      setDoc,
+      updateDoc,
+      deleteDoc,
+      onSnapshot,
+      query,
+      orderBy,
+      serverTimestamp,
+      writeBatch
+    };
+  </script>
+  <style>
+    @keyframes confetti {
+      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes drop-in {
+      0% { transform: translateY(-50px) scale(0.8); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .animate-confetti { animation: confetti 3s ease-out forwards; }
+  </style>
+</head>
+<body class="m-0 p-0 overflow-hidden">
+  <div id="root"></div>
+  
+  <script type="text/babel" data-type="module">
+    const { useState, useEffect, useMemo } = React;
+    const { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, writeBatch } = window.firebaseModules;
+    
+    // Firebase 配置
+    const firebaseConfig = {
+      apiKey: "AIzaSyDx2Rz0qV7X5Q8P9N6M0L1K2J3H4G5F6",
+      authDomain: "lottery-app-b08b0.firebaseapp.com",
+      projectId: "lottery-app-b08b0",
+      storageBucket: "lottery-app-b08b0.appspot.com",
+      messagingSenderId: "123456789012",
+      appId: "1:123456789012:web:abcdef1234567890"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const APP_ID = 'lottery-weare';
+    
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const shuffle = (arr) => {
+      const array = [...arr];
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    };
+    
+    function App() {
+      const [user, setUser] = useState(null);
+      const [stage, setStage] = useState('home');
+      const [prizes, setPrizes] = useState([]);
+      const [tickets, setTickets] = useState([]);
+      const [selectedPrize, setSelectedPrize] = useState(null);
+      const [drawCount, setDrawCount] = useState(1);
+      const [winners, setWinners] = useState([]);
+      const [isDrawing, setIsDrawing] = useState(false);
+      const [showConfetti, setShowConfetti] = useState(false);
+      const [alert, setAlert] = useState(null);
+      
+      useEffect(() => {
+        const unsub = onAuthStateChanged(auth, async (u) => {
+          if (!u) await signInAnonymously(auth);
+          else setUser(u);
+        });
+        return () => unsub();
+      }, []);
+      
+      useEffect(() => {
+        if (!user) return;
+        
+        const unsub1 = onSnapshot(
+          query(collection(db, 'artifacts', APP_ID, 'public', 'data', 'prizes'), orderBy('order', 'asc')),
+          snap => setPrizes(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        );
+        
+        const unsub2 = onSnapshot(
+          collection(db, 'artifacts', APP_ID, 'public', 'data', 'tickets'),
+          snap => setTickets(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        );
+        
+        return () => { unsub1(); unsub2(); };
+      }, [user]);
+      
+      const availableTickets = useMemo(() => tickets.filter(t => !t.isWinner), [tickets]);
+      
+      const selectPrize = (prize) => {
+        const remaining = prize.quantity - (prize.winners?.length || 0);
+        if (remaining <= 0) {
+          setAlert({ title: '無可用名額', msg: '此獎項已抽完！' });
+          return;
+        }
+        if (availableTickets.length === 0) {
+          setAlert({ title: '票池為空', msg: '沒有可用彩票！' });
+          return;
+        }
+        setSelectedPrize(prize);
+        setDrawCount(1);
+        setStage('draw');
+      };
+      
+      const executeDraw = async () => {
+        if (isDrawing) return;
+        
+        const remaining = selectedPrize.quantity - (selectedPrize.winners?.length || 0);
+        
+        if (remaining <= 0 || drawCount <= 0 || drawCount > remaining || availableTickets.length < drawCount) {
+          setAlert({ title: '錯誤', msg: '無法執行抽獎，請檢查設定' });
+          return;
+        }
+        
+        setIsDrawing(true);
+        
+        try {
+          const shuffled = shuffle(availableTickets);
+          const selected = shuffled.slice(0, drawCount);
+          
+          const batch = writeBatch(db);
+          selected.forEach(t => {
+            batch.update(doc(db, 'artifacts', APP_ID, 'public', 'data', 'tickets', t.id), {
+              isWinner: true,
+              wonPrizeId: selectedPrize.id
+            });
+          });
+          
+          batch.update(
+            doc(db, 'artifacts', APP_ID, 'public', 'data', 'prizes', selectedPrize.id),
+            { winners: [...(selectedPrize.winners || []), ...selected.map(t => t.number)] }
+          );
+          
+          await batch.commit();
+          
+          setStage('animating');
+          setWinners(Array(drawCount).fill({ number: '000', locked: false }));
+          
+          await delay(300);
+          
+          let spinning = true;
+          const interval = setInterval(() => {
+            setWinners(prev => prev.map(w => w.locked ? w : {
+              number: String(Math.floor(Math.random() * 1000)).padStart(3, '0'),
+              locked: false
+            }));
+          }, 50);
+          
+          await delay(2000);
+          spinning = false;
+          clearInterval(interval);
+          
+          for (let i = 0; i < selected.length; i++) {
+            setWinners(prev => {
+              const next = [...prev];
+              next[i] = { number: selected[i].number, locked: true };
+              return next;
+            });
+            if (i < selected.length - 1) await delay(drawCount > 10 ? 200 : 600);
+          }
+          
+          await delay(1500);
+          setStage('result');
+          setShowConfetti(true);
+        } catch (err) {
+          setAlert({ title: '錯誤', msg: err.message });
+        } finally {
+          setIsDrawing(false);
+        }
+      };
+      
+      if (!user) {
+        return (
+          <div className="h-screen w-screen flex items-center justify-center bg-slate-900">
+            <div className="text-cyan-400">初始化中...</div>
+          </div>
+        );
+      }
+      
+      if (stage === 'home') {
+        return (
+          <div className="h-screen w-screen bg-gradient-to-b from-slate-900 to-slate-950 text-white p-6 overflow-y-auto">
+            <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 text-center mb-8">
+              尾牙抽獎系統
+            </h1>
+            
+            <div className="text-center mb-8 text-slate-400">
+              <span>總票數：{tickets.length}</span>
+              <span className="mx-4">|</span>
+              <span>待抽：{availableTickets.length}</span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+              {prizes.map(prize => {
+                const remaining = Math.max(0, prize.quantity - (prize.winners?.length || 0));
+                const canDraw = remaining > 0 && availableTickets.length > 0;
+                
+                return (
+                  <button
+                    key={prize.id}
+                    onClick={() => canDraw && selectPrize(prize)}
+                    disabled={!canDraw}
+                    className={`p-6 rounded-lg border-2 transition ${
+                      canDraw
+                        ? 'border-cyan-400 bg-slate-800/50 hover:bg-cyan-500/10 cursor-pointer'
+                        : 'border-slate-600 bg-slate-900/50 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="text-xl font-bold text-cyan-400 mb-2">{prize.name}</div>
+                    <div className="text-slate-400">
+                      剩餘：<span className="text-white font-mono">{remaining}</span> / {prize.quantity}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            
+            {prizes.length === 0 && (
+              <div className="text-center text-slate-400 mt-12">
+                尚未設定任何獎項
+              </div>
+            )}
+          </div>
+        );
+      }
+      
+      if (stage === 'draw') {
+        const remaining = selectedPrize.quantity - (selectedPrize.winners?.length || 0);
+        const max = Math.min(remaining, availableTickets.length);
+        
+        return (
+          <div className="h-screen w-screen bg-gradient-to-b from-slate-900 to-slate-950 text-white p-6 flex flex-col">
+            <button onClick={() => setStage('home')} className="text-cyan-400 mb-6">← 返回</button>
+            
+            <h2 className="text-4xl font-bold text-cyan-400 mb-8">{selectedPrize.name}</h2>
+            
+            <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-6">
+                <div className="text-sm text-slate-400 mb-2">剩餘名額</div>
+                <div className="text-5xl font-bold text-cyan-400">{remaining}</div>
+              </div>
+              
+              <div className="mb-8">
+                <label className="text-slate-400 mb-3 block">抽獎數量</label>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setDrawCount(Math.max(1, drawCount - 1))}
+                    className="px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-2xl"
+                  >
+                    −
+                  </button>
+                  
+                  <input
+                    type="number"
+                    value={drawCount}
+                    onChange={(e) => setDrawCount(Math.min(max, Math.max(1, parseInt(e.target.value) || 1)))}
+                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 text-center text-3xl font-mono text-white"
+                  />
+                  
+                  <button
+                    onClick={() => setDrawCount(Math.min(max, drawCount + 1))}
+                    className="px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-2xl"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="text-xs text-slate-500 mt-2 text-center">上限：{max}</div>
+              </div>
+              
+              <button
+                onClick={executeDraw}
+                disabled={isDrawing}
+                className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50 text-white font-bold py-4 rounded-lg text-xl"
+              >
+                {isDrawing ? '抽獎中...' : '開始抽獎'}
+              </button>
+            </div>
+          </div>
+        );
+      }
+      
+      if (stage === 'animating') {
+        return (
+          <div className="h-screen w-screen bg-gradient-to-b from-slate-900 via-blue-900/20 to-slate-900 flex flex-col items-center justify-center p-6">
+            <h2 className="text-5xl font-black text-cyan-400 mb-12">開獎中...</h2>
+            
+            <div className="flex flex-wrap justify-center gap-6">
+              {winners.map((w, i) => (
+                <div
+                  key={i}
+                  className={`w-28 h-36 flex flex-col items-center justify-center rounded-lg border-2 ${
+                    w.locked
+                      ? 'border-emerald-400 bg-gradient-to-b from-emerald-900/40 to-slate-900'
+                      : 'border-cyan-400 bg-gradient-to-b from-slate-800 to-slate-900 animate-pulse'
+                  }`}
+                >
+                  <div className="text-xs text-slate-400 mb-2">NO.</div>
+                  <div className={`text-6xl font-black font-mono ${w.locked ? 'text-emerald-400' : 'text-cyan-400'}`}>
+                    {w.number}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+      
+      if (stage === 'result') {
+        return (
+          <div className="h-screen w-screen bg-gradient-to-b from-slate-900 via-emerald-900/20 to-slate-900 text-white p-6 overflow-y-auto">
+            {showConfetti && (
+              <div className="fixed inset-0 pointer-events-none">
+                {Array.from({ length: 50 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-3 h-3 bg-gradient-to-b from-cyan-400 to-purple-500 rounded-full animate-confetti"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: '-10px',
+                      animationDelay: `${Math.random() * 0.5}s`,
+                      animationDuration: `${2 + Math.random()}s`
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            
+            <button onClick={() => { setStage('home'); setShowConfetti(false); }} className="text-cyan-400 mb-6">
+              ← 返回
+            </button>
+            
+            <h2 className="text-5xl font-black text-emerald-400 text-center mb-12">
+              🎉 恭喜中獎 🎉
+            </h2>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+              {winners.map((w, i) => (
+                <div
+                  key={i}
+                  className="p-6 bg-gradient-to-b from-emerald-500/20 to-slate-900 border-2 border-emerald-400 rounded-lg text-center"
+                  style={{ animation: `drop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.1}s both` }}
+                >
+                  <div className="text-sm text-slate-400 mb-2">幸運號碼</div>
+                  <div className="text-5xl font-black text-emerald-400 font-mono">{w.number}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+      
+      return (
+        <>
+          {alert && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div className="bg-slate-900 border border-cyan-500 rounded-lg p-6 max-w-md">
+                <h3 className="text-lg font-bold text-cyan-400 mb-3">{alert.title}</h3>
+                <p className="text-slate-300 mb-6">{alert.msg}</p>
+                <button
+                  onClick={() => setAlert(null)}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 rounded"
+                >
+                  確定
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+    
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
