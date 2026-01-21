@@ -24,7 +24,7 @@
 ### 遊戲娛樂
 
 - **數獨遊戲**：`sudo/index.html`
-- **買不買轉盤**：`buytonobuy/index.html`（同資料夾另有 `buyROnobuy.html`、`admin.html` 等）
+- **買不買轉盤**：`buytonobuy/index.html`（同資料夾另有 `admin.html` 等）
 
 ### 其他/報表/腳本
 
