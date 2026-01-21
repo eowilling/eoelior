@@ -1,0 +1,17 @@
+{
+  "is_react_ui": true,
+  "creation_time": "2021-01-07",
+  "developer": "mantinedev (GitHub组织)",
+  "features": [
+    "基于React构建的现代化UI组件库",
+    "提供50+可访问的React组件",
+    "支持TypeScript",
+    "内置暗色模式支持",
+    "提供Hooks库用于状态管理和UI交互",
+    "支持主题定制和CSS-in-JS",
+    "组件遵循WAI-ARIA无障碍标准",
+    "提供Form表单验证解决方案",
+    "支持服务端渲染(SSR)",
+    "轻量级且高性能"
+  ]
+}

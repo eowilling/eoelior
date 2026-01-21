@@ -1,0 +1,14 @@
+{
+  "library_name": "Chakra UI",
+  "is_react_ui_library": true,
+  "first_release_date": "2019-08-17T14:27:54Z",
+  "developer_maintainer": "chakra-ui",
+  "main_features": [
+    "简单易用：提供简单、模块化和可访问的组件",
+    "可组合性：组件可以灵活组合使用，构建复杂UI",
+    "主题定制：支持完整的主题系统，易于定制样式",
+    "无障碍访问：内置WAI-ARIA标准，确保可访问性",
+    "暗黑模式：内置暗黑模式支持，轻松切换主题",
+    "响应式设计：组件支持响应式布局，适配不同设备"
+  ]
+}
