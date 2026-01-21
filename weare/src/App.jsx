@@ -479,12 +479,13 @@ export default function App() {
   const startSelecting = () => setDisplayStage('select-prize');
 
   const selectPrize = (prize) => {
-    setSelectedPrizeId(prize.id);
+    // 即時重新檢查剩餘名額
     const remaining = prize.quantity - (prize.winners?.length || 0);
     if (remaining <= 0) {
       showAlert('無可用名額', '此獎項已抽完，無剩餘名額！');
       return;
     }
+    setSelectedPrizeId(prize.id);
     setDrawQuantity(Math.max(1, remaining));
     setDisplayStage('config-qty');
   };
@@ -493,6 +494,7 @@ export default function App() {
     const prize = prizes.find((p) => p.id === selectedPrizeId);
     if (!prize) return;
 
+    // 即時重新檢查剩餘名額（防止競態條件）
     const remaining = prize.quantity - (prize.winners?.length || 0);
     if (remaining <= 0) {
       showAlert('無可用名額', '此獎項已抽完，無剩餘名額！');
@@ -564,14 +566,19 @@ export default function App() {
 
     // 等待畫面切換完成後再開始動畫
     const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-    await delay(100);
+    await delay(300);  // 增加延遲以確保 React 完成頁面切換
 
+    let isSpinning = true;
     const spinInterval = setInterval(() => {
+      if (!isSpinning) {
+        clearInterval(spinInterval);
+        return;
+      }
       setCurrentWinners((prev) =>
         prev.map((item) => {
           if (item.locked) return item;
           return {
-            number: Math.floor(Math.random() * 999)
+            number: Math.floor(Math.random() * 1000)
               .toString()
               .padStart(3, '0'),
             locked: false,
@@ -580,27 +587,24 @@ export default function App() {
       );
     }, 50);
 
-    await delay(1500);
+    // 滾動動畫持續 2 秒
+    await delay(2000);
+    isSpinning = false;
+    clearInterval(spinInterval);
 
+    // 逐一鎖定號碼（顯示正確答案）
     for (let i = 0; i < winners.length; i++) {
       setCurrentWinners((prev) => {
         const next = [...prev];
         next[i] = { number: winners[i].number, locked: true };
         return next;
       });
-      const dropDelay = drawQuantity > 10 ? 200 : 800;
+      const dropDelay = drawQuantity > 10 ? 200 : 600;
       if (i < winners.length - 1) await delay(dropDelay);
     }
 
-    clearInterval(spinInterval);
-    await delay(1000);
-
-    // 將 winners 轉換為正確的格式
-    const finalWinners = winners.map((w) => ({
-      number: w.number,
-      locked: true,
-    }));
-    setCurrentWinners(finalWinners);
+    // 等待所有號碼都落下後再顯示結果
+    await delay(1500);
 
     console.log('動畫完成，切換到結果頁面');
     setDisplayStage('result');
@@ -801,7 +805,7 @@ export default function App() {
           return (
             <button
               key={p.id}
-              onClick={() => !isDone && selectPrize(p)}
+              onClick={() => selectPrize(p)}
               disabled={isDone}
               className={`relative group text-left p-8 rounded-2xl border-2 transition-all duration-300 ${isDone ? 'bg-slate-900/50 border-slate-800 grayscale cursor-not-allowed opacity-50' : isGrand ? 'bg-gradient-to-br from-slate-900 via-yellow-900/10 to-slate-900 border-yellow-500/50 hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(234,179,8,0.2)]' : 'bg-slate-800/80 border-slate-700 hover:border-cyan-500 hover:bg-slate-800 hover:shadow-[0_0_30px_rgba(6,182,212,0.3)]'} hover:-translate-y-1`}>
               {isDone && (
@@ -849,7 +853,7 @@ export default function App() {
     const actualRemaining = prize.quantity - (prize.winners?.length || 0);
     const remaining = Math.max(0, actualRemaining);
 
-    // 如果實際剩餘 <=0，返回錯誤提示
+    // 如果實際剩餘 <=0，返回錯誤提示並自動返回選擇獎項
     if (actualRemaining <= 0) {
       return (
         <div className="h-full flex flex-col items-center justify-center p-8">
@@ -860,7 +864,10 @@ export default function App() {
               此獎項已無剩餘名額，無法進行抽獎。
             </p>
             <Button
-              onClick={() => setDisplayStage('select-prize')}
+              onClick={() => {
+                setDisplayStage('select-prize');
+                setSelectedPrizeId(null);
+              }}
               variant="secondary">
               重新選擇獎項
             </Button>
@@ -984,39 +991,45 @@ export default function App() {
   };
 
   const DrawingScreen = () => (
-    <div className="h-full flex flex-col items-center justify-center relative bg-slate-950">
+    <div className="h-full flex flex-col items-center justify-center relative bg-slate-950 overflow-hidden">
       <div className="absolute inset-0 bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-900/20 via-slate-950 to-slate-950"></div>
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-cyan-900/30 via-slate-950 to-slate-950"></div>
+        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
       </div>
       <div className="relative z-10 flex-shrink-0 pt-10 pb-6">
-        <h2 className="text-4xl text-cyan-500 font-black tracking-[1em] animate-pulse">
-          DRAWING...
+        <h2 className="text-5xl text-cyan-500 font-black tracking-[0.3em] animate-pulse drop-shadow-[0_0_20px_rgba(6,182,212,0.8)]">
+          🎊 DRAWING... 🎊
         </h2>
       </div>
-      <div className="relative z-10 flex-1 w-full overflow-y-auto px-4 pb-20 scrollbar-none">
-        <div className="flex flex-wrap justify-center gap-6">
-          {currentWinners.map((w, i) => (
-            <div
-              key={i}
-              className={`
-                            w-64 h-64 bg-slate-900/80 border-2 border-cyan-400/50 rounded-3xl flex items-center justify-center shadow-[0_0_50px_rgba(6,182,212,0.3)] backdrop-blur-xl
-                            ${w.locked ? 'animate-drop-in border-yellow-400/80 shadow-[0_0_50px_rgba(234,179,8,0.5)] bg-slate-800' : 'animate-bounce'}
-                        `}
-              style={
-                w.locked
-                  ? {}
-                  : {
-                    animationDuration: '0.5s',
-                    animationDelay: `${i * 0.05}s`,
-                  }
-              }>
-              <span
-                className={`text-8xl font-black font-mono tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] ${w.locked ? 'text-yellow-400' : 'text-cyan-50'}`}>
-                {w.number}
-              </span>
-            </div>
-          ))}
+      <div className="relative z-10 flex-1 w-full overflow-y-auto px-4 pb-20 scrollbar-none flex flex-col items-center justify-center">
+        <div className="flex flex-wrap justify-center gap-8 max-w-6xl">
+          {currentWinners && currentWinners.length > 0 ? (
+            currentWinners.map((w, i) => (
+              <div
+                key={i}
+                className={`
+                  w-72 h-72 bg-gradient-to-br from-slate-800 to-slate-900 border-4 rounded-3xl flex items-center justify-center shadow-2xl backdrop-blur-xl transition-all duration-300
+                  ${w.locked ? 'border-yellow-400/90 shadow-[0_0_80px_rgba(234,179,8,0.6)] animate-drop-in scale-105 bg-gradient-to-br from-yellow-900/20 to-slate-900' : 'border-cyan-400/50 shadow-[0_0_40px_rgba(6,182,212,0.4)] animate-bounce text-cyan-300'}
+              `}
+                style={
+                  w.locked
+                    ? {
+                      animationDelay: `${i * 0.1}s`,
+                    }
+                    : {
+                      animationDuration: '0.4s',
+                      animationDelay: `${i * 0.05}s`,
+                    }
+                }>
+                <span
+                  className={`text-9xl font-black font-mono tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,1)] transition-colors duration-300 ${w.locked ? 'text-yellow-300' : 'text-cyan-100'}`}>
+                  {w.number}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="text-2xl text-slate-500 animate-pulse">準備中...</div>
+          )}
         </div>
       </div>
     </div>
