@@ -1,3 +1,92 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    @keyframes confetti {
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+
+    .animate-confetti {
+        animation: confetti ease-out forwards;
+    }
+
+    @keyframes tilt {
+
+        0%,
+        50%,
+        100% {
+            transform: rotate(0deg);
+        }
+
+        25% {
+            transform: rotate(0.5deg);
+        }
+
+        75% {
+            transform: rotate(-0.5deg);
+        }
+    }
+
+    .animate-tilt {
+        animation: tilt 10s infinite linear;
+    }
+
+    @keyframes bounce-slow {
+
+        0%,
+        100% {
+            transform: translateY(-5%);
+        }
+
+        50% {
+            transform: translateY(5%);
+        }
+    }
+
+    .animate-bounce-slow {
+        animation: bounce-slow 2s infinite ease-in-out;
+    }
+
+    @keyframes shimmer {
+        from {
+            transform: translateX(-100%) skewX(-12deg);
+        }
+
+        to {
+            transform: translateX(200%) skewX(-12deg);
+        }
+    }
+
+    .animate-shimmer {
+        animation: shimmer 2.5s infinite linear;
+    }
+
+    @keyframes drop-in {
+        0% {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        60% {
+            transform: translateY(10%);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    .animate-drop-in {
+        animation: drop-in 0.5s ease-out forwards;
+    }
+}

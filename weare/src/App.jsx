@@ -223,7 +223,7 @@ export default function App() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
   const [alertInfo, setAlertInfo] = useState({
     isOpen: false,
@@ -1007,9 +1007,9 @@ export default function App() {
                 w.locked
                   ? {}
                   : {
-                      animationDuration: '0.5s',
-                      animationDelay: `${i * 0.05}s`,
-                    }
+                    animationDuration: '0.5s',
+                    animationDelay: `${i * 0.05}s`,
+                  }
               }>
               <span
                 className={`text-8xl font-black font-mono tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] ${w.locked ? 'text-yellow-400' : 'text-cyan-50'}`}>
