@@ -100,6 +100,27 @@
       font-size:12px; line-height:1.6;
     }
     .hint{display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+
+    /* toast */
+    .toast{
+      position:fixed; right:16px; bottom:16px; z-index:9999;
+      background:rgba(15,23,42,.92); border:1px solid rgba(31,41,55,.9);
+      color:var(--text); padding:10px 12px; border-radius:12px;
+      max-width:min(520px, calc(100vw - 32px));
+      box-shadow:0 18px 50px rgba(0,0,0,.45);
+      display:flex; gap:10px; align-items:flex-start;
+    }
+    .toast .ticon{color:var(--accent); margin-top:1px}
+    .toast .tmsg{font-size:13px; line-height:1.45}
+    .toast .tclose{margin-left:auto; border:none; padding:0 4px; background:transparent; color:var(--muted); cursor:pointer}
+    .toast .tclose:hover{color:var(--text)}
+
+    /* drag handle */
+    .drag{cursor:grab; user-select:none; color:var(--muted); padding:2px 6px; border-radius:8px; border:1px solid rgba(31,41,55,.75)}
+    .drag:hover{border-color:rgba(96,165,250,.65); color:var(--text)}
+    .drag:active{cursor:grabbing}
+    .trow.dragging{opacity:.55}
+    .trow.drop-target{outline:2px dashed rgba(96,165,250,.65); outline-offset:-4px}
   </style>
 </head>
 <body>
@@ -111,20 +132,30 @@
     </div>
     <div class="btns">
       <button class="primary" id="addRowBtn">＋ 新增一行</button>
+      <button id="undoBtn">上一步</button>
+      <button id="redoBtn">下一步</button>
       <button id="exportBtn">匯出（生成文字）</button>
       <button id="copyBtn">複製匯出結果</button>
-      <button id="saveBtn">儲存</button>
+      <button id="saveBtn">手動儲存</button>
       <button id="loadBtn">載入</button>
       <button class="danger" id="clearBtn">清空</button>
     </div>
   </div>
 
-  <div class="rowbar">
+    <div class="rowbar">
     <div class="group">
       <span class="pill">樣式</span>
       <select id="styleSel">
         <option value="p">右側顯示 P.頁碼（例：P.5）</option>
         <option value="plain">只顯示頁碼（例：5）</option>
+      </select>
+    </div>
+
+    <div class="group">
+      <span class="pill">匯出</span>
+      <select id="exportMode">
+        <option value="dots">點線（直接貼上）</option>
+        <option value="tab">Tab 分隔（方便 Word 設定右對齊 + 導引線）</option>
       </select>
     </div>
 
@@ -149,6 +180,12 @@
       <label class="filebtn mini" for="jsonFile">匯入 JSON</label>
       <input id="jsonFile" type="file" accept="application/json" />
     </div>
+
+    <div class="group" style="margin-left:auto">
+      <span class="pill">搜尋</span>
+      <input id="searchInput" type="text" placeholder="輸入關鍵字，Enter 跳到下一個" style="width:min(320px, 100%)" />
+      <button class="mini" id="findNextBtn">下一個</button>
+    </div>
   </div>
 
   <div class="table">
@@ -170,28 +207,57 @@
   </div>
 
   <div class="footer">
-    <div><span class="pill">快捷操作</span> 層級：<b>→</b> 增加縮排、<b>←</b> 減少縮排（在標題欄位按鍵）</div>
-    <div><span class="pill">建議</span> 頁碼可留空；匯出會自動略過空白頁碼的 P. 前綴（仍會保留點線排版）</div>
+    <div><span class="pill">快捷操作</span> 層級：<b>→</b> 增加縮排、<b>←</b> 減少縮排（在標題欄位按鍵）；<b>Enter</b> 新增下一行；<b>Ctrl+Z / Ctrl+Y</b> 復原/重做；<b>Ctrl+S</b> 手動儲存</div>
+    <div><span class="pill">拖曳排序</span> 左側「☰」可拖曳調整順序；也可以用 ↑/↓ 按鈕微調</div>
+    <div><span class="pill">匯出提示</span> 頁碼可留空；匯出會略過空白頁碼。若選「Tab 分隔」，請在 Word 設定段落的右定位點與導引線，會比純點線更整齊。</div>
+    <div><span class="pill">自動儲存</span> 你輸入/調整後會自動存到瀏覽器（localStorage），不怕不小心關掉</div>
   </div>
 </div>
 
 <script>
   const LS_KEY = "sop_toc_tool_v1";
+  const MAX_LEVEL = 6;
+  const HISTORY_MAX = 80;
 
   /** Row model:
-   * { id, level: 1..3, title: string, page: string }
+   * { id, level: 1..6, title: string, page: string }
    */
   let data = [];
+  let history = [];
+  let historyIndex = -1;
+  let autosaveTimer = null;
 
   const $ = (id) => document.getElementById(id);
   const rowsEl = $("rows");
   const outputEl = $("output");
+  const searchEl = $("searchInput");
 
   function uid() {
     return Math.random().toString(36).slice(2, 10);
   }
 
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function toast(msg, type="info") {
+    // type: info | ok | warn | err
+    const old = document.querySelector(".toast");
+    if (old) old.remove();
+    const wrap = document.createElement("div");
+    wrap.className = "toast";
+    const icon = document.createElement("div");
+    icon.className = "ticon";
+    icon.textContent = type === "ok" ? "✓" : type === "warn" ? "!" : type === "err" ? "✕" : "i";
+    const text = document.createElement("div");
+    text.className = "tmsg";
+    text.textContent = msg;
+    const close = document.createElement("button");
+    close.className = "tclose";
+    close.textContent = "×";
+    close.addEventListener("click", ()=>wrap.remove());
+    wrap.append(icon, text, close);
+    document.body.appendChild(wrap);
+    setTimeout(()=>{ if (wrap.isConnected) wrap.remove(); }, 2200);
+  }
 
   function defaultData(){
     return [
@@ -212,13 +278,13 @@
   }
 
   function computeNumbers(rows){
-    // levels 1..3 => counters[1], counters[2], counters[3]
-    const counters = [0,0,0,0];
+    // levels 1..MAX_LEVEL => counters[1..MAX_LEVEL]
+    const counters = Array.from({length: MAX_LEVEL+1}, ()=>0);
     return rows.map(r => {
-      const lv = clamp(Number(r.level)||1, 1, 3);
+      const lv = clamp(Number(r.level)||1, 1, MAX_LEVEL);
       counters[lv] += 1;
       // reset deeper levels
-      for (let i=lv+1;i<=3;i++) counters[i]=0;
+      for (let i=lv+1;i<=MAX_LEVEL;i++) counters[i]=0;
       // build number string
       const parts = [];
       for (let i=1;i<=lv;i++){
@@ -228,9 +294,81 @@
     });
   }
 
+  function snapshotState(){
+    return {
+      version: 1,
+      style: $("styleSel").value,
+      exportMode: $("exportMode").value,
+      lineWidth: Number($("lineWidth").value)||70,
+      data: JSON.parse(JSON.stringify(data))
+    };
+  }
+
+  function restoreSnapshot(snap){
+    if (!snap || !Array.isArray(snap.data)) return;
+    data = snap.data.map(r => ({
+      id: r.id || uid(),
+      level: clamp(Number(r.level)||1, 1, MAX_LEVEL),
+      title: String(r.title ?? ""),
+      page: String(r.page ?? "")
+    }));
+    if (snap.style) $("styleSel").value = snap.style;
+    if (snap.exportMode) $("exportMode").value = snap.exportMode;
+    if (snap.lineWidth) $("lineWidth").value = snap.lineWidth;
+  }
+
+  function pushHistory(){
+    const snap = snapshotState();
+    history = history.slice(0, historyIndex + 1);
+    history.push(snap);
+    if (history.length > HISTORY_MAX) history.shift();
+    historyIndex = history.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function updateUndoRedoButtons(){
+    const u = $("undoBtn");
+    const r = $("redoBtn");
+    const canUndo = historyIndex > 0;
+    const canRedo = historyIndex < history.length - 1;
+    u.disabled = !canUndo;
+    r.disabled = !canRedo;
+    u.style.opacity = canUndo ? "1" : ".45";
+    r.style.opacity = canRedo ? "1" : ".45";
+    u.style.cursor = canUndo ? "pointer" : "not-allowed";
+    r.style.cursor = canRedo ? "pointer" : "not-allowed";
+  }
+
+  function undo(){
+    if (historyIndex <= 0) return;
+    historyIndex--;
+    restoreSnapshot(history[historyIndex]);
+    render();
+    toast("已還原上一步", "ok");
+    updateUndoRedoButtons();
+  }
+
+  function redo(){
+    if (historyIndex >= history.length - 1) return;
+    historyIndex++;
+    restoreSnapshot(history[historyIndex]);
+    render();
+    toast("已重做", "ok");
+    updateUndoRedoButtons();
+  }
+
+  function scheduleAutosave(){
+    if (autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(()=>{
+      localStorage.setItem(LS_KEY, JSON.stringify(snapshotState()));
+      toast("已自動儲存", "ok");
+    }, 500);
+  }
+
   function moveRow(index, dir){
     const j = index + dir;
     if (j < 0 || j >= data.length) return;
+    pushHistory();
     const tmp = data[index];
     data[index] = data[j];
     data[j] = tmp;
@@ -238,16 +376,19 @@
   }
 
   function deleteRow(index){
+    pushHistory();
     data.splice(index, 1);
     render();
   }
 
   function setLevel(index, delta){
-    data[index].level = clamp((Number(data[index].level)||1) + delta, 1, 3);
+    pushHistory();
+    data[index].level = clamp((Number(data[index].level)||1) + delta, 1, MAX_LEVEL);
     render(false); // keep focus
   }
 
   function addRow(afterIndex = null){
+    pushHistory();
     const row = { id: uid(), level: 1, title: "", page: "" };
     if (afterIndex === null || afterIndex === undefined){
       data.push(row);
@@ -255,6 +396,7 @@
       data.splice(afterIndex + 1, 0, row);
     }
     render(true, row.id);
+    scheduleAutosave();
   }
 
   function render(tryFocusNew=false, focusId=null){
@@ -265,6 +407,8 @@
     data.forEach((r, i) => {
       const row = document.createElement("div");
       row.className = "trow";
+      row.draggable = true;
+      row.dataset.index = String(i);
 
       // number
       const n = document.createElement("div");
@@ -274,9 +418,16 @@
       // title
       const name = document.createElement("div");
       name.className = "name";
+
+      const drag = document.createElement("span");
+      drag.className = "drag";
+      drag.title = "拖曳可排序";
+      drag.textContent = "☰";
+      name.appendChild(drag);
+
       const indent = document.createElement("span");
       indent.className = "indent";
-      indent.style.width = ((clamp(r.level,1,3)-1) * 20) + "px";
+      indent.style.width = ((clamp(r.level,1,MAX_LEVEL)-1) * 18) + "px";
       name.appendChild(indent);
 
       const titleInput = document.createElement("input");
@@ -284,7 +435,9 @@
       titleInput.value = r.title ?? "";
       titleInput.placeholder = "輸入章節標題（在此按 ←/→ 可調層級）";
       titleInput.addEventListener("input", (e)=>{
+        // input 進行中不每字 pushHistory，採用 debounce autosave；只標記資料變更
         data[i].title = e.target.value;
+        scheduleAutosave();
       });
       titleInput.addEventListener("keydown", (e)=>{
         if (e.key === "ArrowRight") { e.preventDefault(); setLevel(i, +1); }
@@ -303,6 +456,7 @@
       pageInput.placeholder = "例：5";
       pageInput.addEventListener("input", (e)=>{
         data[i].page = e.target.value;
+        scheduleAutosave();
       });
       page.appendChild(pageInput);
 
@@ -324,10 +478,43 @@
       rowsEl.appendChild(row);
     });
 
+    // drag & drop reorder
+    rowsEl.querySelectorAll(".trow").forEach(el => {
+      el.addEventListener("dragstart", (e)=>{
+        el.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", el.dataset.index);
+        e.dataTransfer.effectAllowed = "move";
+      });
+      el.addEventListener("dragend", ()=>{
+        el.classList.remove("dragging");
+        rowsEl.querySelectorAll(".trow.drop-target").forEach(x=>x.classList.remove("drop-target"));
+      });
+      el.addEventListener("dragover", (e)=>{
+        e.preventDefault();
+        el.classList.add("drop-target");
+        e.dataTransfer.dropEffect = "move";
+      });
+      el.addEventListener("dragleave", ()=>el.classList.remove("drop-target"));
+      el.addEventListener("drop", (e)=>{
+        e.preventDefault();
+        const from = Number(e.dataTransfer.getData("text/plain"));
+        const to = Number(el.dataset.index);
+        rowsEl.querySelectorAll(".trow.drop-target").forEach(x=>x.classList.remove("drop-target"));
+        if (!Number.isFinite(from) || !Number.isFinite(to) || from === to) return;
+        pushHistory();
+        const [moved] = data.splice(from, 1);
+        data.splice(to, 0, moved);
+        render();
+        scheduleAutosave();
+      });
+    });
+
     if (tryFocusNew && focusId){
       const input = rowsEl.querySelector(`input[data-row-id="${focusId}"]`);
       if (input){ input.focus(); }
     }
+
+    updateUndoRedoButtons();
   }
 
   function mkBtn(text, onClick, isDanger=false){
@@ -340,6 +527,7 @@
 
   function buildExport(){
     const style = $("styleSel").value;
+    const exportMode = $("exportMode").value;
     const dotsTarget = clamp(Number($("lineWidth").value)||70, 10, 120);
     const nums = computeNumbers(data);
 
@@ -359,16 +547,17 @@
         ? (pageRaw ? `P.${pageRaw}` : "")
         : (pageRaw ? `${pageRaw}` : "");
 
-      // dot leaders: fill from left to a fixed column
-      // Keep at least 3 dots if page exists, else keep minimal spacing.
-      const base = Math.max(maxLeft + 2, left.length + 2);
+      if (!pageText) return `${left}`;
+
+      if (exportMode === "tab") {
+        // Tab 分隔：Word 可在段落設定「右定位點 + 導引線」達到最美觀
+        return `${left}\t${pageText}`;
+      }
+
+      // dot leaders（直接貼上）
       const dotsCount = Math.max(3, dotsTarget - left.length);
       const dots = ".".repeat(dotsCount);
-
-      // If page empty, still keep a neat line (no trailing page)
-      return pageText
-        ? `${left} ${dots} ${pageText}`
-        : `${left}`;
+      return `${left} ${dots} ${pageText}`;
     });
 
     outputEl.value = lines.join("\n");
@@ -380,27 +569,21 @@
       buildExport();
     }
     navigator.clipboard.writeText(outputEl.value).then(()=>{
-      alert("已複製匯出結果！");
+      toast("已複製匯出結果！", "ok");
     }).catch(()=>{
-      alert("複製失敗：瀏覽器可能限制，請手動全選複製。");
+      toast("複製失敗：瀏覽器可能限制，請手動全選複製。", "err");
     });
   }
 
   function saveToLocal(){
-    const payload = {
-      version: 1,
-      style: $("styleSel").value,
-      lineWidth: Number($("lineWidth").value)||70,
-      data
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
-    alert("已儲存到此瀏覽器（localStorage）。");
+    localStorage.setItem(LS_KEY, JSON.stringify(snapshotState()));
+    toast("已手動儲存到此瀏覽器（localStorage）。", "ok");
   }
 
   function loadFromLocal(){
     const raw = localStorage.getItem(LS_KEY);
     if (!raw){
-      alert("找不到儲存資料，已載入範例。");
+      toast("找不到儲存資料，已載入範例。", "warn");
       data = defaultData();
       render();
       return;
@@ -408,21 +591,14 @@
     try{
       const payload = JSON.parse(raw);
       if (payload && Array.isArray(payload.data)){
-        data = payload.data.map(r => ({
-          id: r.id || uid(),
-          level: clamp(Number(r.level)||1, 1, 3),
-          title: String(r.title ?? ""),
-          page: String(r.page ?? "")
-        }));
-        if (payload.style) $("styleSel").value = payload.style;
-        if (payload.lineWidth) $("lineWidth").value = payload.lineWidth;
+        restoreSnapshot(payload);
         render();
-        alert("已載入。");
+        toast("已載入。", "ok");
       } else {
         throw new Error("bad format");
       }
     }catch(e){
-      alert("載入失敗：儲存資料格式錯誤。已載入範例。");
+      toast("載入失敗：儲存資料格式錯誤。已載入範例。", "err");
       data = defaultData();
       render();
     }
@@ -430,11 +606,12 @@
 
   function clearAll(){
     if (!confirm("確定清空目前內容？此操作無法復原。")) return;
+    pushHistory();
     data = [];
     outputEl.value = "";
     localStorage.removeItem(LS_KEY);
     render();
-    alert("已清空所有內容。");
+    toast("已清空所有內容。", "ok");
   }
 
   function downloadJson(){
@@ -442,6 +619,7 @@
       version: 1,
       exportedAt: new Date().toISOString(),
       style: $("styleSel").value,
+      exportMode: $("exportMode").value,
       lineWidth: Number($("lineWidth").value)||70,
       data
     };
@@ -452,6 +630,7 @@
     document.body.appendChild(a);
     a.click();
     setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    toast("已下載 JSON 備份。", "ok");
   }
 
   function importJsonFile(file){
@@ -462,16 +641,19 @@
         if (!payload || !Array.isArray(payload.data)) throw new Error("bad format");
         data = payload.data.map(r => ({
           id: r.id || uid(),
-          level: clamp(Number(r.level)||1, 1, 3),
+          level: clamp(Number(r.level)||1, 1, MAX_LEVEL),
           title: String(r.title ?? ""),
           page: String(r.page ?? "")
         }));
         if (payload.style) $("styleSel").value = payload.style;
+        if (payload.exportMode) $("exportMode").value = payload.exportMode;
         if (payload.lineWidth) $("lineWidth").value = payload.lineWidth;
         render();
-        alert("已匯入 JSON。");
+        scheduleAutosave();
+        pushHistory();
+        toast("已匯入 JSON。", "ok");
       }catch(e){
-        alert("匯入失敗：JSON 格式不正確。");
+        toast("匯入失敗：JSON 格式不正確。", "err");
       }
     };
     reader.readAsText(file, "utf-8");
@@ -481,6 +663,7 @@
     const from = clamp(Number($("batchFrom").value)||1, 1, 999999) - 1;
     const delta = Number($("batchDelta").value)||0;
 
+    pushHistory();
     for (let i=from;i<data.length;i++){
       const p = String(data[i].page ?? "").trim();
       if (!p) continue;
@@ -491,10 +674,47 @@
     }
     render(false);
     buildExport();
+    scheduleAutosave();
+    toast("已套用批次頁碼調整。", "ok");
+  }
+
+  // search
+  let searchHits = [];
+  let searchIndex = -1;
+  function rebuildSearchHits(){
+    const q = (searchEl.value || "").trim().toLowerCase();
+    if (!q) {
+      searchHits = [];
+      searchIndex = -1;
+      return;
+    }
+    searchHits = data
+      .map((r, idx)=>({ idx, text: String(r.title||"").toLowerCase() }))
+      .filter(x => x.text.includes(q))
+      .map(x => x.idx);
+    searchIndex = -1;
+  }
+
+  function jumpToNextHit(){
+    rebuildSearchHits();
+    if (searchHits.length === 0) {
+      toast("找不到符合的標題", "warn");
+      return;
+    }
+    searchIndex = (searchIndex + 1) % searchHits.length;
+    const idx = searchHits[searchIndex];
+    const rowInput = rowsEl.querySelectorAll(".name input")[idx];
+    if (rowInput) {
+      rowInput.focus();
+      rowInput.select();
+      toast(`跳到第 ${idx+1} 行（共 ${searchHits.length} 筆）`, "ok");
+    }
   }
 
   // Wire up UI
   $("addRowBtn").addEventListener("click", ()=>addRow(null));
+  $("undoBtn").addEventListener("click", undo);
+  $("redoBtn").addEventListener("click", redo);
   $("exportBtn").addEventListener("click", buildExport);
   $("copyBtn").addEventListener("click", copyOutput);
   $("saveBtn").addEventListener("click", saveToLocal);
@@ -502,6 +722,7 @@
   $("clearBtn").addEventListener("click", clearAll);
   $("downloadJsonBtn").addEventListener("click", downloadJson);
   $("applyBatchBtn").addEventListener("click", applyBatch);
+  $("findNextBtn").addEventListener("click", jumpToNextHit);
 
   $("jsonFile").addEventListener("change", (e)=>{
     const f = e.target.files && e.target.files[0];
@@ -510,12 +731,24 @@
   });
 
   $("styleSel").addEventListener("change", buildExport);
-  $("lineWidth").addEventListener("input", ()=>{ /* keep responsive */ });
+  $("exportMode").addEventListener("change", buildExport);
+  $("lineWidth").addEventListener("input", ()=>{ buildExport(); scheduleAutosave(); });
+  searchEl.addEventListener("keydown", (e)=>{
+    if (e.key === "Enter") { e.preventDefault(); jumpToNextHit(); }
+  });
+  searchEl.addEventListener("input", ()=>{ /* just update hits lazily */ });
+
+  // global shortcuts
+  window.addEventListener("keydown", (e)=>{
+    if (e.ctrlKey && (e.key === "z" || e.key === "Z")) { e.preventDefault(); undo(); }
+    if (e.ctrlKey && (e.key === "y" || e.key === "Y")) { e.preventDefault(); redo(); }
+    if (e.ctrlKey && (e.key === "s" || e.key === "S")) { e.preventDefault(); saveToLocal(); }
+  });
 
   // Init
   loadFromLocal();
-  // If nothing in localStorage, loadFromLocal will fallback; ensure render done
   render();
+  pushHistory();
 </script>
 </body>
 </html>
