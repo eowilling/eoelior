@@ -485,7 +485,7 @@ export default function App() {
       showAlert('無可用名額', '此獎項已抽完，無剩餘名額！');
       return;
     }
-    setDrawQuantity(remaining > 0 ? 1 : 0);
+    setDrawQuantity(Math.max(1, remaining));
     setDisplayStage('config-qty');
   };
 
@@ -842,10 +842,29 @@ export default function App() {
   const ConfigQtyScreen = () => {
     const prize = prizes.find((p) => p.id === selectedPrizeId);
     if (!prize) return null;
-    const remaining = Math.max(
-      0,
-      prize.quantity - (prize.winners?.length || 0),
-    );
+    const actualRemaining = prize.quantity - (prize.winners?.length || 0);
+    const remaining = Math.max(0, actualRemaining);
+
+    // 如果實際剩餘 <=0，返回錯誤提示
+    if (actualRemaining <= 0) {
+      return (
+        <div className="h-full flex flex-col items-center justify-center p-8">
+          <div className="bg-red-900/20 border border-red-500/50 p-8 rounded-2xl max-w-md text-center">
+            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-red-400 mb-2">無可用名額</h2>
+            <p className="text-slate-300 mb-6">
+              此獎項已無剩餘名額，無法進行抽獎。
+            </p>
+            <Button
+              onClick={() => setDisplayStage('select-prize')}
+              variant="secondary">
+              重新選擇獎項
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 relative">
         <Button
