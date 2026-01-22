@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企業終極抽獎系統 | Ultimate Rebox</title>
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --accent: #ff0055;
+            --bg: #050510;
+            --card-bg: rgba(20, 20, 35, 0.6);
+            --gold: #ffd700;
+            --warning: #ff9900;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon-glow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-attachment: fixed;
+        }
+
+        /* Sci-Fi Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .center {
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        /* UI Components */
+        .btn {
+            padding: 12px 30px;
+            border: 1px solid var(--primary);
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: var(--neon-glow);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover {
+            background: #fff;
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        .btn-outline {
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #aaa;
+        }
+
+        .btn-outline:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .btn-danger {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(255, 0, 85, 0.1);
+        }
+
+        .btn-danger:hover {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        .btn-warning {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .btn-warning:hover {
+            background: var(--warning);
+            color: #000;
+            box-shadow: 0 0 20px var(--warning);
+        }
+
+        /* Screens */
+        section {
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .welcome-wrapper {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .setup-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: rgba(10, 10, 20, 0.9);
+            padding: 40px;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 4px;
+            /* Tech corners */
+        }
+
+        /* Typography */
+        .main-title {
+            font-size: 5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            background: linear-gradient(to bottom, #fff, #aaa);
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0px;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+        }
+
+        .subtitle {
+            color: var(--primary);
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        h2,
+        h3 {
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        input,
+        textarea {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            color: var(--primary);
+            padding: 15px;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+
+        /* Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            padding: 40px;
+            width: 100%;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .prize-card,
+        .showcase-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            position: relative;
+            backdrop-filter: blur(5px);
+            transition: 0.4s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .prize-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: var(--primary);
+            opacity: 0.2;
+            transition: 0.4s;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .prize-card:hover::before {
+            width: 100%;
+        }
+
+        .prize-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .prize-card.special {
+            border-color: var(--gold);
+        }
+
+        .prize-card.special .stamp {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .prize-card.finished {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: grayscale(1);
+        }
+
+        /* Modals */
+        .modal-overlay,
+        .draw-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 90;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: #0a0a15;
+            padding: 40px;
+            border: 1px solid var(--primary);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 0 50px rgba(0, 242, 255, 0.1);
+            position: relative;
+        }
+
+        .modal-content::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--primary), transparent, var(--secondary));
+            z-index: -1;
+        }
+
+        /* Draw Area */
+        .draw-overlay {
+            flex-direction: column;
+            background: #000;
+        }
+
+        .draw-top {
+            padding: 40px;
+            text-align: center;
+            border-bottom: 1px solid #222;
+        }
+
+        .draw-title {
+            font-size: 4rem;
+            color: #fff;
+            text-shadow: 0 0 20px var(--primary);
+            font-weight: bold;
+        }
+
+        .draw-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            overflow-y: auto;
+            /* Enable vertical scroll */
+            position: relative;
+            padding: 20px 0;
+            /* Add padding for aesthetics */
+            scrollbar-width: thin;
+            /* Firefox */
+            scrollbar-color: var(--primary) #222;
+        }
+
+        .draw-main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .draw-main::-webkit-scrollbar-track {
+            background: #222;
+        }
+
+        .draw-main::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .result-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 20px;
+            /* perspective: 1000px; - Removed to simplify layout calc */
+            width: 100%;
+            max-width: 1600px;
+            /* Limit max width on huge screens */
+            margin: 0 auto;
+        }
+
+        .result-box {
+            width: 180px;
+            /* Default size */
+            height: 140px;
+            /* Adjusted height */
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            /* Adjusted font size */
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.15);
+            text-shadow: 0 0 10px var(--primary);
+            position: relative;
+            border-radius: 8px;
+            /* Softer corners */
+            transition: all 0.3s ease;
+        }
+
+        /* Dynamic sizing classes will be added via JS, but here are modifiers */
+        .result-box.small {
+            width: 100px;
+            height: 80px;
+            font-size: 1.5rem;
+        }
+
+        .result-box.tiny {
+            width: 80px;
+            height: 60px;
+            font-size: 1rem;
+        }
+
+        .result-box.special.revealed {
+            background: var(--gold);
+            box-shadow: 0 0 60px var(--gold);
+        }
+
+        .draw-controls {
+            padding: 40px;
+            background: linear-gradient(to top, #000, transparent);
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .pool-list {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            opacity: 0.3;
+            font-size: 0.8rem;
+            color: #555;
+            max-width: 300px;
+            display: none;
+            /* Hidden for cleaner look, maybe show on hover? */
+        }
+
+        .stamp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-20deg) scale(3);
+            border: 5px solid var(--accent);
+            color: var(--accent);
+            font-size: 3rem;
+            font-weight: 900;
+            padding: 10px 40px;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+
+        .stamp.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) rotate(-20deg) scale(1);
+        }
+
+        /* Animations */
+        @keyframes glitch {
+            0% {
+                transform: translate(0);
+            }
+
+            20% {
+                transform: translate(-2px, 2px);
+            }
+
+            40% {
+                transform: translate(-2px, -2px);
+            }
+
+            60% {
+                transform: translate(2px, 2px);
+            }
+
+            80% {
+                transform: translate(2px, -2px);
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        @keyframes revealPop {
+            0% {
+                transform: scale(0.5) rotateX(90deg);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1) rotateX(0);
+                opacity: 1;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(720deg);
+            }
+        }
+
+        .mode-group {
+            display: flex;
+            background: #222;
+            padding: 5px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .setup-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 10px;
+        }
+
+        #celebration-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Effects Layer -->
+    <div id="celebration-layer"></div>
+    <div id="toast" class="toast"><span id="toast-msg">訊息</span></div>
+
+    <!-- 1. Welcome Screen -->
+    <section id="screen-welcome" class="welcome-wrapper">
+        <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px;">
+            <button class="btn btn-outline" onclick="Draw.openDisplay()">🖥️ 開啟大螢幕</button>
+            <button class="btn btn-outline" onclick="App.goToSetup()">⚙️ 設定</button>
+        </div>
+        <h1 id="display-activity-name" class="main-title">2024 年度尾牙大抽獎</h1>
+        <p id="display-subtitle" class="subtitle">Lucky Draw System Pro</p>
+        <div
+            style="background: rgba(0, 242, 255, 0.1); padding: 15px 40px; border-radius: 50px; display:inline-block; margin-bottom: 30px; border:1px solid var(--primary); box-shadow: 0 0 15px rgba(0,242,255,0.2);">
+            待抽人數：<span id="total-people"
+                style="color:var(--primary); font-size: 2rem; font-weight:bold; text-shadow:0 0 10px var(--primary);">0</span>
+        </div>
+        <h3 style="margin-bottom:20px; color:#aaa;">獎品總覽</h3>
+        <div id="showcase-grid" class="dashboard-grid" style="padding:0; gap:20px;"></div>
+        <button class="btn btn-primary" style="font-size:1.5rem; margin-top:40px; padding: 15px 50px;"
+            onclick="App.checkAndStart()">🚀
+            進入抽獎系統</button>
+    </section>
+
+    <!-- 2. Setup Screen -->
+    <section id="screen-setup" class="setup-container hidden">
+        <div class="flex" style="justify-content:space-between; margin-bottom:20px;">
+            <h2>⚙️ 系統設定</h2>
+            <button class="btn btn-outline" onclick="App.goToWelcome()">返回</button>
+        </div>
+        <div style="margin-bottom:20px; border-bottom:1px solid #333; padding-bottom:20px;">
+            <label style="display:block; text-align:left; color:#aaa; margin-bottom:5px;">活動資訊</label>
+            <input type="text" id="setup-activity-name" placeholder="活動名稱">
+            <input type="text" id="setup-subtitle" placeholder="副標題">
+        </div>
+        <div style="margin-bottom:20px; text-align:left;">
+            <label style="color:#aaa; display:block; margin-bottom:5px;">獎項設定</label>
+            <div id="prizes-input-list"></div>
+            <button class="btn btn-outline w-full" onclick="Setup.addPrizeRow()">+ 新增獎項</button>
+        </div>
+        <div style="margin-bottom:20px; text-align:left;">
+            <label style="color:#aaa; display:block; margin-bottom:5px;">參與人員名單</label>
+            <div class="flex gap-4">
+                <input type="number" id="quick-num" placeholder="輸入人數快速生成 (例如: 100)" style="margin-bottom:0;">
+                <button class="btn btn-primary" onclick="Setup.quickImport()">生成</button>
+            </div>
+            <textarea id="participants-input" rows="5" placeholder="輸入名單，以逗號或換行分隔..."></textarea>
+        </div>
+        <div class="flex gap-4">
+            <button class="btn btn-warning w-full" onclick="Setup.resetWinners()">重置抽獎狀態</button>
+            <button class="btn btn-primary w-full" onclick="Setup.save()">儲存設定</button>
+        </div>
+    </section>
+
+    <!-- 3. Dashboard -->
+    <section id="screen-dashboard" class="hidden">
+        <header class="flex"
+            style="justify-content:space-between; padding:20px 40px; border-bottom:1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.5);">
+            <h2 style="font-size:2rem;">🎉 抽獎控制台</h2>
+            <div class="flex gap-4">
+                <button class="btn btn-outline" style="border-color:var(--primary); color:var(--primary);"
+                    onclick="App.showRemoteQR()">📱 長官遙控器</button>
+                <button class="btn btn-outline" onclick="Draw.openDisplay()">🖥️ 開啟大螢幕</button>
+                <button class="btn btn-outline" onclick="Results.show()">📜 中獎名單</button>
+                <button class="btn btn-danger" onclick="location.reload()">結束活動</button>
+            </div>
+        </header>
+        <div id="dash-grid" class="dashboard-grid"></div>
+    </section>
+
+    <!-- 4. Prep Modal -->
+    <section id="screen-prep" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 style="text-align:center; color:var(--primary); margin-bottom: 20px;">準備開獎</h3>
+            <div
+                style="text-align:center; margin-bottom:25px; padding: 20px; background:rgba(0,0,0,0.3); border-radius:10px;">
+                <div id="prep-prize-name" style="font-size:2rem; font-weight:bold; color:#fff; margin-bottom:10px;">
+                </div>
+                <div style="font-size:1rem; color:#aaa;">本輪剩餘名額: <span id="prep-remain-count"
+                        style="color:var(--primary); font-size:1.5rem; font-weight:bold;">0</span></div>
+            </div>
+
+            <label style="display:block; text-align:left; font-size:0.9rem; color:#aaa;">開獎嘉賓</label>
+            <input type="text" id="prep-host" placeholder="輸入嘉賓姓名">
+
+            <label style="display:block; text-align:left; font-size:0.9rem; color:#aaa; margin-top:15px;">抽獎模式</label>
+            <div class="mode-group">
+                <button class="mode-btn active" onclick="Prep.setMode('one', this)">單抽 (1)</button>
+                <button class="mode-btn" onclick="Prep.setMode('half', this)">半開 (1/2)</button>
+                <button class="mode-btn" onclick="Prep.setMode('all', this)">全開 (All)</button>
+                <button class="mode-btn" onclick="Prep.setMode('custom', this)">自訂數量</button>
+            </div>
+            <input type="number" id="prep-custom-num" class="hidden" placeholder="輸入本輪抽取數量" style="margin-bottom:20px;">
+
+            <div class="flex gap-4" style="margin-top: 20px;">
+                <button class="btn btn-danger w-full" onclick="Prep.close()">取消</button>
+                <button class="btn btn-primary w-full" onclick="Prep.confirm()">確認並前往</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Drawing Screen -->
+    <section id="screen-draw" class="draw-overlay hidden">
+        <div class="draw-top">
+            <div id="draw-title" class="draw-title">獎項名稱</div>
+            <div style="color:#aaa; margin-top:10px; font-size:1.2rem;">
+                本輪抽獎: <span id="draw-count-display" style="color:#fff; font-weight:bold;">0</span> 人 |
+                剩餘: <span id="draw-remain-count" style="color:var(--primary)">0</span>
+            </div>
+            <div
+                style="color:var(--gold); margin-top:15px; background:rgba(255,215,0,0.1); padding:5px 20px; border-radius:20px; display:inline-block; border:1px solid var(--gold);">
+                🎤 <span id="draw-host-name"></span>
+            </div>
+        </div>
+        <div class="draw-main">
+            <div id="result-area" class="result-container"></div>
+        </div>
+        <div class="draw-controls">
+            <button id="btn-draw-action" class="btn btn-primary"
+                style="font-size:2rem; padding:15px 60px; min-width: 300px;" onclick="Draw.action()">開始滾動</button>
+        </div>
+
+        <!-- Pool Display hidden by default per CSS, but good to keep in DOM -->
+        <div id="pool-display" class="pool-list"></div>
+    </section>
+
+    <!-- 6. Results Modal -->
+    <section id="screen-results" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width:800px;">
+            <div class="flex" style="justify-content:space-between; margin-bottom:20px;">
+                <h2>📜 中獎名單</h2>
+                <button class="btn btn-outline" onclick="Results.close()">關閉</button>
+            </div>
+            <div id="results-list" style="max-height:60vh; overflow-y:auto; padding-right: 10px;"></div>
+        </div>
+    </section>
+
+    <!-- 7. Remote QR Modal -->
+    <section id="screen-remote-qr" class="modal-overlay hidden"
+        onclick="if(event.target === this) this.classList.add('hidden')">
+        <div class="modal-content" style="text-align:center;">
+            <h3 style="color:var(--primary); margin-bottom:10px;">📱 長官遙控器連線</h3>
+            <p style="color:#aaa; margin-bottom:20px;">請使用手機掃描下方 QR Code 即可連線</p>
+            <div style="background:#fff; padding:20px; display:inline-block; border-radius:10px;">
+                <img id="remote-qr-img" src="" alt="Remote QR Code" style="width:250px; height:250px;">
+            </div>
+            <p style="margin-top:20px; color:#666; font-size:0.9rem;">
+                連結網址: <span id="remote-url-text" style="color:var(--primary); word-break:break-all;">...</span>
+            </p>
+            <button class="btn btn-primary w-full" style="margin-top:20px;"
+                onclick="document.getElementById('screen-remote-qr').classList.add('hidden')">關閉</button>
+        </div>
+    </section>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Firebase Config - User will need to replace this if they want their own project
+        // For now, using a structure that allows external injection or placeholder
+        // Firebase Config is now loaded from firebase-config.js
+        // Access via window.__firebase_config
+
+
+        // Expose Firebase functions globally for our App to use
+        window.Cloud = {
+            db: null,
+            init: () => {
+                try {
+                    if (window.__firebase_config) {
+                        const app = initializeApp(window.__firebase_config);
+                        window.Cloud.db = getDatabase(app);
+                        console.log("Firebase initialized with project:", window.__firebase_config.projectId);
+
+                        // Optional: Listen for remote Start/Stop commands in the future
+                        // For now we just ensure connectivity
+                    } else {
+                        console.warn("No Firebase Config found in window.__firebase_config");
+                    }
+                } catch (e) {
+                    console.error("Firebase Init Error", e);
+                }
+            },
+            save: (data) => {
+                if (!window.Cloud.db) return;
+                // Generate a consistent ID based on activity name or use a default 'latest'
+                const activityId = data.activityName ? btoa(encodeURIComponent(data.activityName)).replace(/[^a-zA-Z0-9]/g, '') : 'default_event';
+
+                // Save to 'events/{id}'
+                set(ref(window.Cloud.db, 'events/' + activityId), {
+                    ...data,
+                    _updatedAt: Date.now()
+                }).then(() => {
+                    console.log("Cloud Synced Successfully");
+                    const t = document.getElementById('cloud-status');
+                    if (t) { t.style.color = '#00ff00'; t.title = "Cloud Synced"; }
+                }).catch((e) => {
+                    console.error("Cloud Sync Failed", e);
+                    const t = document.getElementById('cloud-status');
+                    if (t) { t.style.color = '#ff0000'; t.title = "Sync Failed"; }
+                });
+            },
+            listenCmd: (processCmd) => {
+                if (!window.Cloud.db) return;
+                // We need the activity ID to know where to listen
+                // We'll rely on appData being loaded first
+                const checkInterval = setInterval(() => {
+                    if (appData && appData.activityName) {
+                        clearInterval(checkInterval);
+                        const activityId = btoa(encodeURIComponent(appData.activityName)).replace(/[^a-zA-Z0-9]/g, '') || 'default_event';
+
+                        console.log("Listening for Remote Commands on:", activityId);
+
+                        const cmdRef = ref(window.Cloud.db, 'events/' + activityId + '/cmd');
+                        onValue(cmdRef, (snapshot) => {
+                            const val = snapshot.val();
+                            if (val && val.timestamp > Date.now() - 5000) { // Ignore old cmds (older than 5s)
+                                console.log("Remote CMD:", val);
+                                processCmd(val);
+                            }
+                        });
+                    }
+                }, 1000);
+            },
+            updateStatus: (status) => {
+                if (!window.Cloud.db || !appData.activityName) return;
+                const activityId = btoa(encodeURIComponent(appData.activityName)).replace(/[^a-zA-Z0-9]/g, '') || 'default_event';
+                set(ref(window.Cloud.db, 'events/' + activityId + '/status'), {
+                    state: status,
+                    updatedAt: Date.now()
+                });
+            }
+        };
+
+        // Tiny hack to init after window load
+        window.addEventListener('load', window.Cloud.init);
+    </script>
+
+    <script>
+        // Utils
+        const Utils = {
+            shuffle: (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; },
+            showToast: (m) => { const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = m; t.className = 'toast show'; setTimeout(() => t.className = 'toast', 3000); },
+            round: (n) => Math.round(n)
+        };
+
+        const Storage = {
+            KEY: 'lucky_draw_final_v7_scifi',
+            save: (d) => {
+                localStorage.setItem(Storage.KEY, JSON.stringify(d));
+                // Try Cloud Save if available
+                if (window.Cloud && window.Cloud.save) window.Cloud.save(d);
+            },
+            load: () => { const d = localStorage.getItem(Storage.KEY); return d ? JSON.parse(d) : null; }
+        };
+
+        let appData = {
+            activityName: "2024 年度尾牙大抽獎", subtitle: "Lucky Draw System Pro",
+            prizes: [], participants: [], remaining: []
+        };
+
+
+
+        const Setup = {
+            render: () => {
+                document.getElementById('setup-activity-name').value = appData.activityName;
+                document.getElementById('setup-subtitle').value = appData.subtitle;
+                const l = document.getElementById('prizes-input-list'); l.innerHTML = '';
+                appData.prizes.forEach(p => Setup.addPrizeRow(p.name, p.count, p.isSpecial, p.host));
+                document.getElementById('participants-input').value = appData.participants.join(', ');
+            },
+            addPrizeRow: (n = '', c = 1, s = false, h = '') => {
+                const d = document.createElement('div'); d.className = 'setup-row';
+                d.innerHTML = `<input placeholder="獎項名稱" value="${n}" class="p-name">
+                               <input type="number" placeholder="數量" value="${c}" min="1" class="p-count" style="width:80px">
+                               <input placeholder="頒獎嘉賓" value="${h}" class="p-host">
+                               <label style="color:#aaa; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                                   <input type="checkbox" class="p-special" ${s ? 'checked' : ''}> 特殊獎
+                               </label>
+                               <button class="btn btn-danger" onclick="this.parentElement.remove()">X</button>`;
+                document.getElementById('prizes-input-list').appendChild(d);
+            },
+            quickImport: () => {
+                const n = parseInt(document.getElementById('quick-num').value);
+                if (!n || n <= 0) return Utils.showToast('請輸入有效人數');
+                document.getElementById('participants-input').value = Array.from({ length: n }, (_, i) => `No.${String(i + 1).padStart(3, '0')}`).join(', ');
+            },
+            resetWinners: () => {
+                if (!confirm('確定要重置所有中獎狀態嗎？(獎項與名單將保留)')) return;
+                appData.prizes.forEach(p => p.winners = []);
+                appData.remaining = [...appData.participants];
+                // Update UI inputs just in case, though they are usually static in setup
+                // Save immediately
+                Storage.save(appData);
+                Utils.showToast('已重置抽獎狀態');
+            },
+            save: () => {
+                try {
+                    appData.activityName = document.getElementById('setup-activity-name').value || "2024 年度尾牙大抽獎";
+                    appData.subtitle = document.getElementById('setup-subtitle').value || "Lucky Draw System Pro";
+
+                    // Validate Prizes
+                    const rows = document.querySelectorAll('#prizes-input-list .setup-row');
+                    if (rows.length === 0) return Utils.showToast('請至少新增一個獎項');
+
+                    const newP = [];
+                    let invalidCount = 0;
+
+                    rows.forEach((r, i) => {
+                        const nInput = r.querySelector('.p-name');
+                        const cInput = r.querySelector('.p-count');
+                        const hInput = r.querySelector('.p-host');
+                        const sInput = r.querySelector('.p-special');
+
+                        // Safety check for elements
+                        if (!nInput || !cInput) return;
+
+                        const n = nInput.value.trim();
+                        const c = parseInt(cInput.value);
+                        const h = hInput ? hInput.value.trim() : '';
+                        const s = sInput ? sInput.checked : false;
+
+                        if (n && c > 0) {
+                            newP.push({ id: Date.now() + i, name: n, count: c, isSpecial: s, host: h || '未設定', winners: [] });
+                        } else {
+                            invalidCount++;
+                        }
+                    });
+
+                    if (newP.length === 0) {
+                        return Utils.showToast(invalidCount > 0 ? '獎項名稱不可為空，且數量需大於 0' : '請設定有效的獎項');
+                    }
+
+                    // Validate Participants
+                    const raw = document.getElementById('participants-input').value;
+                    const parts = [...new Set(raw.split(/[\n,，\s]+/).filter(s => s.trim()))];
+                    if (parts.length === 0) return Utils.showToast('參與人員名單不能為空');
+
+                    // Preserve winners if re-saving
+                    newP.forEach(np => {
+                        const old = appData.prizes.find(p => p.name === np.name && p.isSpecial === np.isSpecial);
+                        if (old) np.winners = old.winners;
+                    });
+
+                    // Update Data
+                    appData.prizes = newP;
+                    appData.participants = parts;
+
+                    // Re-calculate remaining based on winners
+                    const allWinners = newP.flatMap(p => p.winners);
+                    // Filter out already won
+                    appData.remaining = parts.filter(p => !allWinners.includes(p));
+
+                    // Make sure remaining logic handles people removed from list
+                    // Warning: If a winner is removed from participant list, should we keep them in winners? Yes, mostly.
+
+                    Storage.save(appData);
+                    Utils.showToast('設定已成功儲存！');
+                    setTimeout(() => App.goToWelcome(), 500);
+                } catch (e) {
+                    console.error(e);
+                    Utils.showToast('儲存失敗，請檢查輸入格式');
+                }
+            }
+        };
+
+        const App = {
+            init: () => {
+                const loaded = Storage.load();
+                if (loaded) {
+                    appData = loaded;
+                    App.goToWelcome();
+                } else {
+                    App.goToSetup();
+                }
+
+                // Set initial activity name on welcome
+                if (appData.activityName) document.getElementById('display-activity-name').innerText = appData.activityName;
+                if (appData.subtitle) document.getElementById('display-subtitle').innerText = appData.subtitle;
+                // Cloud listen
+                window.Cloud.init();
+            },
+            goToSetup: () => {
+                document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+                document.getElementById('screen-setup').classList.remove('hidden');
+                // Populate fields
+                document.getElementById('setup-activity-name').value = appData.activityName;
+                document.getElementById('setup-subtitle').value = appData.subtitle;
+                document.getElementById('prizes-input-list').innerHTML = '';
+                appData.prizes.forEach(p => Setup.addPrizeRow(p.name, p.count, p.isSpecial, p.host));
+                document.getElementById('participants-input').value = appData.participants.join(', ');
+            },
+            goToWelcome: () => {
+                document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+                document.getElementById('screen-welcome').classList.remove('hidden');
+                document.getElementById('display-activity-name').innerText = appData.activityName;
+                document.getElementById('display-subtitle').innerText = appData.subtitle;
+                document.getElementById('total-people').innerText = appData.remaining.length;
+
+                // Populate Showcase
+                const g = document.getElementById('showcase-grid'); g.innerHTML = '';
+                appData.prizes.forEach(p => {
+                    const r = p.count - p.winners.length;
+                    const c = document.createElement('div');
+                    c.className = `showcase-card ${p.isSpecial ? 'special' : ''} ${r <= 0 ? 'finished' : ''}`;
+                    c.innerHTML = `
+                         <div style="color:${p.isSpecial ? 'var(--gold)' : '#fff'}; font-size:1.5rem; font-weight:bold;">${p.name}</div>
+                         <div style="margin-top:10px; color:#aaa;">${r <= 0 ? '已抽完' : `剩餘: ${r} 名`}</div>
+                     `;
+                    g.appendChild(c);
+                });
+            },
+            checkAndStart: () => {
+                if (!appData.prizes.length || !appData.participants.length) return Utils.showToast('請先完成設定');
+                Dashboard.render();
+                document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+                document.getElementById('screen-dashboard').classList.remove('hidden');
+            },
+            showRemoteQR: () => {
+                // Generate URL
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/remote.html';
+                const fullUrl = `${baseUrl}?name=${encodeURIComponent(appData.activityName)}`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
+
+                document.getElementById('remote-qr-img').src = qrUrl;
+                document.getElementById('remote-url-text').innerText = fullUrl;
+                document.getElementById('screen-remote-qr').classList.remove('hidden');
+            }
+        };
+
+        const Dashboard = {
+            render: () => {
+                const g = document.getElementById('dash-grid'); g.innerHTML = '';
+                appData.prizes.forEach(p => {
+                    const r = p.count - p.winners.length, f = r <= 0;
+                    const c = document.createElement('div'); c.className = `prize-card ${p.isSpecial ? 'special' : ''} ${f ? 'finished' : ''}`;
+                    c.onclick = () => !f && Prep.open(p);
+
+                    let wHtml = '';
+                    if (p.winners.length) {
+                        wHtml = `<div style="margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.9rem; color:#bbb; max-height:100px; overflow-y:auto;">
+                            <strong>得主 (${p.winners.length}):</strong><br>${p.winners.join(', ')}
+                        </div>`;
+                    }
+
+                    c.innerHTML = `
+                        <div class="stamp ${f ? 'show' : ''}">終了</div>
+                        <div style="flex:1;">
+                            <h3 style="font-size:1.5rem; color:${p.isSpecial ? 'var(--gold)' : '#fff'}">${p.name}</h3>
+                            <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                                <span style="color:#aaa;">總數: ${p.count}</span>
+                                <span style="color:var(--primary); font-weight:bold;">剩餘: ${r}</span>
+                            </div>
+                            <p style="font-size:0.9rem;color:#666; margin-top:5px;">嘉賓: ${p.host}</p>
+                            ${wHtml}
+                        </div>
+                        ${!f ? `<button class="btn btn-primary w-full" style="margin-top:15px;">開始抽獎</button>` : ''}
+                    `;
+                    g.appendChild(c);
+                });
+            }
+        };
+
+        const Prep = {
+            curr: null, mode: 'one',
+            open: (p) => {
+                if (!appData.remaining.length) return Utils.showToast('所有人皆已中獎！');
+                Prep.curr = p;
+                document.getElementById('prep-prize-name').innerText = p.name;
+                document.getElementById('prep-remain-count').innerText = p.count - p.winners.length;
+                document.getElementById('prep-host').value = p.host;
+                Prep.setMode('one', document.querySelector('.mode-btn'));
+                document.getElementById('screen-prep').classList.remove('hidden');
+
+                // Sync with Dislay
+                bc.postMessage({ type: 'PREPARE', prize: p, host: p.host });
+            },
+            setMode: (m, b) => {
+                Prep.mode = m;
+                document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                document.getElementById('prep-custom-num').classList.toggle('hidden', m !== 'custom');
+            },
+            close: () => document.getElementById('screen-prep').classList.add('hidden'),
+            confirm: () => {
+                const h = document.getElementById('prep-host').value.trim() || '神秘嘉賓'; Prep.curr.host = h; Storage.save(appData);
+                const pR = Prep.curr.count - Prep.curr.winners.length, poolR = appData.remaining.length, cI = document.getElementById('prep-custom-num');
+                let c = 0;
+
+                if (Prep.mode === 'one') c = 1;
+                else if (Prep.mode === 'all') c = pR;
+                else if (Prep.mode === 'half') c = Utils.round(pR / 2);
+                else if (Prep.mode === 'custom') c = parseInt(cI.value) || 1;
+
+                if (c < 1) c = 1;
+                if (c > poolR) c = poolR;
+                if (c > pR) c = pR;
+
+                Prep.close();
+                Draw.start(Prep.curr, h, c);
+            }
+        };
+
+        // Broadcast Channel for Dual Screen
+        const bc = new BroadcastChannel('rebox_channel');
+
+        const Draw = {
+            int: null,
+            isRolling: false,
+            curr: null,
+            cnt: 0,
+            winners: [],
+
+            openDisplay: () => {
+                window.open('display.html', 'rebox_display', 'width=1200,height=800');
+            },
+
+            start: (p, h, c) => {
+                Draw.curr = p; Draw.cnt = c; Draw.isRolling = false; Draw.winners = [];
+
+                // UI Setup (Controller View)
+                const titleEl = document.getElementById('draw-title');
+                titleEl.innerText = p.name;
+                titleEl.style.color = p.isSpecial ? 'var(--gold)' : '#fff';
+
+                document.getElementById('draw-remain-count').innerText = p.count - p.winners.length;
+                document.getElementById('draw-host-name').innerText = h;
+                document.getElementById('draw-count-display').innerText = c;
+
+                // Show simple status in local container
+                const a = document.getElementById('result-area');
+                a.innerHTML = `<div style="text-align:center; padding:50px; color:#aaa;">
+                    <h3>大螢幕模式已就緒</h3>
+                    <p>請確認「大螢幕」分頁已開啟</p>
+                    <button class="btn btn-outline" onclick="Draw.openDisplay()" style="margin-top:10px;">開啟大螢幕視窗</button>
+                    <div style="margin-top:20px; font-size:2rem; color:var(--primary);">等待滾動...</div>
+                </div>`;
+
+                document.getElementById('btn-draw-action').classList.add('btn-primary');
+                document.getElementById('btn-draw-action').onclick = Draw.action;
+
+                document.getElementById('screen-draw').classList.remove('hidden');
+
+                // Sync Status
+                if (window.Cloud) window.Cloud.updateStatus('IDLE');
+                document.getElementById('btn-draw-action').classList.remove('btn-danger');
+                document.getElementById('btn-draw-action').classList.add('btn-primary');
+                document.getElementById('btn-draw-action').onclick = Draw.action;
+
+                document.getElementById('screen-draw').classList.remove('hidden');
+            },
+
+            action: () => { if (Draw.isRolling) Draw.stop(); else Draw.rollFn(); },
+
+            rollFn: () => {
+                if (appData.remaining.length < Draw.cnt) return Utils.showToast('剩餘人數不足！');
+
+                // Send Start Command
+                bc.postMessage({
+                    type: 'START',
+                    prize: Draw.curr,
+                    count: Draw.cnt,
+                    host: Draw.curr.host,
+                    candidates: appData.remaining
+                });
+
+                // Update Local UI
+                Draw.isRolling = true;
+                const btn = document.getElementById('btn-draw-action');
+                btn.innerText = '🛑 停止 (空白鍵)';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-danger');
+
+                const a = document.getElementById('result-area');
+                a.querySelector('div').innerHTML = `<h3 style="color:var(--primary); font-size:3rem;">滾動中...</h3>`;
+
+                // Sync Status
+                if (window.Cloud) window.Cloud.updateStatus('ROLLING');
+            },
+
+            stop: () => {
+                if (!Draw.isRolling) return;
+                Draw.isRolling = false;
+
+                const btn = document.getElementById('btn-draw-action');
+                btn.disabled = true;
+                btn.innerText = '開獎中...';
+
+                // Determine winners
+                const pool = [...appData.remaining];
+                Utils.shuffle(pool);
+                Draw.winners = pool.splice(0, Draw.cnt);
+
+                // Send Stop Command
+                bc.postMessage({
+                    type: 'STOP',
+                    winners: Draw.winners
+                });
+
+                // Local Feedback
+                const a = document.getElementById('result-area');
+                a.querySelector('div').innerHTML = `<h3 style="color:#fff;">開獎中...</h3><p>請關注大螢幕</p>`;
+
+                // Sync Status
+                if (window.Cloud) window.Cloud.updateStatus('STOPPED');
+            },
+
+            exit: () => {
+                // Return to welcome state on display, but with updated prize data
+                bc.postMessage({
+                    type: 'RESET',
+                    data: {
+                        title: appData.activityName,
+                        subtitle: appData.subtitle,
+                        prizes: appData.prizes
+                    }
+                });
+                document.getElementById('screen-draw').classList.add('hidden');
+                Dashboard.render();
+            }
+        };
+
+        // Listen for done signal from display
+        bc.onmessage = (ev) => {
+            const data = ev.data;
+            if (data.type === 'DONE') {
+                Draw.finalize();
+            } else if (data.type === 'DISPLAY_READY') {
+                // Send Init Data
+                bc.postMessage({
+                    type: 'INIT_DATA',
+                    title: appData.activityName,
+                    subtitle: appData.subtitle,
+                    prizes: appData.prizes
+                });
+            }
+        };
+
+        // Add method to update data after animation
+        Draw.finalize = () => {
+            appData.remaining = appData.remaining.filter(x => !Draw.winners.includes(x));
+            Draw.curr.winners.push(...Draw.winners);
+            Storage.save(appData);
+
+            Utils.showToast('開獎完成！');
+
+            const a = document.getElementById('result-area');
+            a.querySelector('div').innerHTML = `<h3 style="color:var(--primary);">開獎完成</h3>
+                <div style="margin-top:10px; max-height:200px; overflow-y:auto; font-size:1.2rem;">
+                    ${Draw.winners.join(', ')}
+                </div>`;
+
+            const btn = document.getElementById('btn-draw-action');
+            btn.innerText = '回儀表板';
+            btn.disabled = false;
+            btn.classList.remove('btn-danger');
+            btn.classList.add('btn-primary');
+            btn.onclick = Draw.exit;
+        };
+
+        // Spacebar shortcut
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !document.getElementById('screen-draw').classList.contains('hidden')) {
+                e.preventDefault();
+                Draw.action();
+            }
+        });
+
+        // Initialize Remote Listening
+        const initRemote = () => {
+            if (window.Cloud && window.Cloud.listenCmd) {
+                window.Cloud.listenCmd((cmd) => {
+                    // Only react if we are in Draw Screen
+                    if (document.getElementById('screen-draw').classList.contains('hidden')) return;
+
+                    if (cmd.type === 'START' && !Draw.isRolling) Draw.action();
+                    if (cmd.type === 'STOP' && Draw.isRolling) Draw.action();
+                });
+            }
+        };
+        setTimeout(initRemote, 2000); // Wait for Cloud init
+
+        const Results = {
+            show: () => {
+                document.getElementById('screen-results').classList.remove('hidden');
+                const l = document.getElementById('results-list');
+                l.innerHTML = '';
+
+                if (appData.prizes.every(p => p.winners.length === 0)) {
+                    l.innerHTML = '<div style="text-align:center;color:#666;padding:20px;">尚無中獎紀錄</div>';
+                    return;
+                }
+
+                appData.prizes.forEach(p => {
+                    if (p.winners.length) {
+                        const d = document.createElement('div');
+                        d.style.marginBottom = '20px';
+                        d.style.background = 'rgba(255,255,255,0.05)';
+                        d.style.padding = '15px';
+                        d.style.borderRadius = '8px';
+                        d.innerHTML = `
+                            <h4 style="color:${p.isSpecial ? 'var(--gold)' : 'var(--primary)'}; margin-bottom:10px; font-size:1.2rem;">${p.name} <span style="font-size:0.8rem;color:#aaa;">(共${p.winners.length}人)</span></h4>
+                            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                                ${p.winners.map(x => `<span style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:5px 10px; border-radius:4px;">${x}</span>`).join('')}
+                            </div>`;
+                        l.appendChild(d);
+                    }
+                });
+            },
+            close: () => document.getElementById('screen-results').classList.add('hidden')
+        };
+
+        window.addEventListener('DOMContentLoaded', App.init);
+    </script>
+</body>
+
+</html>
