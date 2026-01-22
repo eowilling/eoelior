@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>抽獎遙控器</title>
+    <script src="firebase-config.js"></script>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        #status {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #aaa;
+            text-align: center;
+        }
+
+        #action-btn {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: none;
+            background: #222;
+            color: #555;
+            font-size: 2.5rem;
+            font-weight: bold;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+            transition: 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #action-btn.ready-start {
+            background: #00f2ff;
+            color: #000;
+            box-shadow: 0 0 60px rgba(0, 242, 255, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        #action-btn.ready-stop {
+            background: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 60px rgba(255, 0, 85, 0.4);
+        }
+
+        #action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.8rem;
+            color: #444;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 30px rgba(0, 242, 255, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 242, 255, 0);
+            }
+        }
+
+        input {
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            width: 80%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="setup-panel">
+        <h2 style="color:#00f2ff;">🔗 連線設定</h2>
+        <input type="text" id="activity-name" placeholder="輸入活動名稱 (需與主控台一致)">
+        <button onclick="connect()"
+            style="padding:10px 30px; background:#00f2ff; border:none; border-radius:4px; font-weight:bold;">連線</button>
+    </div>
+
+    <div id="control-panel" style="display:none; text-align:center;">
+        <div id="status">等待信號...</div>
+        <button id="action-btn" onclick="triggerAction()">連線中...</button>
+    </div>
+
+    <div class="info">Rebox Remote v1.0</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        let db = null;
+        let activityId = null;
+        let currentState = 'IDLE';
+
+        window.connect = () => {
+            const name = document.getElementById('activity-name').value.trim();
+            if (!name) return alert('請輸入活動名稱');
+
+            activityId = btoa(encodeURIComponent(name)).replace(/[^a-zA-Z0-9]/g, '');
+
+            if (window.__firebase_config) {
+                const app = initializeApp(window.__firebase_config);
+                db = getDatabase(app);
+
+                document.getElementById('setup-panel').style.display = 'none';
+                document.getElementById('control-panel').style.display = 'block';
+
+                startListen();
+            } else {
+                alert('未找到 Firebase 設定');
+            }
+        };
+
+        // Auto connect if query param exists
+        const urlParams = new URLSearchParams(window.location.search);
+        const qName = urlParams.get('name');
+        if (qName) {
+            document.getElementById('activity-name').value = qName;
+            // Delay slightly to ensure config loads
+            setTimeout(window.connect, 500);
+        } else {
+            // Default value for quick test
+            document.getElementById('activity-name').value = "2024 年度尾牙大抽獎";
+        }
+
+        function startListen() {
+            const statusRef = ref(db, 'events/' + activityId + '/status');
+            onValue(statusRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val) {
+                    currentState = val.state;
+                    updateUI(currentState);
+                }
+            });
+        }
+
+        function updateUI(state) {
+            const btn = document.getElementById('action-btn');
+            const status = document.getElementById('status');
+
+            btn.className = '';
+
+            if (state === 'ROLLING') {
+                status.innerText = '正在滾動抽獎...';
+                btn.innerText = '停止';
+                btn.classList.add('ready-stop');
+            } else if (state === 'STOPPED' || state === 'IDLE') {
+                status.innerText = '準備就緒';
+                btn.innerText = '開始';
+                btn.classList.add('ready-start');
+            } else {
+                status.innerText = '未知狀態';
+                btn.innerText = '---';
+            }
+        }
+
+        window.triggerAction = () => {
+            if (!db || !activityId) return;
+
+            const cmd = currentState === 'ROLLING' ? 'STOP' : 'START';
+
+            set(ref(db, 'events/' + activityId + '/cmd'), {
+                type: cmd,
+                timestamp: Date.now()
+            });
+
+            // Haptic feed back if available
+            if (navigator.vibrate) navigator.vibrate(50);
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽獎大螢幕 | Rebox Display</title>
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --accent: #ff0055;
+            --gold: #ffd700;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Rajdhani', 'Microsoft JhengHei', sans-serif;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            /* Full screen immersion */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sci-Fi Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%),
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 50px 50px, 50px 50px;
+            z-index: -1;
+        }
+
+        .header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .prize-title {
+            font-size: 4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px var(--primary);
+            color: #fff;
+        }
+
+        .prize-title.special {
+            color: var(--gold);
+            text-shadow: 0 0 30px var(--gold);
+        }
+
+        .stats-box {
+            text-align: right;
+            color: #aaa;
+            font-size: 1.2rem;
+        }
+
+        .main-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        /* Grid Container */
+        .result-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 1800px;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Sizes */
+        .card.size-normal {
+            width: 220px;
+            height: 160px;
+            font-size: 2.5rem;
+        }
+
+        .card.size-small {
+            width: 140px;
+            height: 100px;
+            font-size: 1.8rem;
+        }
+
+        .card.size-tiny {
+            width: 90px;
+            height: 60px;
+            font-size: 1rem;
+        }
+
+        /* States */
+        .card.rolling {
+            animation: pulse 0.1s infinite;
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--primary);
+            text-shadow: 0 0 5px var(--primary);
+        }
+
+        .card.revealed {
+            background: var(--primary);
+            color: #000;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--primary);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-color: #fff;
+        }
+
+        .card.special {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .card.special.rolling {
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--gold);
+            text-shadow: 0 0 5px var(--gold);
+        }
+
+        .card.special.revealed {
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 50px var(--gold);
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 30px;
+            border-radius: 30px;
+            border: 1px solid #333;
+            color: #888;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        #celebration-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .confetti {
+            position: absolute;
+            top: -20px;
+            width: 10px;
+            height: 10px;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(720deg);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 10px currentColor;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+
+        /* Waiting Screen */
+        #waiting-state {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+        }
+
+        .waiting-text {
+            font-size: 2rem;
+            color: var(--primary);
+            letter-spacing: 5px;
+            animation: breathe 3s infinite;
+            text-transform: uppercase;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 20px var(--primary);
+            }
+        }
+
+        /* Welcome Prize List */
+        .welcome-grid {
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            width: 80%;
+            max-width: 1200px;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .prize-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .prize-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            color: #ccc;
+            min-width: 150px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .prize-pill.special {
+            border-color: var(--gold);
+            color: var(--gold);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+            font-weight: bold;
+            font-size: 1.4rem;
+        }
+
+        .count-badge {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="waiting-state">
+        <div id="display-title" class="waiting-text" style="font-size: 3rem;">Ready to Start</div>
+        <div id="display-sub" style="color:#aaa; font-size:1.5rem; letter-spacing:3px; margin-top:10px;">請在主控台操
+            作</div>
+        <div id="welcome-prizes" class="welcome-grid"></div>
+    </div>
+
+    <header class="header">
+        <div id="prize-name" class="prize-title">---</div>
+        <div class="stats-box">
+            本輪名額: <span id="draw-count" style="color:var(--primary); font-weight:bold;">0</span> |
+            <span id="host-name"
+                style="font-size:1rem; border:1px solid #555; padding:2px 10px; border-radius:10px;">---</span>
+        </div>
+    </header>
+
+    <div class="main-stage">
+        <div id="grid" class="result-grid"></div>
+    </div>
+
+    <div id="celebration-layer"></div>
+    <div class="status-bar" id="status-text">等待指令...</div>
+
+    <script>
+        const bc = new BroadcastChannel('rebox_channel');
+        const DOM = {
+            waiting: document.getElementById('waiting-state'),
+            title: document.getElementById('prize-name'),
+            count: document.getElementById('draw-count'),
+            host: document.getElementById('host-name'),
+            grid: document.getElementById('grid'),
+            status: document.getElementById('status-text'),
+            confetti: document.getElementById('celebration-layer')
+        };
+
+        const State = {
+            candidates: [],
+            rollingInterval: null,
+            prize: null
+        };
+
+        // Command Listener
+        bc.onmessage = (ev) => {
+            const cmd = ev.data;
+            // console.log('Received:', cmd);
+
+            if (cmd.type === 'INIT_DATA') {
+                updateWelcome(cmd);
+            } else if (cmd.type === 'START') {
+                startDraw(cmd);
+            } else if (cmd.type === 'PREPARE') {
+                prepareDraw(cmd);
+            } else if (cmd.type === 'STOP') {
+                stopDraw(cmd.winners);
+            } else if (cmd.type === 'RESET') {
+                if (cmd.data) updateWelcome(cmd.data); // If reset sends data back
+                else resetView();
+            }
+        };
+
+        function updateWelcome(data) {
+            if (!data) return;
+            DOM.waiting.style.display = 'flex';
+            document.getElementById('display-title').innerText = data.title || 'Welcome';
+            document.getElementById('display-sub').innerText = data.subtitle || '';
+
+            const list = document.getElementById('welcome-prizes');
+            list.innerHTML = '';
+
+            // Sort: Special first
+            const specials = data.prizes.filter(p => p.isSpecial);
+            const normals = data.prizes.filter(p => !p.isSpecial);
+
+            // Helper to create row
+            const addRow = (items, isSp) => {
+                if (!items.length) return;
+                const row = document.createElement('div');
+                row.className = 'prize-row';
+                items.forEach(p => {
+                    const el = document.createElement('div');
+                    el.className = `prize-pill ${isSp ? 'special' : ''}`;
+                    // Mark finished?
+                    const isDone = (p.winners && p.winners.length >= p.count);
+                    if (isDone) {
+                        el.style.opacity = '0.4';
+                        el.style.textDecoration = 'line-through';
+                    }
+                    el.innerHTML = `<span>${p.name}</span> <span class="count-badge">${p.count}名</span>`;
+                    row.appendChild(el);
+                });
+                list.appendChild(row);
+            };
+
+            // Chunking into groups of 5
+            const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
+
+            // Render Special Rows
+            chunk(specials, 5).forEach(group => addRow(group, true));
+
+            // Render Normal Rows
+            chunk(normals, 5).forEach(group => addRow(group, false));
+        }
+
+        function resetView() {
+            DOM.waiting.style.display = 'flex';
+            DOM.grid.innerHTML = '';
+            DOM.status.innerText = '等待指令...';
+        }
+
+        function prepareDraw(data) {
+            DOM.waiting.style.display = 'none';
+            DOM.title.innerText = data.prize.name;
+            DOM.title.className = `prize-title ${data.prize.isSpecial ? 'special' : ''}`;
+
+            const remaining = data.prize.count - (data.prize.winners ? data.prize.winners.length : 0);
+            DOM.count.innerText = remaining;
+            DOM.host.innerText = data.host || '嘉賓';
+
+            DOM.grid.innerHTML = '';
+            DOM.status.innerText = '準備中...';
+            DOM.confetti.innerHTML = '';
+        }
+
+        function startDraw(data) {
+            DOM.waiting.style.display = 'none';
+            DOM.title.innerText = data.prize.name;
+            DOM.title.className = `prize-title ${data.prize.isSpecial ? 'special' : ''}`;
+            DOM.count.innerText = data.count;
+            DOM.host.innerText = data.host || '嘉賓';
+            DOM.status.innerText = '滾動中...';
+
+            State.prize = data.prize;
+            State.candidates = data.candidates || ['No Data'];
+
+            // Build Grid
+            DOM.grid.innerHTML = '';
+            let sizeClass = 'size-normal';
+            if (data.count > 50) sizeClass = 'size-tiny';
+            else if (data.count > 12) sizeClass = 'size-small';
+
+            for (let i = 0; i < data.count; i++) {
+                const el = document.createElement('div');
+                el.className = `card rolling ${data.prize.isSpecial ? 'special' : ''} ${sizeClass}`;
+                el.innerText = '???';
+                DOM.grid.appendChild(el);
+            }
+
+            // Start Rolling Motion
+            if (State.rollingInterval) clearInterval(State.rollingInterval);
+            State.rollingInterval = setInterval(() => {
+                const cards = document.querySelectorAll('.card.rolling');
+                cards.forEach(c => {
+                    c.innerText = State.candidates[Math.floor(Math.random() * State.candidates.length)];
+                });
+            }, 50);
+        }
+
+        function stopDraw(winners) {
+            clearInterval(State.rollingInterval);
+            DOM.status.innerText = '開獎中...';
+
+            const cards = Array.from(DOM.grid.children);
+
+            cards.forEach((card, i) => {
+                const delay = State.prize.isSpecial ? i * 1500 : i * 500; // Slower for special
+
+                setTimeout(() => {
+                    card.classList.remove('rolling');
+                    card.classList.add('revealed');
+                    card.innerText = winners[i];
+
+                    // Sound effect trigger could go here
+
+                    if (i === cards.length - 1) {
+                        celebrate();
+                    }
+                }, delay);
+            });
+        }
+
+        function celebrate() {
+            DOM.status.innerText = '恭喜中獎！';
+            DOM.confetti.innerHTML = '';
+            const pCount = State.prize.isSpecial ? 300 : 100;
+
+            for (let i = 0; i < pCount; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.backgroundColor = State.prize.isSpecial ?
+                    ['#ffd700', '#fff', '#ffa500'][Math.floor(Math.random() * 3)] :
+                    ['#00f2ff', '#7000ff', '#ff0055'][Math.floor(Math.random() * 3)];
+                c.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                DOM.confetti.appendChild(c);
+            }
+            setTimeout(() => DOM.confetti.innerHTML = '', 6000);
+
+            // Notify Controller
+            bc.postMessage({ type: 'DONE' });
+        }
+
+        // Notify controller we are alive
+        bc.postMessage({ type: 'DISPLAY_READY' });
+
+        // Fullscreen Toggle on Double Click
+        document.body.addEventListener('dblclick', () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        });
+
+    </script>
+</body>
+
+</html>
