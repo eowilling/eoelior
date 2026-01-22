@@ -142,6 +142,22 @@
             box-shadow: 0 0 20px var(--warning);
         }
 
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #ff0055;
+            box-shadow: 0 0 10px #ff0055;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .status-dot.connected {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
         /* Screens */
         section {
             padding: 20px;
@@ -567,9 +583,11 @@
 
     <!-- 1. Welcome Screen -->
     <section id="screen-welcome" class="welcome-wrapper">
-        <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px;">
-            <button class="btn btn-outline" onclick="Draw.openDisplay()">🖥️ 開啟大螢幕</button>
-            <button class="btn btn-outline" onclick="App.goToSetup()">⚙️ 設定</button>
+        <div style="position:absolute; top:20px; right:20px; display:flex; align-items:center;">
+            <div id="conn-status" class="status-dot tooltip" title="未連線"></div>
+            <button class="btn btn-outline" onclick="App.showRemoteQR()">📱 長官遙控器</button>
+            <button class="btn btn-outline" style="margin-left:10px;" onclick="Draw.openDisplay()">🖥️ 開啟大螢幕</button>
+            <button class="btn btn-outline" style="margin-left:10px;" onclick="App.goToSetup()">⚙️ 設定</button>
         </div>
         <h1 id="display-activity-name" class="main-title">2024 年度尾牙大抽獎</h1>
         <p id="display-subtitle" class="subtitle">Lucky Draw System Pro</p>
@@ -734,12 +752,27 @@
                     if (window.__firebase_config) {
                         const app = initializeApp(window.__firebase_config);
                         window.Cloud.db = getDatabase(app);
-                        console.log("Firebase initialized with project:", window.__firebase_config.projectId);
+                        console.log("Firebase initialized");
 
-                        // Optional: Listen for remote Start/Stop commands in the future
-                        // For now we just ensure connectivity
+                        // Connection Status Listener
+                        const connectedRef = ref(window.Cloud.db, ".info/connected");
+                        onValue(connectedRef, (snap) => {
+                            const connected = snap.val() === true;
+                            const el = document.getElementById('conn-status');
+                            if (el) {
+                                if (connected) {
+                                    el.classList.add('connected');
+                                    el.title = "已連線至雲端";
+                                } else {
+                                    el.classList.remove('connected');
+                                    el.title = "已斷線";
+                                }
+                            }
+                            console.log("Connection Status:", connected);
+                        });
+
                     } else {
-                        console.warn("No Firebase Config found in window.__firebase_config");
+                        console.warn("No Firebase Config found");
                     }
                 } catch (e) {
                     console.error("Firebase Init Error", e);
@@ -959,6 +992,8 @@
                 document.getElementById('screen-welcome').classList.remove('hidden');
                 document.getElementById('display-activity-name').innerText = appData.activityName;
                 document.getElementById('display-subtitle').innerText = appData.subtitle;
+                document.title = appData.activityName + " | Rebox"; // Sync Page Title
+
                 document.getElementById('total-people').innerText = appData.remaining.length;
 
                 // Populate Showcase
@@ -981,9 +1016,11 @@
                 document.getElementById('screen-dashboard').classList.remove('hidden');
             },
             showRemoteQR: () => {
-                // Generate URL
-                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/')) + '/remote.html';
-                const fullUrl = `${baseUrl}?name=${encodeURIComponent(appData.activityName)}`;
+                // Generate URL robustly
+                const url = new URL('remote.html', window.location.href);
+                url.searchParams.set('name', appData.activityName);
+                const fullUrl = url.href;
+
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
 
                 document.getElementById('remote-qr-img').src = qrUrl;
