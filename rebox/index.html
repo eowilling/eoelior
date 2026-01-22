@@ -753,6 +753,7 @@
                         const app = initializeApp(window.__firebase_config);
                         window.Cloud.db = getDatabase(app);
                         console.log("Firebase initialized");
+                        window.Cloud.lastError = null;
 
                         // Connection Status Listener
                         const connectedRef = ref(window.Cloud.db, ".info/connected");
@@ -762,20 +763,29 @@
                             if (el) {
                                 if (connected) {
                                     el.classList.add('connected');
-                                    el.title = "已連線至雲端";
+                                    el.title = "已連線至雲端 (點擊查看詳情)";
                                 } else {
                                     el.classList.remove('connected');
-                                    el.title = "已斷線";
+                                    el.title = "已斷線 (點擊查看詳情)";
                                 }
+                                // Debug click
+                                el.onclick = () => {
+                                    alert(`Firebase 連線狀態診斷:\n\n1. 連線狀態: ${connected ? '🟢 已連線' : '🔴 未連線'}\n2. Project ID: ${window.__firebase_config.projectId}\n3. Database URL: ${window.__firebase_config.databaseURL}\n\n如果不通，請檢查 (非常重要!):\n- Firebase Realtime Database Rule 是否設為 read: true, write: true\n- 網路是否正常`);
+                                };
                             }
                             console.log("Connection Status:", connected);
                         });
 
                     } else {
                         console.warn("No Firebase Config found");
+                        window.Cloud.lastError = "No Config Found";
                     }
                 } catch (e) {
                     console.error("Firebase Init Error", e);
+                    window.Cloud.lastError = e.message;
+                    // Try to attach click to red dot if possible
+                    const el = document.getElementById('conn-status');
+                    if (el) el.onclick = () => alert("Firebase 初始化失敗:\n" + e.message);
                 }
             },
             save: (data) => {
