@@ -585,7 +585,7 @@
     <section id="screen-welcome" class="welcome-wrapper">
         <div style="position:absolute; top:20px; right:20px; display:flex; align-items:center;">
             <div id="conn-status" class="status-dot tooltip" title="未連線"></div>
-            <button class="btn btn-outline" onclick="App.showRemoteQR()">📱 長官遙控器</button>
+            <button class="btn btn-outline" onclick="App.showRemoteQR()">📱 主持人遙控器</button>
             <button class="btn btn-outline" style="margin-left:10px;" onclick="Draw.openDisplay()">🖥️ 開啟大螢幕</button>
             <button class="btn btn-outline" style="margin-left:10px;" onclick="App.goToSetup()">⚙️ 設定</button>
         </div>
@@ -640,7 +640,7 @@
             <h2 style="font-size:2rem;">🎉 抽獎控制台</h2>
             <div class="flex gap-4">
                 <button class="btn btn-outline" style="border-color:var(--primary); color:var(--primary);"
-                    onclick="App.showRemoteQR()">📱 長官遙控器</button>
+                    onclick="App.showRemoteQR()">📱 主持人遙控器</button>
                 <button class="btn btn-outline" onclick="Draw.openDisplay()">🖥️ 開啟大螢幕</button>
                 <button class="btn btn-outline" onclick="Results.show()">📜 中獎名單</button>
                 <button class="btn btn-danger" onclick="location.reload()">結束活動</button>
@@ -720,7 +720,7 @@
     <section id="screen-remote-qr" class="modal-overlay hidden"
         onclick="if(event.target === this) this.classList.add('hidden')">
         <div class="modal-content" style="text-align:center;">
-            <h3 style="color:var(--primary); margin-bottom:10px;">📱 長官遙控器連線</h3>
+            <h3 style="color:var(--primary); margin-bottom:10px;">📱 主持人遙控器連線</h3>
             <p style="color:#aaa; margin-bottom:20px;">請使用手機掃描下方 QR Code 即可連線</p>
             <div style="background:#fff; padding:20px; display:inline-block; border-radius:10px;">
                 <img id="remote-qr-img" src="" alt="Remote QR Code" style="width:250px; height:250px;">
@@ -1063,7 +1063,7 @@
                 document.getElementById('remote-url-text').innerText = fullUrl;
                 document.getElementById('remote-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fullUrl)}`;
 
-                const title = prizeName ? `獎項專屬遙控: ${prizeName}` : `長官遙控器連線 (主控)`;
+                const title = prizeName ? `獎項專屬遙控: ${prizeName}` : `主持人遙控器連線 (主控)`;
                 el.querySelector('h3').innerText = title;
             }
         };
