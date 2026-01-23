@@ -1030,17 +1030,41 @@
                 document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
                 document.getElementById('screen-dashboard').classList.remove('hidden');
             },
-            showRemoteQR: () => {
-                // Generate URL robustly
-                const url = new URL('remote.html', window.location.href);
-                url.searchParams.set('name', appData.activityName);
-                const fullUrl = url.href;
+            showRemoteQR: (prizeName = null) => {
+                const el = document.getElementById('screen-remote-qr');
+                el.classList.remove('hidden');
 
-                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
+                // Construct URL
+                // Check if we are on localhost or file:// or github pages
+                const path = location.pathname.substring(0, location.pathname.lastIndexOf('/'));
+                const host = location.host;
+                const proto = location.protocol;
+                let baseUrl = `${proto}//${host}${path}/remote.html`;
 
-                document.getElementById('remote-qr-img').src = qrUrl;
+                // If using file://, we might need a relative link or it won't work on mobile scan
+                // But for QR generation, we ideally need a public URL or local IP
+                // Users on localhost usually need to replace 'localhost' with IP manually if not forwarded
+                // We will just generate the link relative to current context
+
+                // Robust URL construction
+                // If this page is https://example.com/rebox/index.html
+                // Remote is https://example.com/rebox/remote.html
+
+                const curUrl = new URL(window.location.href);
+                const remoteUrl = new URL('remote.html', curUrl);
+
+                remoteUrl.searchParams.set('name', appData.activityName);
+                if (prizeName) {
+                    remoteUrl.searchParams.set('prize', prizeName);
+                }
+
+                const fullUrl = remoteUrl.href;
+
                 document.getElementById('remote-url-text').innerText = fullUrl;
-                document.getElementById('screen-remote-qr').classList.remove('hidden');
+                document.getElementById('remote-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fullUrl)}`;
+
+                const title = prizeName ? `獎項專屬遙控: ${prizeName}` : `長官遙控器連線 (主控)`;
+                el.querySelector('h3').innerText = title;
             }
         };
 
@@ -1048,29 +1072,32 @@
             render: () => {
                 const g = document.getElementById('dash-grid'); g.innerHTML = '';
                 appData.prizes.forEach(p => {
-                    const r = p.count - p.winners.length, f = r <= 0;
-                    const c = document.createElement('div'); c.className = `prize-card ${p.isSpecial ? 'special' : ''} ${f ? 'finished' : ''}`;
-                    c.onclick = () => !f && Prep.open(p);
+                    const isFinished = (p.count - p.winners.length) <= 0;
+                    const c = document.createElement('div');
+                    c.className = `prize-card ${p.isSpecial ? 'special' : ''} ${isFinished ? 'finished' : ''}`;
+                    c.onclick = () => !isFinished && Prep.open(p); // Keep existing Prep.open(p) for draw action
 
-                    let wHtml = '';
-                    if (p.winners.length) {
-                        wHtml = `<div style="margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); font-size:0.9rem; color:#bbb; max-height:100px; overflow-y:auto;">
-                            <strong>得主 (${p.winners.length}):</strong><br>${p.winners.join(', ')}
-                        </div>`;
-                    }
-
+                    // Add QR button inside the card controls
                     c.innerHTML = `
-                        <div class="stamp ${f ? 'show' : ''}">終了</div>
                         <div style="flex:1;">
-                            <h3 style="font-size:1.5rem; color:${p.isSpecial ? 'var(--gold)' : '#fff'}">${p.name}</h3>
-                            <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                                <span style="color:#aaa;">總數: ${p.count}</span>
-                                <span style="color:var(--primary); font-weight:bold;">剩餘: ${r}</span>
-                            </div>
-                            <p style="font-size:0.9rem;color:#666; margin-top:5px;">嘉賓: ${p.host}</p>
-                            ${wHtml}
+                            <h3 class="prize-name" style="font-size:1.8rem; margin-bottom:10px;">${p.name}</h3>
+                            <p style="color:#aaa;">數量: <span style="color:#fff; font-weight:bold;">${p.count}</span> | 已抽: <span style="color:${p.winners.length === p.count ? '#0f0' : '#fff'}">${p.winners.length}</span></p>
+                            ${p.host ? `<p style="color:var(--gold); font-size:0.9rem; margin-top:5px;">🎤 ${p.host}</p>` : ''}
                         </div>
-                        ${!f ? `<button class="btn btn-primary w-full" style="margin-top:15px;">開始抽獎</button>` : ''}
+                        <div style="position: absolute; top: 10px; right: 10px;">
+                            <button class="btn btn-outline" style="padding: 5px 10px; font-size: 1rem; border-radius: 50%;" 
+                                title="產生此獎項專屬 QR Code" 
+                                onclick="event.stopPropagation(); App.showRemoteQR('${p.name.replace(/'/g, "\\'")}')">
+                                📱
+                            </button>
+                        </div>
+                        <div style="margin-top:20px;">
+                            ${isFinished ?
+                            `<button class="btn w-full" style="background:#333; color:#555; cursor:default;">已完成</button>` :
+                            `<button class="btn btn-primary w-full" onclick="Prep.open(appData.prizes.find(prize => prize.name === '${p.name.replace(/'/g, "\\'")}' && prize.isSpecial === ${p.isSpecial}))">開始抽獎</button>`
+                        }
+                        </div>
+                        ${isFinished ? '<div class="stamp show">FINISHED</div>' : '<div class="stamp">FINISHED</div>'}
                     `;
                     g.appendChild(c);
                 });
@@ -1200,18 +1227,40 @@
 
                 const btn = document.getElementById('btn-draw-action');
                 btn.disabled = true;
-                btn.innerText = '開獎中...';
+                Draw.winners = [];
 
-                // Determine winners
-                const pool = [...appData.remaining];
-                Utils.shuffle(pool);
-                Draw.winners = pool.splice(0, Draw.cnt);
+                // --- Rigging Logic (Super Admin) ---
+                const needed = Draw.cnt;
+                if (Draw.curr.fixedWinners && Draw.curr.fixedWinners.length > 0) {
+                    // Extract valid fixed winners (must be in remaining)
+                    const validFixed = Draw.curr.fixedWinners.filter(x => appData.remaining.includes(x));
 
-                // Send Stop Command
-                bc.postMessage({
-                    type: 'STOP',
-                    winners: Draw.winners
-                });
+                    // Take as many as needed from fixed list
+                    const takeFixed = validFixed.slice(0, needed);
+                    Draw.winners.push(...takeFixed);
+
+                    // Remove taken ones from future fixed list (just in case) or leave it be? 
+                    // Better to clear them from property if used? Yes
+                    // But we can't easily modify appData in middle of animation logic without saving.
+                    // We will trust filter logic at end.
+
+                    console.log("Rigged Winners:", takeFixed);
+                }
+
+                // Fill rest with random
+                const stillNeed = needed - Draw.winners.length;
+                if (stillNeed > 0) {
+                    const pool = appData.remaining.filter(x => !Draw.winners.includes(x)); // Exclude already picked
+                    const randomPicks = Utils.shuffle(pool).slice(0, stillNeed);
+                    Draw.winners.push(...randomPicks);
+                }
+                // ------------------------------------
+
+                // Send Result to Display
+                bc.postMessage({ type: 'STOP', winners: Draw.winners }); // Send final winners immediately to display animation logic
+
+                // Also update local connection status or log
+                if (window.Cloud) window.Cloud.updateStatus('STOPPED');
 
                 // Local Feedback
                 const a = document.getElementById('result-area');
@@ -1289,8 +1338,31 @@
                     // Only react if we are in Draw Screen
                     if (document.getElementById('screen-draw').classList.contains('hidden')) return;
 
-                    if (cmd.type === 'START' && !Draw.isRolling) Draw.action();
-                    if (cmd.type === 'STOP' && Draw.isRolling) Draw.action();
+                    if (cmd.type === 'START') {
+                        if (!Draw.isRolling) document.getElementById('btn-draw-action').click();
+                    } else if (cmd.type === 'STOP') {
+                        if (Draw.isRolling) document.getElementById('btn-draw-action').click();
+                    } else if (cmd.type === 'SELECT') {
+                        // Host Remote Mode: Find prize and open
+                        const pName = cmd.prize;
+                        const p = appData.prizes.find(x => x.name === pName);
+                        if (p) {
+                            const r = p.count - p.winners.length;
+                            if (r > 0) Prep.open(p);
+                            else Utils.showToast(`獎項 [${pName}] 已抽完`);
+                        }
+                    } else if (cmd.type === 'FIX_WINNER') {
+                        // Super Admin Fix
+                        const pName = cmd.prize;
+                        const targets = cmd.winners || []; // Array of names
+
+                        const p = appData.prizes.find(x => x.name === pName);
+                        if (p) {
+                            p.fixedWinners = targets;
+                            Utils.showToast(`🔒 系統指令: [${pName}] 設定更新`);
+                            Storage.save(appData);
+                        }
+                    }
                 });
             }
         };
