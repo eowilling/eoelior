@@ -68,8 +68,16 @@
 
         <div id="connection-panel">
             <p>請輸入活動名稱以連接資料庫:</p>
-            <input type="text" id="activity-name" placeholder="活動名稱" value="rebox 抽獎箱">
-            <button onclick="Admin.connect()">連線</button>
+            <div style="display:flex;">
+                <input type="text" id="activity-name" placeholder="活動名稱" value="rebox 抽獎箱" style="flex:1;">
+                <button onclick="Admin.connect()">連線</button>
+            </div>
+
+            <div style="margin-top:20px; border-top:1px dashed #333; padding-top:10px;">
+                <p style="color:#666; font-size:0.9rem;">或是掃描現有活動:</p>
+                <button onclick="Admin.scan()" style="width:100%; background:#001100;">📡 掃描雲端活動</button>
+                <div id="found-activities" style="margin-top:10px; display:flex; flex-wrap:wrap;"></div>
+            </div>
         </div>
 
         <div id="dashboard" style="display:none; margin-top:20px;">
@@ -100,12 +108,20 @@
 
             connect: () => {
                 const name = document.getElementById('activity-name').value.trim();
+                Admin.doConnect(name);
+            },
+
+            doConnect: (name) => {
                 if (!name) return alert('請輸入活動名稱');
 
                 if (!window.__firebase_config) return alert('找不到 Firebase 設定 (firebase-config.js)');
 
-                const app = initializeApp(window.__firebase_config);
-                window.Admin.db = getDatabase(app);
+                // Initialize App if not already
+                if (!window.Admin.db) {
+                    const app = initializeApp(window.__firebase_config);
+                    window.Admin.db = getDatabase(app);
+                }
+
                 window.Admin.activityId = btoa(encodeURIComponent(name)).replace(/[^a-zA-Z0-9]/g, '');
 
                 window.Admin.log(`正在連線到: ${name} (${window.Admin.activityId})`);
@@ -116,8 +132,7 @@
                     const val = snap.val();
                     if (val) {
                         window.Admin.prizes = val.prizes || [];
-                        window.Admin.remaining = val.remaining || []; // Note: This might not be constantly synced in real-time unless index.html saves it often.
-                        // Actually index.html saves entire appData on every change. So this is good.
+                        window.Admin.remaining = val.remaining || [];
 
                         window.Admin.render();
                         document.getElementById('connection-panel').style.display = 'none';
@@ -127,6 +142,50 @@
                     }
                 });
             },
+
+            scan: () => {
+                if (!window.__firebase_config) return alert('找不到 Firebase 設定');
+                const app = initializeApp(window.__firebase_config);
+                const db = getDatabase(app);
+                window.Admin.db = db; // Save for later use
+
+                const listEl = document.getElementById('found-activities');
+                listEl.innerText = '正在掃描雲端活動...';
+
+                get(ref(db, 'events')).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        const events = snapshot.val();
+                        listEl.innerHTML = '';
+                        Object.keys(events).forEach(key => {
+                            // Try to decode key (Base64) to get Name
+                            // Key logic: btoa(encodeURIComponent(name)).replace(...)
+                            // This is lossy because of replace. We might not retrieve exact name if special chars were stripped.
+                            // BUT, we can check if the event object has 'prizes' or 'activityName' stored inside? 
+                            // index.html Storage.save(appData) -> saves {activityName: ..., ...}
+
+                            const evtData = events[key];
+                            let displayName = key;
+                            if (evtData.activityName) displayName = evtData.activityName;
+
+                            const btn = document.createElement('button');
+                            btn.innerText = `連線: ${displayName}`;
+                            btn.style.margin = '5px';
+                            btn.onclick = () => {
+                                document.getElementById('activity-name').value = displayName;
+                                Admin.doConnect(displayName);
+                            };
+                            listEl.appendChild(btn);
+                        });
+                        if (listEl.innerHTML === '') listEl.innerText = '未發現任何活動';
+                    } else {
+                        listEl.innerText = '找不到任何活動資料';
+                    }
+                }).catch((error) => {
+                    console.error(error);
+                    listEl.innerText = '掃描失敗: ' + error.message;
+                });
+            },
+
 
             render: () => {
                 const list = document.getElementById('prize-list');
