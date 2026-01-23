@@ -1097,16 +1097,17 @@
             },
 
             endEvent: () => {
-                if (!confirm('確定要結束活動嗎？\n\n大螢幕將顯示中獎查詢 QR Code')) return;
+                if (!confirm('確定要結束活動嗎？\n\n大螢幕將顯示完整中獎名單')) return;
 
-                // Send END command to display
+                // Send END command to display with prizes data
                 const channel = new BroadcastChannel('rebox_channel');
                 channel.postMessage({
                     type: 'END_EVENT',
-                    activityName: appData.activityName
+                    activityName: appData.activityName,
+                    prizes: appData.prizes
                 });
 
-                Utils.showToast('活動已結束，大螢幕顯示查詢 QR Code');
+                Utils.showToast('活動已結束，大螢幕顯示中獎名單');
             }
         };
 
