@@ -1397,6 +1397,14 @@
                         // Auto-confirm prep screen if it's open
                         if (!document.getElementById('screen-prep').classList.contains('hidden')) {
                             Prep.confirm();
+                            // After Prep.confirm() calls Draw.start(), we need to trigger the roll
+                            // Draw.start() opens the screen but doesn't start rolling
+                            // We need to wait a moment for the screen to open, then trigger Draw.rollFn()
+                            setTimeout(() => {
+                                if (!Draw.isRolling && !document.getElementById('screen-draw').classList.contains('hidden')) {
+                                    Draw.rollFn();
+                                }
+                            }, 500);
                         }
                     }
                 });
