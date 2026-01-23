@@ -1065,6 +1065,32 @@
 
                 const title = prizeName ? `長官遙控器: ${prizeName}` : `主持人遙控器連線 (主控)`;
                 el.querySelector('h3').innerText = title;
+            },
+
+            resetPrize: (pName) => {
+                if (!confirm(`確定要重置 [${pName}] 嗎？\n\n警告：\n1. 目前該獎項已中獎名單將被清除。\n2. 這些人將被放回「未中獎池」。\n3. 此動作無法復原。`)) return;
+
+                const p = appData.prizes.find(x => x.name === pName);
+                if (!p) return;
+
+                // Recover winners to pool
+                if (p.winners.length > 0) {
+                    // Filter out duplicates just in case
+                    const validRecover = p.winners.filter(x => !appData.remaining.includes(x));
+                    appData.remaining.push(...validRecover);
+                    p.winners = []; // Clear
+                    Storage.save(appData);
+
+                    // Reset Display View if needed? 
+                    // We should probably broadcast a reset or simply let it be.
+                    // The display currently accumulates revealed cards. 
+                    // If we reset, we might want to tell display that this prize is fresh.
+                    // But display is stateless on refresh or PREPARE command.
+                    // So just saving is enough.
+
+                    Dashboard.render();
+                    Utils.showToast(`[${pName}] 已重置`);
+                }
             }
         };
 
@@ -1091,11 +1117,14 @@
                                 📱 長官遙控
                             </button>
                         </div>
-                        <div style="margin-top:20px;">
+                        </div>
+                        <div style="margin-top:20px; display:flex; gap:10px;">
                             ${isFinished ?
                             `<button class="btn w-full" style="background:#333; color:#555; cursor:default;">已完成</button>` :
                             `<button class="btn btn-primary w-full" onclick="Prep.open(appData.prizes.find(prize => prize.name === '${p.name.replace(/'/g, "\\'")}' && prize.isSpecial === ${p.isSpecial}))">開始抽獎</button>`
                         }
+                            ${p.winners.length > 0 ?
+                            `<button class="btn btn-warning" style="padding:0 15px;" title="重置本獎項 (已中獎者回歸)" onclick="event.stopPropagation(); App.resetPrize('${p.name.replace(/'/g, "\\'")}')">↺</button>` : ''}
                         </div>
                         ${isFinished ? '<div class="stamp show">FINISHED</div>' : '<div class="stamp">FINISHED</div>'}
                     `;
