@@ -359,36 +359,49 @@
             prize: null
         };
 
-        function showEndScreen(activityName) {
+        function showEndScreen(data) {
             // Clear everything
-            DOM.title.innerText = '活動圓滿結束';
+            DOM.title.innerText = '🎊 中獎名單 🎊';
             DOM.title.style.color = '#ffd700';
-            DOM.subtitle.innerText = '感謝參與！';
+            DOM.subtitle.innerText = data.activityName || '活動圓滿結束';
             DOM.host.innerText = '';
             DOM.status.innerText = '';
 
-            // Generate QR Code URL
-            const curUrl = new URL(window.location.href);
-            const resultsUrl = new URL('results.html', curUrl);
-            resultsUrl.searchParams.set('name', activityName);
-            const fullUrl = resultsUrl.href;
+            // Build winners list HTML
+            let html = '<div style="padding:40px; max-height:80vh; overflow-y:auto;">';
 
-            // Show QR Code
-            DOM.grid.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:30px;">
-                    <div style="font-size:2rem; color:#00f2ff; text-align:center;">
-                        掃描 QR Code 查詢中獎結果
+            // Sort: Special prizes first
+            const sorted = [...data.prizes].sort((a, b) => {
+                if (a.isSpecial && !b.isSpecial) return -1;
+                if (!a.isSpecial && b.isSpecial) return 1;
+                return 0;
+            });
+
+            sorted.forEach(prize => {
+                const color = prize.isSpecial ? '#ffd700' : '#00f2ff';
+                const hasWinners = prize.winners && prize.winners.length > 0;
+
+                html += `
+                    <div style="margin-bottom:40px; padding:20px; background:rgba(0,0,0,0.3); border-radius:10px; border-left:5px solid ${color};">
+                        <div style="font-size:2rem; font-weight:bold; color:${color}; margin-bottom:15px;">
+                            ${prize.name} (${prize.winners ? prize.winners.length : 0}/${prize.count})
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:15px;">
+                            ${hasWinners ?
+                        prize.winners.map(w => `
+                                    <div style="background:rgba(255,255,255,0.1); padding:10px 20px; border-radius:20px; font-size:1.3rem; border:2px solid ${color}; color:#fff;">
+                                        ${w}
+                                    </div>
+                                `).join('') :
+                        `<div style="color:#666; font-size:1.2rem;">尚未抽獎</div>`
+                    }
+                        </div>
                     </div>
-                    <div style="background:#fff; padding:30px; border-radius:20px; box-shadow:0 0 50px rgba(0,242,255,0.5);">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(fullUrl)}" 
-                             alt="Results QR Code" 
-                             style="display:block; width:400px; height:400px;">
-                    </div>
-                    <div style="font-size:1.5rem; color:#aaa; text-align:center; max-width:600px; word-break:break-all;">
-                        ${fullUrl}
-                    </div>
-                </div>
-            `;
+                `;
+            });
+
+            html += '</div>';
+            DOM.grid.innerHTML = html;
         }
 
         // Command Listener
@@ -408,7 +421,7 @@
                 if (cmd.data) updateWelcome(cmd.data); // If reset sends data back
                 else resetView();
             } else if (cmd.type === 'END_EVENT') {
-                showEndScreen(cmd.activityName);
+                showEndScreen(cmd);
             }
         };
 
