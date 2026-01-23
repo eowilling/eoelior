@@ -118,6 +118,24 @@
     <div id="control-panel" style="display:none; text-align:center;">
         <div id="prize-info" style="color: #00f2ff; font-size:1.2rem; margin-bottom:10px; font-weight:bold;"></div>
         <div id="status">等待信號...</div>
+
+        <!-- Draw Count Selection -->
+        <div id="count-selector"
+            style="margin:20px 0; padding:15px; background:rgba(255,255,255,0.05); border-radius:8px; display:none;">
+            <div style="color:#aaa; font-size:0.9rem; margin-bottom:10px;">抽獎人數</div>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button class="count-btn" onclick="setDrawCount(1)"
+                    style="padding:8px 20px; background:#222; border:1px solid #444; color:#fff; border-radius:4px; cursor:pointer;">1人</button>
+                <button class="count-btn" onclick="setDrawCount('half')"
+                    style="padding:8px 20px; background:#222; border:1px solid #444; color:#fff; border-radius:4px; cursor:pointer;">一半</button>
+                <button class="count-btn" onclick="setDrawCount('all')"
+                    style="padding:8px 20px; background:#222; border:1px solid #444; color:#fff; border-radius:4px; cursor:pointer;">全部</button>
+                <input type="number" id="custom-count" placeholder="自訂" min="1"
+                    style="width:80px; padding:8px; background:#222; border:1px solid #444; color:#fff; text-align:center; border-radius:4px;">
+            </div>
+            <div id="selected-count" style="margin-top:10px; color:#00f2ff; font-weight:bold;">已選: 1 人</div>
+        </div>
+
         <button id="action-btn" onclick="triggerAction()">連線中...</button>
         <button id="back-btn" onclick="goBack()"
             style="margin-top:20px; background:none; border:1px solid #444; color:#888; padding:5px 15px; border-radius:20px; display:none;">
@@ -135,11 +153,55 @@
         let activityId = null;
         let currentState = 'IDLE';
         let targetPrize = null; // If set, we are in Prize Mode
+        let drawCount = 1; // Default draw count
+        let drawMode = 'one'; // 'one', 'half', 'all', 'custom'
 
         // Initialize from URL
         const urlParams = new URLSearchParams(window.location.search);
         const qName = urlParams.get('name');
         const qPrize = urlParams.get('prize');
+
+        // Count selection function
+        window.setDrawCount = (mode) => {
+            drawMode = mode;
+            if (mode === 1) {
+                drawCount = 1;
+                document.getElementById('selected-count').innerText = '已選: 1 人';
+            } else if (mode === 'half') {
+                document.getElementById('selected-count').innerText = '已選: 一半';
+            } else if (mode === 'all') {
+                document.getElementById('selected-count').innerText = '已選: 全部';
+            }
+
+            // Highlight selected button
+            document.querySelectorAll('.count-btn').forEach(btn => {
+                btn.style.background = '#222';
+                btn.style.borderColor = '#444';
+            });
+            event.target.style.background = '#00f2ff';
+            event.target.style.borderColor = '#00f2ff';
+            event.target.style.color = '#000';
+        };
+
+        // Handle custom count input
+        document.addEventListener('DOMContentLoaded', () => {
+            const customInput = document.getElementById('custom-count');
+            if (customInput) {
+                customInput.addEventListener('change', (e) => {
+                    const val = parseInt(e.target.value);
+                    if (val > 0) {
+                        drawMode = 'custom';
+                        drawCount = val;
+                        document.getElementById('selected-count').innerText = `已選: ${val} 人`;
+                        document.querySelectorAll('.count-btn').forEach(btn => {
+                            btn.style.background = '#222';
+                            btn.style.borderColor = '#444';
+                            btn.style.color = '#fff';
+                        });
+                    }
+                });
+            }
+        });
 
         window.connect = () => {
             const name = document.getElementById('activity-name').value.trim();
@@ -233,10 +295,12 @@
 
         function selectPrize(name) {
             targetPrize = name;
-            // Send SELECT command
+            // Send SELECT command with count info
             set(ref(db, 'events/' + activityId + '/cmd'), {
                 type: 'SELECT',
                 prize: name,
+                mode: drawMode,
+                count: drawMode === 'custom' ? drawCount : null,
                 timestamp: Date.now()
             });
 
@@ -257,7 +321,11 @@
         function enterPrizeMode(name, showBack = false) {
             document.getElementById('prize-info').innerText = name;
             document.getElementById('control-panel').style.display = 'block';
-            if (showBack) document.getElementById('back-btn').style.display = 'inline-block';
+            if (showBack) {
+                document.getElementById('back-btn').style.display = 'inline-block';
+                // Show count selector in host mode
+                document.getElementById('count-selector').style.display = 'block';
+            }
 
             startListenStatus();
         }
