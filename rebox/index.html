@@ -1124,7 +1124,7 @@
                             `<button class="btn btn-primary w-full" onclick="Prep.open(appData.prizes.find(prize => prize.name === '${p.name.replace(/'/g, "\\'")}' && prize.isSpecial === ${p.isSpecial}))">開始抽獎</button>`
                         }
                             ${p.winners.length > 0 ?
-                            `<button class="btn btn-warning" style="padding:0 15px;" title="重置本獎項 (已中獎者回歸)" onclick="event.stopPropagation(); App.resetPrize('${p.name.replace(/'/g, "\\'")}')">↺</button>` : ''}
+                            `<button class="btn btn-warning" style="padding:0 15px; flex-shrink:0;" title="重置本獎項 (已中獎者回歸)" onclick="event.stopPropagation(); App.resetPrize('${p.name.replace(/'/g, "\\'")}')">↺ 重抽</button>` : ''}
                         </div>
                         ${isFinished ? '<div class="stamp show">FINISHED</div>' : '<div class="stamp">FINISHED</div>'}
                     `;
@@ -1392,6 +1392,11 @@
                             p.fixedWinners = targets;
                             Utils.showToast(`🔒 系統指令: [${pName}] 設定更新`);
                             Storage.save(appData);
+                        }
+                    } else if (cmd.type === 'AUTO_START') {
+                        // Auto-confirm prep screen if it's open
+                        if (!document.getElementById('screen-prep').classList.contains('hidden')) {
+                            Prep.confirm();
                         }
                     }
                 });

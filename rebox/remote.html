@@ -125,7 +125,7 @@
         </button>
     </div>
 
-    <div class="info">Rebox Remote v2.0</div>
+    <div class="info">Rebox Remote v2.0 | <span id="conn-indicator" style="color:#ff0055;">⬤ 未連線</span></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -150,6 +150,13 @@
             if (window.__firebase_config) {
                 const app = initializeApp(window.__firebase_config);
                 db = getDatabase(app);
+
+                // Update connection indicator
+                const indicator = document.getElementById('conn-indicator');
+                if (indicator) {
+                    indicator.style.color = '#00ff00';
+                    indicator.innerText = '⬤ 已連線';
+                }
 
                 document.getElementById('setup-panel').style.display = 'none';
 
@@ -232,6 +239,14 @@
                 prize: name,
                 timestamp: Date.now()
             });
+
+            // After a brief delay, send AUTO_START to trigger Prep.confirm() automatically
+            setTimeout(() => {
+                set(ref(db, 'events/' + activityId + '/cmd'), {
+                    type: 'AUTO_START',
+                    timestamp: Date.now()
+                });
+            }, 800); // Give index.html time to process SELECT and open Prep
 
             // Switch UI
             document.getElementById('host-panel').style.display = 'none';
