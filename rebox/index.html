@@ -699,6 +699,8 @@
         <div class="draw-controls">
             <button id="btn-draw-action" class="btn btn-primary"
                 style="font-size:2rem; padding:15px 60px; min-width: 300px;" onclick="Draw.action()">開始滾動</button>
+            <button class="btn btn-outline" style="font-size:1.2rem; padding:10px 30px;"
+                onclick="if(confirm('確定要取消並返回儀表板嗎？')) { Draw.cancel(); }">⬅ 返回儀表板</button>
         </div>
 
         <!-- Pool Display hidden by default per CSS, but good to keep in DOM -->
@@ -1311,6 +1313,31 @@
                 });
                 document.getElementById('screen-draw').classList.add('hidden');
                 Dashboard.render();
+            },
+
+            cancel: () => {
+                // Cancel current draw and return to dashboard
+                // Stop rolling if active
+                if (Draw.isRolling) {
+                    Draw.isRolling = false;
+                }
+
+                // Reset display
+                bc.postMessage({
+                    type: 'RESET',
+                    data: {
+                        title: appData.activityName,
+                        subtitle: appData.subtitle,
+                        prizes: appData.prizes
+                    }
+                });
+
+                // Close draw screen
+                document.getElementById('screen-draw').classList.add('hidden');
+                Dashboard.render();
+
+                // Update status
+                if (window.Cloud) window.Cloud.updateStatus('IDLE');
             }
         };
 
@@ -1395,16 +1422,9 @@
                         }
                     } else if (cmd.type === 'AUTO_START') {
                         // Auto-confirm prep screen if it's open
+                        // This just moves from Prep to Draw screen, user still needs to manually start rolling
                         if (!document.getElementById('screen-prep').classList.contains('hidden')) {
                             Prep.confirm();
-                            // After Prep.confirm() calls Draw.start(), we need to trigger the roll
-                            // Draw.start() opens the screen but doesn't start rolling
-                            // We need to wait a moment for the screen to open, then trigger Draw.rollFn()
-                            setTimeout(() => {
-                                if (!Draw.isRolling && !document.getElementById('screen-draw').classList.contains('hidden')) {
-                                    Draw.rollFn();
-                                }
-                            }, 500);
                         }
                     }
                 });

@@ -290,7 +290,8 @@
                 status.innerText = '正在滾動抽獎...';
                 btn.innerText = '停止';
                 btn.classList.add('ready-stop');
-                if (backBtn) backBtn.style.display = 'none'; // Lock back button
+                // Keep back button visible so user can return to list
+                if (backBtn && !qPrize) backBtn.style.display = 'inline-block';
             } else if (state === 'STOPPED' || state === 'IDLE') {
                 status.innerText = '準備就緒';
                 btn.innerText = '開始';
