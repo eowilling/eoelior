@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin | Rebox</title>
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+        }
+
+        h1 {
+            border-bottom: 2px solid #0f0;
+            padding-bottom: 10px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        input {
+            background: #111;
+            border: 1px solid #0f0;
+            color: #fff;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        button {
+            background: #003300;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0f0;
+            color: #000;
+        }
+
+        .status {
+            color: #888;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🕵️ 超級管理員後台 (Super Admin)</h1>
+
+        <div id="connection-panel">
+            <p>請輸入活動名稱以連接資料庫:</p>
+            <input type="text" id="activity-name" placeholder="活動名稱" value="rebox 抽獎箱">
+            <button onclick="Admin.connect()">連線</button>
+        </div>
+
+        <div id="dashboard" style="display:none; margin-top:20px;">
+            <h3 style="color:#fff;">獎項內定設定</h3>
+            <div id="prize-list"></div>
+        </div>
+
+        <div id="log"
+            style="margin-top:20px; color:#555; font-size:0.8rem; border-top:1px solid #333; padding-top:10px;"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Global Admin Object
+        window.Admin = {
+            db: null,
+            activityId: null,
+            prizes: [],
+            remaining: [],
+
+            log: (msg) => {
+                const l = document.getElementById('log');
+                l.innerText = `[${new Date().toLocaleTimeString()}] ${msg}\n` + l.innerText;
+            },
+
+            connect: () => {
+                const name = document.getElementById('activity-name').value.trim();
+                if (!name) return alert('請輸入活動名稱');
+
+                if (!window.__firebase_config) return alert('找不到 Firebase 設定 (firebase-config.js)');
+
+                const app = initializeApp(window.__firebase_config);
+                window.Admin.db = getDatabase(app);
+                window.Admin.activityId = btoa(encodeURIComponent(name)).replace(/[^a-zA-Z0-9]/g, '');
+
+                window.Admin.log(`正在連線到: ${name} (${window.Admin.activityId})`);
+
+                // Load Initial Data
+                const evRef = ref(window.Admin.db, 'events/' + window.Admin.activityId);
+                onValue(evRef, (snap) => {
+                    const val = snap.val();
+                    if (val) {
+                        window.Admin.prizes = val.prizes || [];
+                        window.Admin.remaining = val.remaining || []; // Note: This might not be constantly synced in real-time unless index.html saves it often.
+                        // Actually index.html saves entire appData on every change. So this is good.
+
+                        window.Admin.render();
+                        document.getElementById('connection-panel').style.display = 'none';
+                        document.getElementById('dashboard').style.display = 'block';
+                    } else {
+                        window.Admin.log("查無資料，請確認主控台已開啟並連線");
+                    }
+                });
+            },
+
+            render: () => {
+                const list = document.getElementById('prize-list');
+                list.innerHTML = '';
+
+                window.Admin.prizes.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'input-group';
+
+                    const fixed = p.fixedWinners ? p.fixedWinners.join(',') : '';
+
+                    div.innerHTML = `
+                        <div style="flex:1;">
+                            <strong style="font-size:1.2rem;">${p.name}</strong>
+                            <div class="status">數量: ${p.count} | 已抽: ${p.winners ? p.winners.length : 0}</div>
+                        </div>
+                        <div style="flex:2; display:flex;">
+                            <input type="text" id="fix-${p.name}" placeholder="輸入指定中獎人 (逗號分隔)" value="${fixed}" style="flex:1;">
+                            <button onclick="Admin.saveFix('${p.name}')">設定</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            },
+
+            saveFix: (prizeName) => {
+                const input = document.getElementById(`fix-${prizeName}`);
+                const candidates = input.value.split(',').map(s => s.trim()).filter(s => s);
+
+                // Logic Validation
+                // 1. Check if candidates exist in remaining OR are already winners of THIS prize (re-assigning same is ok)
+                // Actually they must be in remaining. If they are already winners, it's too late.
+                // Wait, if I want to fix the NEXT winner, they must be in remaining.
+
+                // Let's allow setting it. The validation should happen:
+                // Is this person available? (In remaining pool)
+                // Is this person already fixed for ANOTHER prize?
+
+                const allFixed = [];
+                window.Admin.prizes.forEach(p => {
+                    if (p.name !== prizeName && p.fixedWinners) {
+                        allFixed.push(...p.fixedWinners);
+                    }
+                });
+
+                const errors = [];
+                candidates.forEach(c => {
+                    if (!window.Admin.remaining.includes(c)) {
+                        // Check if he is already a winner?
+                        // If he is not in remaining, he might have been won already.
+                        // Assuming complete list is not available easily here, but remaining is.
+                        errors.push(`${c} 不在未中獎名單中 (可能已中獎或不存在)`);
+                    }
+                    if (allFixed.includes(c)) {
+                        errors.push(`${c} 已經被其他獎項內定`);
+                    }
+                });
+
+                if (errors.length > 0) {
+                    alert("設定失敗:\n" + errors.join("\n"));
+                    return;
+                }
+
+                // Send Command to Index
+                // We don't write directly to prizes to avoid race conditions with index.js saving.
+                // We send a command FIX_WINNER.
+
+                set(ref(window.Admin.db, 'events/' + window.Admin.activityId + '/cmd'), {
+                    type: 'FIX_WINNER',
+                    prize: prizeName,
+                    winners: candidates,
+                    timestamp: Date.now()
+                }).then(() => {
+                    alert(`已發送設定指令: ${prizeName} -> ${candidates.join(',')}`);
+                    window.Admin.log(`指令發送: 設定 ${prizeName} = ${candidates}`);
+                });
+            }
+        };
+    </script>
+</body>
+
+</html>

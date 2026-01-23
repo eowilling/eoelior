@@ -106,20 +106,40 @@
             style="padding:10px 30px; background:#00f2ff; border:none; border-radius:4px; font-weight:bold;">連線</button>
     </div>
 
-    <div id="control-panel" style="display:none; text-align:center;">
-        <div id="status">等待信號...</div>
-        <button id="action-btn" onclick="triggerAction()">連線中...</button>
+    <!-- Host Mode: Prize List -->
+    <div id="host-panel" style="display:none; width:100%; max-width:400px; text-align:center;">
+        <h3 style="color:#aaa; margin-bottom:15px;">主控模式：選擇獎項</h3>
+        <div id="prize-list"
+            style="display:flex; flex-direction:column; gap:10px; max-height:70vh; overflow-y:auto; padding-bottom:50px;">
+        </div>
     </div>
 
-    <div class="info">Rebox Remote v1.0</div>
+    <!-- Prize Control Mode -->
+    <div id="control-panel" style="display:none; text-align:center;">
+        <div id="prize-info" style="color: #00f2ff; font-size:1.2rem; margin-bottom:10px; font-weight:bold;"></div>
+        <div id="status">等待信號...</div>
+        <button id="action-btn" onclick="triggerAction()">連線中...</button>
+        <button id="back-btn" onclick="goBack()"
+            style="margin-top:20px; background:none; border:1px solid #444; color:#888; padding:5px 15px; border-radius:20px; display:none;">
+            ⬅ 返回列表
+        </button>
+    </div>
+
+    <div class="info">Rebox Remote v2.0</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         let db = null;
         let activityId = null;
         let currentState = 'IDLE';
+        let targetPrize = null; // If set, we are in Prize Mode
+
+        // Initialize from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const qName = urlParams.get('name');
+        const qPrize = urlParams.get('prize');
 
         window.connect = () => {
             const name = document.getElementById('activity-name').value.trim();
@@ -132,27 +152,108 @@
                 db = getDatabase(app);
 
                 document.getElementById('setup-panel').style.display = 'none';
-                document.getElementById('control-panel').style.display = 'block';
 
-                startListen();
+                if (qPrize) {
+                    // Prize Mode
+                    targetPrize = qPrize;
+                    enterPrizeMode(qPrize);
+                } else {
+                    // Host Mode
+                    enterHostMode();
+                }
             } else {
                 alert('未找到 Firebase 設定');
             }
         };
 
-        // Auto connect if query param exists
-        const urlParams = new URLSearchParams(window.location.search);
-        const qName = urlParams.get('name');
         if (qName) {
             document.getElementById('activity-name').value = qName;
-            // Delay slightly to ensure config loads
             setTimeout(window.connect, 500);
         } else {
-            // Default value for quick test
             document.getElementById('activity-name').value = "rebox 抽獎箱";
         }
 
-        function startListen() {
+        // --- Host Mode Logic ---
+        function enterHostMode() {
+            document.getElementById('host-panel').style.display = 'block';
+            document.getElementById('control-panel').style.display = 'none';
+
+            const prizesRef = ref(db, 'events/' + activityId + '/prizes'); // Need to change index.html to sync prizes list if possible, or we just listen to status? 
+            // Actually index.html currently doesn't sync the full prize list to a simple path easily accessible. 
+            // BUT, initRemote in index.html is passive.
+            // We need index.html to save prize list to DB.
+            // Let's check if 'events/{id}' has prizes. Yes, UpdateStatus saves `prizes`? No, save() saves `prizes`.
+
+            // Storage.save calls Cloud.save which saves to 'events/{id}'. Use onValue to get updates.
+            const evRef = ref(db, 'events/' + activityId);
+            onValue(evRef, (snap) => {
+                const data = snap.val();
+                if (data && data.prizes) {
+                    renderPrizeList(data.prizes);
+                }
+            });
+        }
+
+        function renderPrizeList(prizes) {
+            const list = document.getElementById('prize-list');
+            list.innerHTML = '';
+            prizes.forEach(p => {
+                const isFinished = (p.count - (p.winners ? p.winners.length : 0)) <= 0;
+                const btn = document.createElement('div');
+                btn.style.cssText = `
+                    padding: 15px; 
+                    background: #222; 
+                    border: 1px solid ${isFinished ? '#444' : '#00f2ff'}; 
+                    border-radius: 8px; 
+                    text-align: left;
+                    opacity: ${isFinished ? '0.5' : '1'};
+                    cursor: pointer;
+                `;
+                btn.innerHTML = `
+                    <div style="font-weight:bold; color:${p.isSpecial ? '#ffd700' : '#fff'}; font-size:1.1rem;">${p.name}</div>
+                    <div style="font-size:0.8rem; color:#888; margin-top:5px;">
+                        剩餘: ${p.count - (p.winners ? p.winners.length : 0)} / ${p.count}
+                        ${isFinished ? '(已完成)' : ''}
+                    </div>
+                `;
+                btn.onclick = () => {
+                    if (isFinished) return alert('此獎項已抽完');
+                    selectPrize(p.name);
+                };
+                list.appendChild(btn);
+            });
+        }
+
+        function selectPrize(name) {
+            targetPrize = name;
+            // Send SELECT command
+            set(ref(db, 'events/' + activityId + '/cmd'), {
+                type: 'SELECT',
+                prize: name,
+                timestamp: Date.now()
+            });
+
+            // Switch UI
+            document.getElementById('host-panel').style.display = 'none';
+            enterPrizeMode(name, true);
+        }
+
+        // --- Prize Mode Logic ---
+        function enterPrizeMode(name, showBack = false) {
+            document.getElementById('prize-info').innerText = name;
+            document.getElementById('control-panel').style.display = 'block';
+            if (showBack) document.getElementById('back-btn').style.display = 'inline-block';
+
+            startListenStatus();
+        }
+
+        window.goBack = () => {
+            document.getElementById('control-panel').style.display = 'none';
+            enterHostMode();
+            targetPrize = null;
+        }
+
+        function startListenStatus() {
             const statusRef = ref(db, 'events/' + activityId + '/status');
             onValue(statusRef, (snapshot) => {
                 const val = snapshot.val();
@@ -166,6 +267,7 @@
         function updateUI(state) {
             const btn = document.getElementById('action-btn');
             const status = document.getElementById('status');
+            const backBtn = document.getElementById('back-btn');
 
             btn.className = '';
 
@@ -173,10 +275,14 @@
                 status.innerText = '正在滾動抽獎...';
                 btn.innerText = '停止';
                 btn.classList.add('ready-stop');
+                if (backBtn) backBtn.style.display = 'none'; // Lock back button
             } else if (state === 'STOPPED' || state === 'IDLE') {
                 status.innerText = '準備就緒';
                 btn.innerText = '開始';
                 btn.classList.add('ready-start');
+                if (document.getElementById('host-panel').style.display === 'none' && !qPrize) {
+                    backBtn.style.display = 'inline-block';
+                }
             } else {
                 status.innerText = '未知狀態';
                 btn.innerText = '---';
@@ -185,15 +291,11 @@
 
         window.triggerAction = () => {
             if (!db || !activityId) return;
-
             const cmd = currentState === 'ROLLING' ? 'STOP' : 'START';
-
             set(ref(db, 'events/' + activityId + '/cmd'), {
                 type: cmd,
                 timestamp: Date.now()
             });
-
-            // Haptic feed back if available
             if (navigator.vibrate) navigator.vibrate(50);
         };
     </script>
