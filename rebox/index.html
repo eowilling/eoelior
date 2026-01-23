@@ -779,6 +779,11 @@
                     } else {
                         console.warn("No Firebase Config found");
                         window.Cloud.lastError = "No Config Found";
+                        const el = document.getElementById('conn-status');
+                        if (el) {
+                            el.title = "設定檔遺失 (點擊查看詳情)";
+                            el.onclick = () => alert("錯誤: 找不到 firebase-config.js 設定檔。\n\n請確認:\n1. 該檔案是否已上傳至 GitHub Pages?\n2. 是否被 .gitignore 排除?\n3. 網址路徑是否正確?");
+                        }
                     }
                 } catch (e) {
                     console.error("Firebase Init Error", e);
@@ -862,7 +867,7 @@
         };
 
         let appData = {
-            activityName: "2024 年度尾牙大抽獎", subtitle: "Lucky Draw System Pro",
+            activityName: "rebox 抽獎箱", subtitle: "Lucky Draw System Pro",
             prizes: [], participants: [], remaining: []
         };
 
@@ -903,7 +908,7 @@
             },
             save: () => {
                 try {
-                    appData.activityName = document.getElementById('setup-activity-name').value || "2024 年度尾牙大抽獎";
+                    appData.activityName = document.getElementById('setup-activity-name').value || "rebox 抽獎箱";
                     appData.subtitle = document.getElementById('setup-subtitle').value || "Lucky Draw System Pro";
 
                     // Validate Prizes
@@ -1002,7 +1007,7 @@
                 document.getElementById('screen-welcome').classList.remove('hidden');
                 document.getElementById('display-activity-name').innerText = appData.activityName;
                 document.getElementById('display-subtitle').innerText = appData.subtitle;
-                document.title = appData.activityName + " | Rebox"; // Sync Page Title
+                document.title = appData.activityName; // Sync Page Title
 
                 document.getElementById('total-people').innerText = appData.remaining.length;
 

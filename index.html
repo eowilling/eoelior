@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,10 +56,17 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
+
 <body class="p-4 md:p-8">
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
@@ -69,40 +77,11 @@
                 </h1>
                 <p class="text-slate-400 text-lg">一組可直接在瀏覽器開啟使用的前端小工具集合。</p>
             </div>
-            <div class="flex items-center gap-3 justify-center md:justify-end text-slate-400 text-sm">
-                <a href="README.md" class="hover:text-white transition-colors inline-flex items-center gap-2">
-                    <i class="fa-solid fa-book"></i> 說明文件
-                </a>
-                <span class="text-slate-600">|</span>
-                <a href="FlowChart/FlowChat.html" target="_blank" class="hover:text-white transition-colors inline-flex items-center gap-2">
-                    <i class="fa-solid fa-star"></i> 推薦：流程圖工具
-                </a>
-            </div>
+
         </header>
 
         <!-- Search & Filters -->
-        <div class="mb-10 space-y-6">
-            <div class="relative max-w-2xl mx-auto md:mx-0">
-                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                <input type="text" id="searchInput" placeholder="搜尋玩具名稱..."
-                    class="w-full bg-slate-800/50 border border-slate-700 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 search-input transition-all">
-            </div>
 
-            <div class="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-                <div class="flex items-center gap-4 text-sm text-slate-400">
-                    <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-                        <input id="showDisabledToggle" type="checkbox" class="accent-indigo-500">
-                        顯示已下架
-                    </label>
-                    <span id="availabilityStatus" class="text-xs text-slate-500">連結狀態：未檢查</span>
-                </div>
-                <div class="text-xs text-slate-500">
-                    提示：若用 <span class="text-slate-300">http://localhost</span> 開啟，會自動檢查 404 並隱藏下架工具。
-                </div>
-            </div>
-
-            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2" id="filterTabs"></div>
-        </div>
 
         <!-- Tools Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16" id="toolsGrid"></div>
@@ -116,7 +95,20 @@
         // ==========================================
         // 工具清單（維護入口只要改這裡）
         // ==========================================
+        // ==========================================
+        // 工具清單（維護入口只要改這裡）
+        // ==========================================
         const TOOLS = [
+            {
+                name: '終極尾牙抽獎 (Rebox)',
+                desc: '最新版雙螢幕抽獎系統：手機遙控、Firebase 同步、炫酷動畫。',
+                category: 'entertainment',
+                href: 'rebox/index.html',
+                enabled: true,
+                badge: 'NEW',
+                icon: 'fa-rocket',
+                color: 'cyan'
+            },
             {
                 name: '流程圖工具',
                 desc: 'Canvas 流程圖繪製：錨點連線、平移/縮放、匯出、存讀 JSON。',
@@ -126,115 +118,14 @@
                 badge: '推薦',
                 icon: 'fa-diagram-project',
                 color: 'blue'
-            },
-            {
-                name: '數獨遊戲',
-                desc: '完整的數獨挑戰系統。',
-                category: 'entertainment',
-                href: 'sudo/index.html',
-                enabled: true,
-                icon: 'fa-puzzle-piece',
-                color: 'emerald'
-            },
-            {
-                name: '買不買轉盤',
-                desc: '可自訂選項與機率的命運轉盤。',
-                category: 'entertainment',
-                href: 'buytonobuy/index.html',
-                enabled: true,
-                icon: 'fa-circle-notch',
-                color: 'purple'
-            },
-            {
-                name: 'QR Code 產生器',
-                desc: '快速生成 QR Code（離線單頁）。',
-                category: 'image',
-                href: 'QRcode/qr-generate-standalone.html',
-                enabled: true,
-                icon: 'fa-qrcode',
-                color: 'cyan'
-            },
-            {
-                name: 'HEIC 轉 PNG/JPG',
-                desc: 'HEIC 格式圖片轉換工具。',
-                category: 'image',
-                href: 'HeicPngJpg/H2PJ.html',
-                enabled: true,
-                icon: 'fa-image',
-                color: 'amber'
-            },
-            {
-                name: '每日打卡',
-                desc: '追蹤每日習慣與目標（含 PHP 版本）。',
-                category: 'productivity',
-                href: 'eveday/index.html',
-                enabled: true,
-                icon: 'fa-calendar-check',
-                color: 'indigo'
-            },
-            {
-                name: 'LUSH（文件索引）',
-                desc: '文件/索引管理頁。',
-                category: 'productivity',
-                href: 'LUSH/index.html',
-                enabled: true,
-                icon: 'fa-folder-tree',
-                color: 'teal'
-            },
-            {
-                name: 'ISMS',
-                desc: 'ISMS 相關頁面。',
-                category: 'productivity',
-                href: 'ISMS/isms.html',
-                enabled: true,
-                icon: 'fa-shield-halved',
-                color: 'rose'
-            },
-            {
-                name: '會議統計報表',
-                desc: '會議分析產出的統計報表（HTML）。',
-                category: 'other',
-                href: 'talktalk/analysis_results/meeting_statistics_report.html',
-                enabled: true,
-                badge: 'Report',
-                icon: 'fa-chart-column',
-                color: 'slate'
-            },
-            {
-                name: '尾牙抽獎系統',
-                desc: '功能完整的年會抽獎系統：即時動畫、獎項管理、彩票生成。',
-                category: 'entertainment',
-                href: 'weare/lottery.html',
-                enabled: true,
-                badge: '熱門',
-                icon: 'fa-gift',
-                color: 'pink'
-            },
+            }
         ];
 
-        const CATEGORIES = {
-            all: { label: '全部' },
-            productivity: { label: '生產力' },
-            image: { label: '圖像處理' },
-            entertainment: { label: '遊戲娛樂' },
-            other: { label: '其他' },
-        };
-
-        const elSearch = document.getElementById('searchInput');
-        const elTabs = document.getElementById('filterTabs');
         const elGrid = document.getElementById('toolsGrid');
-        const elShowDisabled = document.getElementById('showDisabledToggle');
-        const elAvailabilityStatus = document.getElementById('availabilityStatus');
 
-        let activeCategory = 'all';
-        let showDisabled = false;
-
-        // t._available: true/false/null(unknown)
-        // t._autoDisabled: true/false
-        function isToolEnabled(t) {
-            const manual = (t.enabled !== false);
-            const auto = (t._autoDisabled !== true);
-            return manual && auto;
+        function badgeHtml(text) {
+            if (!text) return '';
+            return `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-700 text-slate-300">${escHtml(text)}</span>`;
         }
 
         function escHtml(str) {
@@ -246,44 +137,6 @@
                 .replaceAll("'", '&#039;');
         }
 
-        function renderTabs() {
-            const used = new Set(
-                TOOLS
-                    .filter(t => showDisabled ? true : isToolEnabled(t))
-                    .map(t => t.category)
-            );
-            const keys = ['all', ...Object.keys(CATEGORIES).filter(k => k !== 'all' && used.has(k))];
-            elTabs.innerHTML = keys.map((k) => {
-                const isActive = (k === activeCategory);
-                return `
-                    <button class="category-tab ${isActive ? 'active' : ''} px-6 py-2 rounded-full border border-slate-700 text-slate-300 whitespace-nowrap transition-all hover:border-slate-500"
-                        data-category="${k}">
-                        ${escHtml(CATEGORIES[k]?.label ?? k)}
-                    </button>
-                `;
-            }).join('');
-
-            elTabs.querySelectorAll('button[data-category]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    activeCategory = btn.dataset.category;
-                    renderTabs();
-                    renderGrid();
-                });
-            });
-        }
-
-        function badgeHtml(text) {
-            if (!text) return '';
-            return `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-700 text-slate-300">${escHtml(text)}</span>`;
-        }
-
-        function statusBadgeHtml(t) {
-            // 自動判定下架/失效時顯示（避免和自訂 badge 衝突，放在右上角第二顆）
-            if (isToolEnabled(t)) return '';
-            const reason = (t.enabled === false) ? '下架' : (t._available === false ? '404' : '下架');
-            return `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-red-900/60 text-red-200 border border-red-800/50">${escHtml(reason)}</span>`;
-        }
-
         function iconClass(color) {
             // tailwind class: bg-xxx-500/20 + text-xxx-400
             const bg = `bg-${color}-500/20`;
@@ -292,16 +145,7 @@
         }
 
         function renderGrid() {
-            const term = (elSearch.value || '').trim().toLowerCase();
-            const list = TOOLS.filter(t => {
-                const matchesCat = activeCategory === 'all' || t.category === activeCategory;
-                const hay = `${t.name} ${t.desc}`.toLowerCase();
-                const matchesSearch = !term || hay.includes(term);
-                const matchesEnabled = showDisabled ? true : isToolEnabled(t);
-                return matchesCat && matchesSearch && matchesEnabled;
-            });
-
-            elGrid.innerHTML = list.map(t => {
+            elGrid.innerHTML = TOOLS.map(t => {
                 const { bg, fg } = iconClass(t.color || 'slate');
                 return `
                     <div class="glass-card rounded-2xl p-6 flex flex-col group">
@@ -310,90 +154,22 @@
                                 <i class="fa-solid ${escHtml(t.icon || 'fa-toolbox')}"></i>
                             </div>
                             <div class="flex items-center gap-2">
-                                ${statusBadgeHtml(t)}
                                 ${badgeHtml(t.badge)}
                             </div>
                         </div>
                         <h3 class="text-xl font-bold mb-2">${escHtml(t.name)}</h3>
                         <p class="text-slate-400 text-sm mb-6 flex-grow">${escHtml(t.desc || '')}</p>
-                        ${isToolEnabled(t)
-                            ? `<a href="${escHtml(t.href)}" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">
+                        <a href="${escHtml(t.href)}" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">
                                     開啟工具 <i class="fa-solid fa-arrow-right text-xs"></i>
-                               </a>`
-                            : `<div class="mt-auto text-sm text-slate-500">此工具已下架</div>`
-                        }
+                        </a>
                     </div>
                 `;
             }).join('');
-
-            if (list.length === 0) {
-                elGrid.innerHTML = `
-                    <div class="glass-card rounded-2xl p-8 text-center text-slate-400 col-span-full">
-                        找不到符合條件的工具。
-                    </div>
-                `;
-            }
-        }
-
-        elSearch.addEventListener('input', () => renderGrid());
-        elShowDisabled.addEventListener('change', () => {
-            showDisabled = !!elShowDisabled.checked;
-            renderTabs();
-            renderGrid();
-        });
-
-        async function checkUrlAvailable(url) {
-            // 同源相對路徑才檢查
-            if (!url || /^(https?:)?\/\//i.test(url)) return null;
-            try {
-                const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-                if (head.ok) return true;
-                if (head.status === 405) {
-                    const getRes = await fetch(url, { method: 'GET', cache: 'no-store' });
-                    return getRes.ok;
-                }
-                return false;
-            } catch (_) {
-                return false;
-            }
-        }
-
-        async function validateToolsAvailability() {
-            // file:// 開啟時 fetch 相對路徑常會受限，直接跳過
-            const proto = (location && location.protocol) ? location.protocol : '';
-            if (proto !== 'http:' && proto !== 'https:') {
-                elAvailabilityStatus.textContent = '連結狀態：略過（非 http/https）';
-                return;
-            }
-
-            elAvailabilityStatus.textContent = '連結狀態：檢查中...';
-            let okCount = 0;
-            let badCount = 0;
-
-            // 依序檢查（避免同時大量 fetch）
-            for (const t of TOOLS) {
-                const available = await checkUrlAvailable(t.href);
-                if (available === null) {
-                    t._available = null;
-                    t._autoDisabled = false;
-                    continue;
-                }
-                t._available = available;
-                t._autoDisabled = (available === false);
-                if (available) okCount++; else badCount++;
-            }
-
-            elAvailabilityStatus.textContent = `連結狀態：可用 ${okCount}、失效 ${badCount}`;
-
-            // 檢查完後重繪（分類也要跟著變）
-            renderTabs();
-            renderGrid();
         }
 
         // init
-        renderTabs();
         renderGrid();
-        validateToolsAvailability();
     </script>
 </body>
+
 </html>
