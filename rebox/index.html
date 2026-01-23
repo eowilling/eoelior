@@ -1100,7 +1100,8 @@
                 if (!confirm('確定要結束活動嗎？\n\n大螢幕將顯示中獎查詢 QR Code')) return;
 
                 // Send END command to display
-                bc.postMessage({
+                const channel = new BroadcastChannel('rebox_channel');
+                channel.postMessage({
                     type: 'END_EVENT',
                     activityName: appData.activityName
                 });
