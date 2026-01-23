@@ -1364,15 +1364,17 @@
         const initRemote = () => {
             if (window.Cloud && window.Cloud.listenCmd) {
                 window.Cloud.listenCmd((cmd) => {
-                    // Only react if we are in Draw Screen
-                    if (document.getElementById('screen-draw').classList.contains('hidden')) return;
+                    const isDrawHidden = document.getElementById('screen-draw').classList.contains('hidden');
 
                     if (cmd.type === 'START') {
-                        if (!Draw.isRolling) document.getElementById('btn-draw-action').click();
+                        if (!isDrawHidden && !Draw.isRolling) document.getElementById('btn-draw-action').click();
                     } else if (cmd.type === 'STOP') {
-                        if (Draw.isRolling) document.getElementById('btn-draw-action').click();
+                        if (!isDrawHidden && Draw.isRolling) document.getElementById('btn-draw-action').click();
                     } else if (cmd.type === 'SELECT') {
                         // Host Remote Mode: Find prize and open
+                        // Only allow if we are NOT currently rolling
+                        if (Draw.isRolling) return;
+
                         const pName = cmd.prize;
                         const p = appData.prizes.find(x => x.name === pName);
                         if (p) {
