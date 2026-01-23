@@ -643,6 +643,7 @@
                     onclick="App.showRemoteQR()">📱 主持人遙控器</button>
                 <button class="btn btn-outline" onclick="Draw.openDisplay()">🖥️ 開啟大螢幕</button>
                 <button class="btn btn-outline" onclick="Results.show()">📜 中獎名單</button>
+                <button class="btn btn-warning" onclick="App.endEvent()">🏁 活動結束</button>
                 <button class="btn btn-danger" onclick="App.goToWelcome()">回首頁</button>
             </div>
         </header>
@@ -1093,6 +1094,18 @@
                     Dashboard.render();
                     Utils.showToast(`[${pName}] 已重置`);
                 }
+            },
+
+            endEvent: () => {
+                if (!confirm('確定要結束活動嗎？\n\n大螢幕將顯示中獎查詢 QR Code')) return;
+
+                // Send END command to display
+                bc.postMessage({
+                    type: 'END_EVENT',
+                    activityName: appData.activityName
+                });
+
+                Utils.showToast('活動已結束，大螢幕顯示查詢 QR Code');
             }
         };
 
