@@ -1377,6 +1377,24 @@
             btn.classList.remove('btn-danger');
             btn.classList.add('btn-primary');
             btn.onclick = Draw.exit;
+
+            // Add redraw button in the controls area
+            const controlsDiv = btn.parentElement;
+            let redrawBtn = document.getElementById('btn-redraw');
+            if (!redrawBtn) {
+                redrawBtn = document.createElement('button');
+                redrawBtn.id = 'btn-redraw';
+                redrawBtn.className = 'btn btn-warning';
+                redrawBtn.style.cssText = 'font-size:1.5rem; padding:10px 40px;';
+                controlsDiv.appendChild(redrawBtn);
+            }
+            redrawBtn.innerText = '↺ 重抽本獎項';
+            redrawBtn.onclick = () => {
+                if (confirm(`確定要重抽 [${Draw.curr.name}] 嗎？\n\n已中獎的 ${Draw.winners.length} 人將回到未中獎池。`)) {
+                    App.resetPrize(Draw.curr.name);
+                    Draw.exit();
+                }
+            };
         };
 
         // Spacebar shortcut
@@ -1406,7 +1424,24 @@
                         const p = appData.prizes.find(x => x.name === pName);
                         if (p) {
                             const r = p.count - p.winners.length;
-                            if (r > 0) Prep.open(p);
+                            if (r > 0) {
+                                Prep.open(p);
+
+                                // Apply count settings from remote if provided
+                                if (cmd.mode) {
+                                    const modeBtn = document.querySelector(`.mode-btn[onclick*="'${cmd.mode}'"]`);
+                                    if (cmd.mode === 'one') {
+                                        Prep.setMode('one', document.querySelector('.mode-btn'));
+                                    } else if (cmd.mode === 'half') {
+                                        Prep.setMode('half', document.querySelectorAll('.mode-btn')[1]);
+                                    } else if (cmd.mode === 'all') {
+                                        Prep.setMode('all', document.querySelectorAll('.mode-btn')[2]);
+                                    } else if (cmd.mode === 'custom' && cmd.count) {
+                                        Prep.setMode('custom', document.querySelectorAll('.mode-btn')[3]);
+                                        document.getElementById('prep-custom-num').value = cmd.count;
+                                    }
+                                }
+                            }
                             else Utils.showToast(`獎項 [${pName}] 已抽完`);
                         }
                     } else if (cmd.type === 'FIX_WINNER') {
