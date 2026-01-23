@@ -359,6 +359,38 @@
             prize: null
         };
 
+        function showEndScreen(activityName) {
+            // Clear everything
+            DOM.title.innerText = '活動圓滿結束';
+            DOM.title.style.color = '#ffd700';
+            DOM.subtitle.innerText = '感謝參與！';
+            DOM.host.innerText = '';
+            DOM.status.innerText = '';
+
+            // Generate QR Code URL
+            const curUrl = new URL(window.location.href);
+            const resultsUrl = new URL('results.html', curUrl);
+            resultsUrl.searchParams.set('name', activityName);
+            const fullUrl = resultsUrl.href;
+
+            // Show QR Code
+            DOM.grid.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:30px;">
+                    <div style="font-size:2rem; color:#00f2ff; text-align:center;">
+                        掃描 QR Code 查詢中獎結果
+                    </div>
+                    <div style="background:#fff; padding:30px; border-radius:20px; box-shadow:0 0 50px rgba(0,242,255,0.5);">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(fullUrl)}" 
+                             alt="Results QR Code" 
+                             style="display:block; width:400px; height:400px;">
+                    </div>
+                    <div style="font-size:1.5rem; color:#aaa; text-align:center; max-width:600px; word-break:break-all;">
+                        ${fullUrl}
+                    </div>
+                </div>
+            `;
+        }
+
         // Command Listener
         bc.onmessage = (ev) => {
             const cmd = ev.data;
@@ -375,6 +407,8 @@
             } else if (cmd.type === 'RESET') {
                 if (cmd.data) updateWelcome(cmd.data); // If reset sends data back
                 else resetView();
+            } else if (cmd.type === 'END_EVENT') {
+                showEndScreen(cmd.activityName);
             }
         };
 
