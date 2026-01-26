@@ -1,71 +1,54 @@
-# eoelior
+# eoelior 雜貨舖 🎪
 
-一個可直接用瀏覽器開啟的工具集合（以純前端為主，少部分工具含 PHP / Python 輔助腳本）。
+歡迎來到 `eoelior`，這裡沒有神燈精靈，但有一堆神奇（且隨機）的網頁工具。
+這是為了讓生活更輕鬆？還是為了在上班時摸魚更方便？我們不予置評。🤫
 
-## 入口
+## 🏆 鎮店之寶
 
-- `index.html`：工具入口頁（`./index.html`）
-- `FlowChart/FlowChat.html`：流程圖工具（推薦，`./FlowChart/FlowChat.html`）
+### 🌌 企業終極抽獎系統 (Rebox)
 
-## 工具列表（以目前專案目錄為準）
+* **入口**: `rebox/index.html`
+* **特色**: 這不是普通的抽獎，這是 **Ultimate Rebox**。擁有科幻風格的介面，讓你的尾牙抽獎看起來像是要在太空船上發射核彈一樣壯觀。
+* **功能**:
+  * 支援手機遙控：主持人可以像絕地武士一樣遠端操控。
+  * 內建「精確的獎項分配」功能，讓主辦單位能精準掌握節奏。
 
-### 生產力
+### 🎲 買不買轉盤 (BuyToNoBuy)
 
-- **流程圖工具**：`FlowChart/FlowChat.html`
-- **每日打卡**：`eveday/index.html`（另含 `EveryDay.php` 等檔案）
-- **LUSH（文件索引）**：`LUSH/index.html`
-- **ISMS**：`ISMS/isms.html`
+* **入口**: `buytonobuy/index.html`
+* **特色**: 有選擇障礙？想買那個酷東西但良心過不去？
+* **用法**: 讓命運之輪來決定你的錢包歸宿。轉到「買」，是天意；轉到「不買」，那就再轉一次直到它是「買」。
 
-### 圖像處理
+## 🛠️ 生產力（與假裝生產力）工具
 
-- **HEIC 轉 PNG/JPG**：`HeicPngJpg/H2PJ.html`
-- **QR Code 產生器**：`QRcode/qr-generate-standalone.html`
+* **流程圖大師** (`FlowChart/FlowChat.html`)：
+    畫幾個圈圈，連幾條線，老闆就會覺得你邏輯縝密，計畫通。
+* **每日打卡** (`eveday/index.html`)：
+    紀錄你出賣靈魂給公司的時間... 我是說，紀錄辛勤工作的每一刻。
+* **會議分析** (`talktalk/`)：
+    用數據證明這場會議其實可以濃縮成一封 Email。
+* **ISMS 資安宣導** (`ISMS/isms.html`)：
+    讓你知道密碼設成 `123456` 是多麼危險的想法。
 
-### 遊戲娛樂
+## 🎨 圖片魔法
 
-- **數獨遊戲**：`sudo/index.html`
-- **買不買轉盤**：`buytonobuy/index.html`（同資料夾另有 `admin.html` 等）
+* **背景移除術** (`remove_bg_v2.py`)：
+    Python 施法，背景退散！把路人甲乙丙丁從你的美照中變不見。
+* **HEIC 轉 PNG** (`HeicPngJpg/H2PJ.html`)：
+    因為我們討厭那個「有些裝置打得開，有些打不開」的格式。
+* **QR Code 產生器** (`QRcode/qr-generate-standalone.html`):
+    雖然到處都有，但自己架一個就是比較帥。
 
-### 其他/報表/腳本
+## 🕹️ 休閒娛樂
 
-- **會議分析/統計**：`talktalk/`（報表：`talktalk/analysis_results/meeting_statistics_report.html`）
-- **自動備份腳本**：`bakauto/`
+* **數獨** (`sudo/index.html`)：
+    當程式在編譯 (Compiling) 或是等待進度條跑完時的最佳伴侶。
 
-## 本地使用
+## 🚀 如何使用
 
-### 方式 1：XAMPP / Apache（建議）
+1. 把這整坨東西丟進你的網頁伺服器（XAMPP 之類的 `htdocs` 下）。
+2. 打開瀏覽器，像個駭客一樣輸入 `http://localhost/eoelior/index.html`。
+3. 享受。
 
-把整個資料夾放到你的網站根目錄（你目前是 `htdocs/eoelior`），然後開啟：
-
-- `http://localhost/eoelior/index.html`
-
-### 方式 2：任意靜態伺服器
-
-例如 Python：
-
-```bash
-python -m http.server 8000
-```
-
-再開啟 `http://localhost:8000/index.html`。
-
-## 專案結構（節錄）
-
-```
-eoelior/
-├── index.html
-├── README.md
-├── FlowChart/FlowChat.html
-├── HeicPngJpg/H2PJ.html
-├── QRcode/qr-generate-standalone.html
-├── LUSH/index.html
-├── ISMS/isms.html
-├── eveday/index.html
-├── sudo/index.html
-├── buytonobuy/index.html
-└── talktalk/analysis_results/meeting_statistics_report.html
-```
-
-## 維護入口頁的方法
-
-入口頁 `index.html` 使用一個 `TOOLS` 陣列產生卡片與分類；要新增/移除工具，修改該清單即可。
+---
+*本專案不保證能解決你的人生問題，但至少能幫你決定午餐要不要加點滷蛋。*
