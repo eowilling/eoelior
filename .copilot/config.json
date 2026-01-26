@@ -1,6 +1,0 @@
-{
-  "language": "zh-TW",
-  "description": "使用繁體中文回答。如果有產生文件請放在 .copilot 資料夾",
-  "outputDirectory": ".copilot",
-  "createdAt": "2026-01-22"
-}
