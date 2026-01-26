@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,8 @@
 
         :root {
             --bg-dark: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --card-border: rgba(255, 255, 255, 0.05);
             --accent-primary: #6366f1;
             --accent-secondary: #a855f7;
         }
@@ -22,81 +23,195 @@
             background-color: var(--bg-dark);
             color: #f8fafc;
             background-image:
-                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 25%),
-                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 25%);
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 35%);
+            background-attachment: fixed;
             min-height: 100vh;
         }
 
+        /* Glassmorphism Card Base */
         .glass-card {
             background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .glass-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(99, 102, 241, 0.5);
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        /* Search Input */
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
         }
 
         .search-input:focus {
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        /* Tabs */
+        .category-tab {
+            cursor: pointer;
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #94a3b8;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .category-tab:hover {
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .category-tab.active {
             background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
             color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
+        /* Gradient Text */
         .gradient-text {
             background: linear-gradient(135deg, #818cf8, #c084fc);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: inline-block;
         }
 
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
         }
     </style>
 </head>
 
-<body class="p-4 md:p-8">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="mb-10 text-center md:text-left flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-                <h1 class="text-4xl md:text-5xl font-bold mb-2">
-                    <span class="gradient-text">eoElior</span> 的玩具盒子
-                </h1>
-                <p class="text-slate-400 text-lg">一組可直接在瀏覽器開啟使用的前端小工具集合。</p>
+<body class="p-4 md:p-8 lg:p-12">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="animate-fade-in" style="animation-delay: 0.05s;">
+                <div class="flex items-center gap-5 mb-5 select-none">
+                    <!-- Logo Image -->
+                    <div class="relative w-16 h-16 md:w-20 md:h-20 shrink-0 group">
+                        <div
+                            class="absolute inset-0 bg-indigo-500/30 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        </div>
+                        <img src="assets/logo.png" alt="eoElior Logo"
+                            class="relative w-full h-full object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300">
+                    </div>
+
+                    <!-- Title Text -->
+                    <h1
+                        class="text-4xl md:text-5xl font-bold tracking-tight text-white flex flex-col md:flex-row md:items-baseline gap-2 md:gap-3">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-br from-indigo-300 to-purple-400">
+                            eoElior
+                        </span>
+                        <span
+                            class="text-xl text-slate-500 font-medium tracking-widest hidden md:inline-block opacity-50">|</span>
+                        <span class="text-3xl md:text-4xl text-slate-200 font-light tracking-wide">玩具盒子</span>
+                    </h1>
+                </div>
+                <p class="text-slate-400 text-lg max-w-2xl leading-relaxed">
+                    一組可直接在瀏覽器開啟使用的小工具集合。<br class="hidden md:block">
+                    包含抽獎、生產力工具、圖像處理與更多實用功能。
+                </p>
             </div>
 
+            <div class="w-full md:w-auto flex flex-col gap-4 animate-fade-in" style="animation-delay: 0.1s;">
+                <!-- Search -->
+                <div class="search-container w-full md:w-80">
+                    <i class="fa-solid fa-search search-icon"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜尋工具...">
+                </div>
+            </div>
         </header>
 
-        <!-- Search & Filters -->
-
+        <!-- Category Tabs -->
+        <div class="mb-8 flex flex-wrap gap-2 animate-fade-in" style="animation-delay: 0.15s;" id="categoryContainer">
+            <button class="category-tab active" data-category="all">全部</button>
+            <button class="category-tab" data-category="entertainment">娛樂 & 遊戲</button>
+            <button class="category-tab" data-category="productivity">生產力 & 管理</button>
+            <button class="category-tab" data-category="image">圖像處理</button>
+        </div>
 
         <!-- Tools Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16" id="toolsGrid"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16" id="toolsGrid">
+            <!-- Grid items will be injected here -->
+        </div>
 
-        <footer class="mt-24 pt-8 border-t border-slate-800 text-center">
-            <p class="text-slate-500 text-sm mb-2">eoElior © 2026</p>
+        <!-- Footer -->
+        <footer class="mt-24 pt-8 border-t border-slate-800/50 text-center animate-fade-in"
+            style="animation-delay: 0.3s;">
+            <p class="text-slate-500 text-sm">
+                eoElior © 2026 | Designed for efficiency and fun
+            </p>
         </footer>
     </div>
 
     <script>
         // ==========================================
-        // 工具清單（維護入口只要改這裡）
-        // ==========================================
-        // ==========================================
-        // 工具清單（維護入口只要改這裡）
+        // 工具清單配置
         // ==========================================
         const TOOLS = [
             {
@@ -104,8 +219,7 @@
                 desc: '最新版雙螢幕抽獎系統：手機遙控、Firebase 同步、炫酷動畫。',
                 category: 'entertainment',
                 href: 'rebox/index.html',
-                enabled: true,
-                badge: 'NEW',
+                badge: 'HOT',
                 icon: 'fa-rocket',
                 color: 'cyan'
             },
@@ -114,84 +228,87 @@
                 desc: 'Canvas 流程圖繪製：錨點連線、平移/縮放、匯出、存讀 JSON。',
                 category: 'productivity',
                 href: 'FlowChart/FlowChat.html',
-                enabled: true,
                 badge: '推薦',
                 icon: 'fa-diagram-project',
                 color: 'blue'
             },
             {
                 name: '數獨遊戲',
-                desc: '完整的數獨挑戰系統。',
+                desc: '完整的數獨挑戰系統，訓練邏輯思維。',
                 category: 'entertainment',
                 href: 'sudo/index.html',
-                enabled: true,
                 icon: 'fa-puzzle-piece',
                 color: 'emerald'
             },
             {
                 name: '買不買轉盤',
-                desc: '可自訂選項與機率的命運轉盤。',
+                desc: '猶豫不決嗎？可自訂選項與機率的命運轉盤幫你決定。',
                 category: 'entertainment',
                 href: 'buytonobuy/index.html',
-                enabled: true,
                 icon: 'fa-circle-notch',
                 color: 'purple'
             },
             {
                 name: 'QR Code 產生器',
-                desc: '快速生成 QR Code（離線單頁）。',
+                desc: '快速生成 QR Code，支援即時預覽與下載。（離線單頁）',
                 category: 'image',
                 href: 'QRcode/qr-generate-standalone.html',
-                enabled: true,
                 icon: 'fa-qrcode',
-                color: 'cyan'
+                color: 'pink'
             },
             {
                 name: 'HEIC 轉 PNG/JPG',
-                desc: 'HEIC 格式圖片轉換工具。',
+                desc: '解決 iPhone 照片格式問題，快速轉換圖片格式。',
                 category: 'image',
                 href: 'HeicPngJpg/H2PJ.html',
-                enabled: true,
-                icon: 'fa-image',
+                icon: 'fa-images',
                 color: 'amber'
             },
             {
                 name: '每日打卡',
-                desc: '追蹤每日習慣與目標（含 PHP 版本）。',
+                desc: '追蹤每日習慣與目標，養成自律生活（包含 PHP 版本）。',
                 category: 'productivity',
                 href: 'eveday/index.html',
-                enabled: true,
                 icon: 'fa-calendar-check',
                 color: 'indigo'
             },
             {
-                name: 'LUSH（文件索引）',
-                desc: '文件/索引管理頁。',
+                name: 'LUSH 文件索引',
+                desc: '文件與資源的索引管理系統，快速查找所需資料。',
                 category: 'productivity',
                 href: 'LUSH/index.html',
-                enabled: true,
                 icon: 'fa-folder-tree',
                 color: 'teal'
             },
             {
-                name: 'ISMS',
-                desc: 'ISMS 相關頁面。',
+                name: 'ISMS 資安宣導',
+                desc: '資訊安全管理系統相關頁面與宣導素材。',
                 category: 'productivity',
                 href: 'ISMS/isms.html',
-                enabled: true,
                 icon: 'fa-shield-halved',
                 color: 'rose'
-            },
-
+            }
         ];
 
+        // ==========================================
+        // 應用程式邏輯
+        // ==========================================
         const elGrid = document.getElementById('toolsGrid');
+        const elSearch = document.getElementById('searchInput');
+        const elTabs = document.querySelectorAll('.category-tab');
 
+        let currentCategory = 'all';
+        let searchQuery = '';
+
+        // 渲染徽章 HTML
         function badgeHtml(text) {
             if (!text) return '';
-            return `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-700 text-slate-300">${escHtml(text)}</span>`;
+            const isHot = text === 'HOT' || text === 'NEW';
+            const bgClass = isHot ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
+            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${bgClass}">${escHtml(text)}</span>`;
         }
 
+        // HTML 轉義防止 XSS
         function escHtml(str) {
             return String(str)
                 .replaceAll('&', '&amp;')
@@ -201,37 +318,96 @@
                 .replaceAll("'", '&#039;');
         }
 
+        // 處理由顏色名稱轉為 Tailwind class
         function iconClass(color) {
-            // tailwind class: bg-xxx-500/20 + text-xxx-400
-            const bg = `bg-${color}-500/20`;
-            const fg = `text-${color}-400`;
-            return { bg, fg };
+            // 預設顏色 fallback
+            const c = color || 'slate';
+            return {
+                bg: `bg-${c}-500/20`,
+                text: `text-${c}-400`
+            };
         }
 
+        // 核心渲染函式
         function renderGrid() {
-            elGrid.innerHTML = TOOLS.map(t => {
-                const { bg, fg } = iconClass(t.color || 'slate');
+            // 篩選邏輯
+            const filtered = TOOLS.filter(t => {
+                const matchCat = currentCategory === 'all' || t.category === currentCategory;
+                const searchLower = searchQuery.toLowerCase();
+                const matchSearch = t.name.toLowerCase().includes(searchLower) ||
+                    t.desc.toLowerCase().includes(searchLower);
+                return matchCat && matchSearch;
+            });
+
+            // 處理無結果狀態
+            if (filtered.length === 0) {
+                elGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-500">
+                        <i class="fa-regular fa-face-frown-open text-4xl mb-3 opacity-50"></i>
+                        <p>沒有找到符合的工具</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 產生卡片 HTML
+            elGrid.innerHTML = filtered.map((t, index) => {
+                const { bg, text } = iconClass(t.color);
+                // 每個卡片稍微延遲出現，製造階梯式動畫效果
+                const delay = index * 0.05;
+
                 return `
-                    <div class="glass-card rounded-2xl p-6 flex flex-col group">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="w-12 h-12 rounded-xl ${bg} flex items-center justify-center ${fg} text-2xl group-hover:scale-110 transition-transform">
+                    <div class="glass-card rounded-2xl p-6 flex flex-col group relative overflow-hidden animate-fade-in" style="animation-delay: ${delay}s">
+                        <!-- 背景裝飾光暈 -->
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-${t.color || 'slate'}-500/10 rounded-full blur-2xl group-hover:bg-${t.color || 'slate'}-500/20 transition-all duration-500"></div>
+
+                        <div class="flex justify-between items-start mb-5 relative z-10">
+                            <div class="w-12 h-12 rounded-xl ${bg} flex items-center justify-center ${text} text-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-inner">
                                 <i class="fa-solid ${escHtml(t.icon || 'fa-toolbox')}"></i>
                             </div>
                             <div class="flex items-center gap-2">
                                 ${badgeHtml(t.badge)}
                             </div>
                         </div>
-                        <h3 class="text-xl font-bold mb-2">${escHtml(t.name)}</h3>
-                        <p class="text-slate-400 text-sm mb-6 flex-grow">${escHtml(t.desc || '')}</p>
-                        <a href="${escHtml(t.href)}" target="_blank" class="mt-auto inline-flex items-center gap-2 text-indigo-400 font-medium hover:gap-3 transition-all">
-                                    開啟工具 <i class="fa-solid fa-arrow-right text-xs"></i>
+
+                        <h3 class="text-xl font-bold mb-2 text-slate-100 group-hover:text-white transition-colors">
+                            ${escHtml(t.name)}
+                        </h3>
+                        
+                        <p class="text-slate-400 text-sm mb-6 flex-grow leading-relaxed">
+                            ${escHtml(t.desc || '')}
+                        </p>
+
+                        <a href="${escHtml(t.href)}" target="_blank" class="mt-auto px-4 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/80 text-slate-300 hover:text-white text-sm font-medium transition-all flex items-center justify-center gap-2 group-hover:ring-1 ring-white/10">
+                            <span>開啟工具</span>
+                            <i class="fa-solid fa-arrow-right text-xs opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all"></i>
                         </a>
                     </div>
                 `;
             }).join('');
         }
 
-        // init
+        // 事件監聽事件
+        // 1. 搜尋
+        elSearch.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim();
+            renderGrid();
+        });
+
+        // 2. 分類頁籤
+        elTabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有 active
+                elTabs.forEach(b => b.classList.remove('active'));
+                // 設定當前 active
+                btn.classList.add('active');
+
+                currentCategory = btn.dataset.category;
+                renderGrid();
+            });
+        });
+
+        // 初始化
         renderGrid();
     </script>
 </body>
