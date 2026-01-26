@@ -1,7 +1,0 @@
-- [ ] 调研React主流UI库，确认是否包含Material UI、Chakra UI、Ant Design、Mantine
-- [ ] 调研npm平台上React抽奖组件的可获取性，如react-lottery-wheel等
-- [ ] 分析React自定义组件的难易程度，基于JSX的灵活性
-- [ ] 调研React的动画API，确认React Transition Group是否为主要解决方案
-- [ ] 评估React过渡效果实现的复杂度
-- [ ] 调研React动画性能优化机制，基于虚拟DOM的特性
-- [ ] 整理所有调研结果，生成符合要求的结构化数据
