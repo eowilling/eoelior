@@ -148,8 +148,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         let db = null;
+        let auth = null;
         let activityId = null;
         let currentState = 'IDLE';
         let targetPrize = null; // If set, we are in Prize Mode
@@ -212,24 +214,33 @@
             if (window.__firebase_config) {
                 const app = initializeApp(window.__firebase_config);
                 db = getDatabase(app);
+                auth = getAuth(app);
 
-                // Update connection indicator
-                const indicator = document.getElementById('conn-indicator');
-                if (indicator) {
-                    indicator.style.color = '#00ff00';
-                    indicator.innerText = '⬤ 已連線';
-                }
+                signInAnonymously(auth).then(() => {
+                    console.log("Remote: Signed in anonymously");
 
-                document.getElementById('setup-panel').style.display = 'none';
+                    // Update connection indicator
+                    const indicator = document.getElementById('conn-indicator');
+                    if (indicator) {
+                        indicator.style.color = '#00ff00';
+                        indicator.innerText = '⬤ 已連線 (Authenticated)';
+                    }
 
-                if (qPrize) {
-                    // Prize Mode
-                    targetPrize = qPrize;
-                    enterPrizeMode(qPrize);
-                } else {
-                    // Host Mode
-                    enterHostMode();
-                }
+                    document.getElementById('setup-panel').style.display = 'none';
+
+                    if (qPrize) {
+                        // Prize Mode
+                        targetPrize = qPrize;
+                        enterPrizeMode(qPrize);
+                    } else {
+                        // Host Mode
+                        enterHostMode();
+                    }
+                }).catch((error) => {
+                    console.error("Auth failed", error);
+                    alert("認證失敗: " + error.message);
+                });
+
             } else {
                 alert('未找到 Firebase 設定');
             }

@@ -740,6 +740,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         // Firebase Config - User will need to replace this if they want their own project
         // For now, using a structure that allows external injection or placeholder
@@ -750,13 +751,25 @@
         // Expose Firebase functions globally for our App to use
         window.Cloud = {
             db: null,
+            auth: null,
             init: () => {
                 try {
                     if (window.__firebase_config) {
                         const app = initializeApp(window.__firebase_config);
+                        window.Cloud.auth = getAuth(app);
                         window.Cloud.db = getDatabase(app);
                         console.log("Firebase initialized");
                         window.Cloud.lastError = null;
+
+                        // Sign in anonymously
+                        signInAnonymously(window.Cloud.auth)
+                            .then(() => {
+                                console.log("Signed in anonymously");
+                            })
+                            .catch((error) => {
+                                console.error("Auth Error", error);
+                                window.Cloud.lastError = "Auth Error: " + error.message;
+                            });
 
                         // Connection Status Listener
                         const connectedRef = ref(window.Cloud.db, ".info/connected");
@@ -773,7 +786,8 @@
                                 }
                                 // Debug click
                                 el.onclick = () => {
-                                    alert(`Firebase 連線狀態診斷:\n\n1. 連線狀態: ${connected ? '🟢 已連線' : '🔴 未連線'}\n2. Project ID: ${window.__firebase_config.projectId}\n3. Database URL: ${window.__firebase_config.databaseURL}\n\n如果不通，請檢查 (非常重要!):\n- Firebase Realtime Database Rule 是否設為 read: true, write: true\n- 網路是否正常`);
+                                    const authStatus = window.Cloud.auth && window.Cloud.auth.currentUser ? "已驗證 (匿名)" : "未驗證";
+                                    alert(`Firebase 連線狀態診斷:\n\n1. 連線狀態: ${connected ? '🟢 已連線' : '🔴 未連線'}\n2. Auth狀態: ${authStatus}\n3. Project ID: ${window.__firebase_config.projectId}\n4. Database URL: ${window.__firebase_config.databaseURL}\n\n如果不通，請檢查 (非常重要!):\n- Firebase Realtime Database Rule 是否設為 allow read, write: if auth != null\n- Firebase Console 是否已啟用 Anonymous Auth\n- 網路是否正常`);
                                 };
                             }
                             console.log("Connection Status:", connected);
