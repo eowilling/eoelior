@@ -145,6 +145,77 @@
             z-index: -1;
         }
 
+        /* LOGO 科技感效果 */
+        .tech-logo-container {
+            position: relative;
+        }
+
+        .tech-logo-container::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #d946ef, #6366f1);
+            border-radius: 50%;
+            animation: logoRotate 4s linear infinite;
+            opacity: 0.6;
+            filter: blur(8px);
+        }
+
+        @keyframes logoRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tech-logo-container::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: conic-gradient(from 180deg, transparent 0%, #6366f1 50%, transparent 100%);
+            border-radius: 50%;
+            animation: logoPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        .tech-logo {
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .tech-logo-container:hover .tech-logo {
+            transform: scale(1.1) rotate(5deg);
+            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
+        }
+
+        /* 座右銘樣式 */
+        .motto {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 0.95rem;
+            color: #94a3b8;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            margin-top: 0.75rem;
+            padding-left: 0.5rem;
+            border-left: 3px solid;
+            border-image: linear-gradient(135deg, #6366f1, #8b5cf6) 1;
+            animation: mottoFadeIn 1s ease-out 0.5s both;
+        }
+
+        @keyframes mottoFadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         /* Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
@@ -189,24 +260,24 @@
             <div class="animate-fade-in" style="animation-delay: 0.05s;">
                 <div class="flex items-center gap-5 mb-5 select-none">
                     <!-- Logo Image -->
-                    <div class="relative w-16 h-16 md:w-20 md:h-20 shrink-0 group">
-                        <div
-                            class="absolute inset-0 bg-indigo-500/30 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                        </div>
+                    <div class="tech-logo-container relative w-16 h-16 md:w-20 md:h-20 shrink-0">
                         <img src="assets/logo.png" alt="eoElior Logo"
-                            class="relative w-full h-full object-contain drop-shadow-xl hover:scale-105 transition-transform duration-300">
+                            class="tech-logo w-full h-full object-contain drop-shadow-xl">
                     </div>
 
                     <!-- Title Text -->
-                    <h1
-                        class="text-4xl md:text-5xl font-bold tracking-tight text-white flex flex-col md:flex-row md:items-baseline gap-2 md:gap-3">
-                        <span class="brand-title">
-                            eoElior
-                        </span>
-                        <span
-                            class="text-xl text-slate-500 font-medium tracking-widest hidden md:inline-block opacity-50">|</span>
-                        <span class="text-3xl md:text-4xl text-slate-200 font-light tracking-wide">玩具盒子</span>
-                    </h1>
+                    <div>
+                        <h1
+                            class="text-4xl md:text-5xl font-bold tracking-tight text-white flex flex-col md:flex-row md:items-baseline gap-2 md:gap-3">
+                            <span class="brand-title">
+                                eoElior
+                            </span>
+                            <span
+                                class="text-xl text-slate-500 font-medium tracking-widest hidden md:inline-block opacity-50">|</span>
+                            <span class="text-3xl md:text-4xl text-slate-200 font-light tracking-wide">玩具盒子</span>
+                        </h1>
+                        <p class="motto">人生就是跌倒了 躺一會也沒關係</p>
+                    </div>
                 </div>
                 <p class="text-slate-400 text-lg max-w-2xl leading-relaxed">
                     一組可直接在瀏覽器開啟使用的小工具集合。<br class="hidden md:block">
