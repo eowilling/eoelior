@@ -105,7 +105,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // 檢查 Firebase 配置
         let firebaseConfig;
@@ -130,7 +130,7 @@
             try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
-                db = getFirestore(app);
+                db = getFirestore(app, 'eveday');  // 使用 eveday 資料庫
                 
                 // 自動匿名登入
                 signInAnonymously(auth).then(() => {
@@ -219,7 +219,7 @@
             `).join('');
         }
 
-        // 上傳到 Firebase
+        // 上傳到 Firebase（批次寫入版本）
         window.uploadQuotesToFirebase = async function() {
             console.log('🚀 開始上傳流程...');
             console.log('Firebase 啟用狀態:', firebaseEnabled);
@@ -245,22 +245,33 @@
             }
 
             try {
-                const quotesCollection = collection(db, 'quotes');
-                console.log('📂 Collection 建立成功:', quotesCollection);
+                const BATCH_SIZE = 500; // Firestore 批次寫入上限
+                const totalBatches = Math.ceil(parsedQuotes.length / BATCH_SIZE);
                 
-                // 批量上傳
-                for (let i = 0; i < parsedQuotes.length; i++) {
-                    const quote = parsedQuotes[i];
-                    const docId = `quote_${Date.now()}_${i}`;
-                    console.log(`⏳ 正在上傳第 ${i + 1}/${parsedQuotes.length} 句...`);
+                console.log(`📦 將分成 ${totalBatches} 個批次上傳`);
+                
+                for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+                    const batch = writeBatch(db);
+                    const start = batchIndex * BATCH_SIZE;
+                    const end = Math.min(start + BATCH_SIZE, parsedQuotes.length);
                     
-                    await setDoc(doc(quotesCollection, docId), {
-                        text: quote,
-                        createdAt: new Date().toISOString(),
-                        order: i
-                    });
+                    console.log(`⏳ 正在處理批次 ${batchIndex + 1}/${totalBatches} (第 ${start + 1}-${end} 句)`);
                     
-                    console.log(`✅ 第 ${i + 1} 句上傳成功: ${docId}`);
+                    for (let i = start; i < end; i++) {
+                        const quote = parsedQuotes[i];
+                        const docId = `quote_${Date.now()}_${i}`;
+                        const docRef = doc(collection(db, 'quotes'), docId);
+                        
+                        batch.set(docRef, {
+                            text: quote,
+                            createdAt: new Date().toISOString(),
+                            order: i
+                        });
+                    }
+                    
+                    console.log(`💾 提交批次 ${batchIndex + 1}...`);
+                    await batch.commit();
+                    console.log(`✅ 批次 ${batchIndex + 1} 上傳成功！`);
                 }
 
                 console.log('🎉 全部上傳完成！');
