@@ -1,6 +1,11 @@
 {
     "rules": {
-        ".read": "auth != null",
-        ".write": "auth != null"
+        "events": {
+            "$activityId": {
+                // 僅允許已驗證的使用者讀取和寫入 events 下的活動資料
+                ".read": "auth != null",
+                ".write": "auth != null"
+            }
+        }
     }
 }
