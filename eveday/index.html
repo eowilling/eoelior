@@ -31,6 +31,7 @@
     <title>每日日曆</title>
     <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
     <script src="firebase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -42,7 +43,7 @@
         
         /* 溫暖色調主題 */
         .calendar-day {
-            min-height: 100px;
+            min-height: 110px;
             transition: all 0.3s ease;
             background: white;
         }
@@ -50,6 +51,31 @@
             background: linear-gradient(135deg, #fff7ed 0%, #fef3e2 100%);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(251, 146, 60, 0.15);
+        }
+        
+        /* 週六 - 淺藍色 */
+        .calendar-day.saturday {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+        .calendar-day.saturday:hover {
+            background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+        }
+        
+        /* 週日 - 淺紅色 */
+        .calendar-day.sunday {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        }
+        .calendar-day.sunday:hover {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+        }
+        
+        /* 國定假日 - 深紅色 */
+        .calendar-day.holiday {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            border-color: #ef4444 !important;
+        }
+        .calendar-day.holiday:hover {
+            background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
         }
         
         /* 已解鎖日期 - 藍綠色溫暖調 */
@@ -2744,6 +2770,21 @@
 
                 const todayKey = getTodayKey();
                 const isUnlocked = checkDateUnlocked(dateKey);
+                const dayOfWeek = date.getDay();
+                const holidayInfo = getHolidayInfo(dateKey);
+
+                // 檢查是否為國定假日
+                if (holidayInfo) {
+                    classes += ' holiday';
+                }
+                // 檢查是否為週六
+                else if (dayOfWeek === 6) {
+                    classes += ' saturday';
+                }
+                // 檢查是否為週日
+                else if (dayOfWeek === 0) {
+                    classes += ' sunday';
+                }
 
                 // 檢查是否為今天
                 if (isToday(date)) {
@@ -2776,6 +2817,28 @@
                 dayNumber.className = 'font-semibold text-gray-800';
                 dayNumber.textContent = day;
                 dayNumberContainer.appendChild(dayNumber);
+
+                // 農曆日期
+                const lunar = Lunar.fromDate(date);
+                const lunarDay = lunar.getDay();
+                const lunarMonth = lunar.getMonth();
+                let lunarText = '';
+                
+                // 如果是初一，顯示月份
+                if (lunarDay === 1) {
+                    lunarText = `${lunarMonth}月`;
+                } else {
+                    // 否則顯示日期
+                    const lunarDayNames = ['初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+                                           '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+                                           '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
+                    lunarText = lunarDayNames[lunarDay - 1];
+                }
+                
+                const lunarLabel = document.createElement('div');
+                lunarLabel.className = 'text-[10px] text-gray-500 mt-0.5';
+                lunarLabel.textContent = lunarText;
+                dayNumberContainer.appendChild(lunarLabel);
 
                 // 普通模式：鎖圖標（只有當天且未解鎖時才顯示，但手機模式下不顯示）
                 if (!developerMode && dateKey === todayKey && !isUnlocked && !isMobile()) {
@@ -2866,8 +2929,7 @@
                     dayElement.classList.add('unlocked', 'unlock-animation');
                 }
 
-                // 檢查節慶日期並顯示標記
-                const holidayInfo = getHolidayInfo(dateKey);
+                // 顯示節慶標記（已在上面檢查過）
                 if (holidayInfo) {
                     const holidayBadge = document.createElement('div');
                     // 固定在格子左上角
