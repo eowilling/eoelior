@@ -36,6 +36,11 @@ jobs:
           window.__app_id = "eveday-calendar";
           window.__gemini_api_key = "${{ secrets.GEMINI_API_KEY }}";
           EOF
+          
+      - name: Verify firebase-config.js was created
+        run: |
+          ls -la eveday/firebase-config.js
+          cat eveday/firebase-config.js
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
