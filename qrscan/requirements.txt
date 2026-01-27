@@ -1,0 +1,44 @@
+# QR碼解碼系統 - Python依賴清單
+
+# 核心依賴
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# GUI依賴
+# tkinter 通常隨Python安裝,無需額外安裝
+
+# 解碼引擎
+pyzbar>=0.1.9
+
+# 可選依賴 - 增強功能
+# 如果需要ZXing支持,請安裝:
+# pyzxing>=0.1.0
+
+# 如果需要QReader支持,請安裝:
+# qreader>=3.0.0
+
+# 批量處理結果導出
+pandas>=1.5.0
+openpyxl>=3.0.0
+
+# 進度條顯示
+tqdm>=4.65.0
+
+# 安裝說明:
+# 1. 基礎安裝 (必需):
+#    pip install opencv-python numpy Pillow pyzbar
+#
+# 2. 完整安裝 (包含所有可選功能):
+#    pip install -r requirements.txt
+#
+# 3. 如果在Windows上安裝pyzbar遇到問題:
+#    - 下載並安裝 Visual C++ Redistributable
+#    - 或使用預編譯的wheel文件
+#
+# 4. 如果需要ZXing支持:
+#    pip install pyzxing
+#    注意: ZXing需要Java運行環境
+#
+# 5. 如果需要QReader支持:
+#    pip install qreader

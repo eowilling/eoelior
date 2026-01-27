@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR碼解碼增強工具 - 下載與使用指南</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .feature-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            color: #2d3748;
+            margin: 0 0 10px 0;
+        }
+
+        p {
+            color: #718096;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .download-section {
+            background: #edf2f7;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 10px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(90, 103, 216, 0.4);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #ebf4ff;
+        }
+
+        code {
+            background: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #c53030;
+        }
+
+        .steps {
+            text-align: left;
+            margin: 20px 0;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+        }
+
+        .step-item {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            border-left: 3px solid #667eea;
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: #a0aec0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚀 強大的 QR 碼解碼工具</h1>
+        <p style="font-size: 1.2em; color: #4a5568;">
+            專為解決模糊、低對比度、破損 QR 碼設計的圖像增強與解碼系統
+        </p>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>極致解碼能力</h3>
+                <p>集成 OpenCV, PyZBar, ZXing, QReader 四大引擎，自動嘗試最佳解碼策略。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3>智能圖像增強</h3>
+                <p>自動評估圖像質量，智能應用二值化、銳化、去噪和對比度增強。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>高速批量處理</h3>
+                <p>多線程並行處理引擎，一次處理數千張圖片，速度提升 600% 以上。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>精準 ROI 選擇</h3>
+                <p>內建圖像預覽與區域選擇工具，輕鬆處理複雜背景中的小 QR 碼。</p>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <h2>如何開始使用？</h2>
+
+            <div class="steps">
+                <div class="step-item">
+                    <strong>步驟 1:</strong> 確保您的電腦已安裝 Python (建議 3.8 或以上版本)。
+                </div>
+                <div class="step-item">
+                    <strong>步驟 2:</strong> 雙擊資料夾中的 <code>啟動工具.bat</code> 腳本。
+                </div>
+                <div class="step-item">
+                    <strong>步驟 3:</strong> 選擇 <code>[3] 安裝Python依賴</code> 首次運行環境配置。
+                </div>
+                <div class="step-item">
+                    <strong>步驟 4:</strong> 選擇 <code>[1] Python圖形工具</code> 開始體驗強大的解碼功能！
+                </div>
+            </div>
+
+            <p style="margin-bottom: 20px;">
+                <small>* 網頁版由於瀏覽器性能限制已停止維護，請使用更強大的 Python 版本以獲得最佳體驗。</small>
+            </p>
+
+            <a href="README_ENHANCED.md" class="btn btn-secondary">📖 查看完整說明書</a>
+        </div>
+
+        <div class="footer">
+            QR Code Decoder Enhanced System v2.0
+        </div>
+    </div>
+</body>
+
+</html>
