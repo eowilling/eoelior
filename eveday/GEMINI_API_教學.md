@@ -52,30 +52,6 @@
 
 ### 步驟 3: 建立 API Key
 
-
-eveday
-https://aistudio.google.com/
-AIzaSyAJa3BvmNyR5s0rlIOoOMJOsnr-pNdgVVI
-722816989754
-
-curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \
-  -H 'Content-Type: application/json' \
-  -H 'X-goog-api-key: AIzaSyAJa3BvmNyR5s0rlIOoOMJOsnr-pNdgVVI' \
-  -X POST \
-  -d '{
-    "contents": [
-      {
-        "parts": [
-          {
-            "text": "Explain how AI works in a few words"
-          }
-        ]
-      }
-    ]
-  }'
-
-
-projects/722816989754
 1. 登入後,點擊左側選單的 **「Get API key」** (取得 API 金鑰)
 
 2. 您會看到兩個選項:
