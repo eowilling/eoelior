@@ -29,6 +29,8 @@
         })();
     </script>
     <title>每日日曆</title>
+    <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
+    <script src="firebase-config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -3310,6 +3312,72 @@
 
         // 初始化
         init();
+    </script>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase 配置
+        let firebaseConfig;
+        let firebaseEnabled = false;
+
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = typeof __firebase_config === 'string'
+                    ? JSON.parse(__firebase_config)
+                    : __firebase_config;
+                firebaseEnabled = true;
+                console.log('✅ Firebase 配置已載入');
+            } else {
+                console.warn('⚠️ 未檢測到 Firebase 配置');
+                firebaseEnabled = false;
+            }
+        } catch (e) {
+            console.error('❌ Firebase 配置解析失敗:', e);
+            firebaseEnabled = false;
+        }
+
+        // Firebase 應用程式識別碼
+        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'eveday-calendar';
+
+        // 初始化 Firebase
+        let app, auth, db;
+        if (firebaseEnabled) {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                // 自動匿名登入
+                signInAnonymously(auth).then(() => {
+                    console.log('✅ Firebase 匿名登入成功');
+                }).catch((error) => {
+                    console.error('❌ Firebase 匿名登入失敗:', error);
+                });
+                
+                // 監聽認證狀態
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log('✅ Firebase 使用者已認證:', user.uid);
+                    } else {
+                        console.log('⚠️ Firebase 使用者未認證');
+                    }
+                });
+                
+            } catch (e) {
+                console.error('❌ Firebase 初始化失敗:', e);
+                firebaseEnabled = false;
+            }
+        }
+
+        // 將 Firebase 實例導出供其他腳本使用
+        window.__firebaseApp = app;
+        window.__firebaseAuth = auth;
+        window.__firebaseDb = db;
+        window.__firebaseEnabled = firebaseEnabled;
     </script>
 </body>
 </html>
