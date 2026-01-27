@@ -37,17 +37,81 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fef3e2 0%, #fef9f3 50%, #e8f5f0 100%);
         }
+        
+        /* 溫暖色調主題 */
         .calendar-day {
             min-height: 100px;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            background: white;
         }
         .calendar-day:hover {
-            background-color: #f3f4f6;
+            background: linear-gradient(135deg, #fff7ed 0%, #fef3e2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(251, 146, 60, 0.15);
         }
+        
+        /* 已解鎖日期 - 藍綠色溫暖調 */
+        .calendar-day.unlocked {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: #34d399 !important;
+        }
+        .calendar-day.unlocked:hover {
+            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+        }
+        
+        /* 今天 - 橙黃色溫暖調 */
+        .calendar-day.today {
+            border-color: #fb923c !important;
+            background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+        }
+        
         .calendar-day.has-todos {
-            background-color: #fef3c7;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         }
+        
+        /* 鎖頭圖示動畫 */
+        .lock-icon {
+            animation: lockPulse 2s ease-in-out infinite;
+        }
+        @keyframes lockPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        /* 解鎖動畫 */
+        .unlock-animation {
+            animation: unlockScale 0.5s ease-out;
+        }
+        @keyframes unlockScale {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* 金句小卡樣式 */
+        .quote-card {
+            background: linear-gradient(135deg, #fef3e2 0%, #e8f5f0 100%);
+            border: 3px solid #fb923c;
+            box-shadow: 0 10px 30px rgba(251, 146, 60, 0.2);
+            animation: cardAppear 0.5s ease-out;
+        }
+        @keyframes cardAppear {
+            0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        
+        /* 台灣節慶標記 */
+        .holiday-badge {
+            background: linear-gradient(135deg, #fca5a5 0%, #fb7185 100%);
+            animation: badgeBounce 1s ease-in-out infinite;
+        }
+        @keyframes badgeBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        
         .todo-item {
             transition: all 0.2s;
         }
@@ -325,6 +389,37 @@
 
         // 開發者模式
         let developerMode = localStorage.getItem('developerMode') === 'true';
+
+        // 2026年台灣節慶與公眾假期
+        const taiwanHolidays2026 = {
+            '2026-01-01': { name: '元旦', emoji: '🎊', type: 'public' },
+            '2026-01-28': { name: '農曆除夕', emoji: '🏮', type: 'public' },
+            '2026-01-29': { name: '春節初一', emoji: '🧧', type: 'public' },
+            '2026-01-30': { name: '春節初二', emoji: '🧧', type: 'public' },
+            '2026-01-31': { name: '春節初三', emoji: '🧧', type: 'public' },
+            '2026-02-01': { name: '春節初四', emoji: '🧧', type: 'public' },
+            '2026-02-02': { name: '春節初五', emoji: '🧧', type: 'public' },
+            '2026-02-14': { name: '西洋情人節', emoji: '💝', type: 'special' },
+            '2026-02-28': { name: '和平紀念日', emoji: '🕊️', type: 'public' },
+            '2026-03-14': { name: '白色情人節', emoji: '🤍', type: 'special' },
+            '2026-04-03': { name: '兒童節', emoji: '🎈', type: 'public' },
+            '2026-04-04': { name: '清明節', emoji: '🌸', type: 'public' },
+            '2026-05-01': { name: '勞動節', emoji: '💼', type: 'public' },
+            '2026-05-10': { name: '母親節', emoji: '💐', type: 'special' },
+            '2026-05-24': { name: '端午節', emoji: '🥟', type: 'public' },
+            '2026-08-08': { name: '父親節', emoji: '👨', type: 'special' },
+            '2026-09-07': { name: '中秋節', emoji: '🌕', type: 'public' },
+            '2026-10-10': { name: '國慶日', emoji: '🇹🇼', type: 'public' },
+            '2026-10-31': { name: '萬聖節', emoji: '🎃', type: 'special' },
+            '2026-11-01': { name: '重陽節', emoji: '🍂', type: 'traditional' },
+            '2026-12-25': { name: '行憲紀念日', emoji: '📜', type: 'public' },
+            '2026-12-24': { name: '平安夜', emoji: '🎄', type: 'special' }
+        };
+
+        // 檢查日期是否為節慶
+        function getHolidayInfo(dateKey) {
+            return taiwanHolidays2026[dateKey] || null;
+        }
 
         // 使用者管理
         function initUsers() {
@@ -2753,6 +2848,20 @@
                         dayCountLabel.textContent = `第${dayIndex + 1}天`;
                         dayElement.appendChild(dayCountLabel);
                     }
+                    // 加入 unlocked 類別用於樣式
+                    dayElement.classList.add('unlocked', 'unlock-animation');
+                }
+
+                // 檢查節慶日期並顯示標記
+                const holidayInfo = getHolidayInfo(dateKey);
+                if (holidayInfo) {
+                    const holidayBadge = document.createElement('div');
+                    // 固定在格子左上角
+                    holidayBadge.className = 'absolute top-1 left-1 z-10 holiday-badge inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-white text-[9px] sm:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
+                    holidayBadge.title = holidayInfo.name;
+                    holidayBadge.textContent = `${holidayInfo.emoji} ${holidayInfo.name}`;
+                    dayElement.appendChild(holidayBadge);
+                }
                 }
 
                 // 儲存日期資訊到元素，方便後續查找
