@@ -1,9 +1,10 @@
 window.__firebase_config = {
-  apiKey: "AIzaSyDDgQUZH5N1IaNR2-CeOIHCQjccsJEYD5s",
-  authDomain: "studio-2298218799-c99fe.firebaseapp.com",
-  projectId: "studio-2298218799-c99fe",
-  storageBucket: "studio-2298218799-c99fe.firebasestorage.app",
-  messagingSenderId: "848457307119",
-  appId: "1:848457307119:web:d0c416db3468efb9ef5c1a",
-  databaseURL: "https://studio-2298218799-c99fe-default-rtdb.firebaseio.com"
+  apiKey: "AIzaSyDRjxIWJc5BabyvRbhR6uZ8ZaO3J70OKfc",
+  authDomain: "eoelior-17bed.firebaseapp.com",
+  projectId: "eoelior-17bed",
+  storageBucket: "eoelior-17bed.firebasestorage.app",
+  messagingSenderId: "722816989754",
+  appId: "1:722816989754:web:4ec2a41fe13c96db769303",
+  measurementId: "G-Y0D90RPHNF",
+  databaseURL: "https://eoelior-17bed.asia-southeast1.firebasedatabase.app/"
 };
