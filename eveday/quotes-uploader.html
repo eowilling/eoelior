@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金句管理系統 | 每日日曆</title>
+    <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
+    <script src="firebase-config.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fef3e2 0%, #fef9f3 50%, #e8f5f0 100%);
+        }
+        .quote-card {
+            background: white;
+            border-left: 4px solid #fb923c;
+            transition: all 0.3s ease;
+        }
+        .quote-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(251, 146, 60, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">📝 金句管理系統</h1>
+                    <p class="text-gray-600">上傳、管理你的勵志金句庫</p>
+                </div>
+                <a href="index.html" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    ← 返回日曆
+                </a>
+            </div>
+            
+            <!-- Firebase 連線狀態 -->
+            <div id="firebaseStatus" class="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded">
+                <p class="text-yellow-700">🔄 正在連接 Firebase...</p>
+            </div>
+        </header>
+
+        <!-- 上傳區域 -->
+        <div id="uploadSection" class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📤 上傳金句 TXT 文件</h2>
+            <div class="space-y-4">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-400 transition">
+                    <input type="file" id="txtFileInput" accept=".txt" class="hidden" onchange="handleFileSelect(event)">
+                    <label for="txtFileInput" class="cursor-pointer">
+                        <div class="text-6xl mb-4">📄</div>
+                        <p class="text-lg font-semibold text-gray-700 mb-2">點擊或拖曳 TXT 文件到這裡</p>
+                        <p class="text-sm text-gray-500">支援格式：使用空行（一行或多行）區分不同金句</p>
+                    </label>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-800 mb-2">📌 文件格式說明：</h3>
+                    <pre class="text-sm text-blue-700 bg-white p-3 rounded">第一句金句
+可以多行
+
+
+第二句金句
+也可以多行
+
+
+
+第三句金句
+空行數量不限，至少一行空行即可區分</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 解析結果預覽 -->
+        <div id="previewSection" class="bg-white rounded-xl shadow-lg p-6 mb-8 hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">👀 解析結果預覽</h2>
+                <button onclick="uploadQuotesToFirebase()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold">
+                    ✅ 確認上傳到 Firebase
+                </button>
+            </div>
+            <div id="quotesPreviewList" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- 預覽內容將動態生成 -->
+            </div>
+        </div>
+
+        <!-- 現有金句列表 -->
+        <div id="existingQuotesSection" class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">💬 現有金句庫</h2>
+                <div class="text-sm text-gray-600">
+                    共 <span id="quotesCount" class="font-bold text-orange-600">0</span> 句
+                </div>
+            </div>
+            <div id="existingQuotesList" class="space-y-2 max-h-96 overflow-y-auto">
+                <!-- 現有金句將動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 檢查 Firebase 配置
+        let firebaseConfig;
+        let firebaseEnabled = false;
+
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = typeof __firebase_config === 'string'
+                    ? JSON.parse(__firebase_config)
+                    : __firebase_config;
+                firebaseEnabled = true;
+            } else {
+                showFirebaseError('未檢測到 Firebase 配置');
+            }
+        } catch (e) {
+            showFirebaseError('Firebase 配置解析失敗: ' + e.message);
+        }
+
+        // 初始化 Firebase
+        let app, auth, db;
+        if (firebaseEnabled) {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                // 自動匿名登入
+                signInAnonymously(auth).then(() => {
+                    console.log('✅ Firebase 匿名登入成功');
+                    showFirebaseSuccess();
+                    loadExistingQuotes();
+                }).catch((error) => {
+                    showFirebaseError('Firebase 登入失敗: ' + error.message);
+                });
+                
+            } catch (e) {
+                showFirebaseError('Firebase 初始化失敗: ' + e.message);
+            }
+        }
+
+        function showFirebaseError(message) {
+            const statusEl = document.getElementById('firebaseStatus');
+            statusEl.className = 'bg-red-100 border-l-4 border-red-500 p-4 rounded';
+            statusEl.innerHTML = `
+                <p class="text-red-700 font-semibold">❌ Firebase 連線失敗</p>
+                <p class="text-red-600 text-sm mt-1">${message}</p>
+                <p class="text-red-600 text-sm mt-2">⚠️ 此系統需要 Firebase 連線才能運作</p>
+            `;
+            document.getElementById('uploadSection').classList.add('opacity-50', 'pointer-events-none');
+        }
+
+        function showFirebaseSuccess() {
+            const statusEl = document.getElementById('firebaseStatus');
+            statusEl.className = 'bg-green-100 border-l-4 border-green-500 p-4 rounded';
+            statusEl.innerHTML = '<p class="text-green-700 font-semibold">✅ Firebase 已連線</p>';
+        }
+
+        // 全局變數
+        let parsedQuotes = [];
+
+        // 處理文件選擇
+        window.handleFileSelect = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith('.txt')) {
+                alert('請選擇 .txt 文件');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseQuotes(content);
+            };
+            reader.readAsText(file, 'UTF-8');
+        };
+
+        // 解析金句（用空行區分）
+        function parseQuotes(content) {
+            // 使用正則表達式：一個或多個空行作為分隔符
+            const quotes = content
+                .split(/\n\s*\n+/)  // 分割：至少一個空行（包含只有空白的行）
+                .map(q => q.trim()) // 移除每句前後的空白
+                .filter(q => q.length > 0); // 移除空字串
+
+            parsedQuotes = quotes;
+            
+            // 顯示預覽
+            showPreview(quotes);
+        }
+
+        // 顯示預覽
+        function showPreview(quotes) {
+            const previewSection = document.getElementById('previewSection');
+            const previewList = document.getElementById('quotesPreviewList');
+            
+            previewSection.classList.remove('hidden');
+            
+            previewList.innerHTML = quotes.map((quote, index) => `
+                <div class="quote-card p-4 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold text-sm">
+                            ${index + 1}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(quote)}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 上傳到 Firebase
+        window.uploadQuotesToFirebase = async function() {
+            if (!firebaseEnabled || !db) {
+                alert('Firebase 未連線');
+                return;
+            }
+
+            if (parsedQuotes.length === 0) {
+                alert('沒有可上傳的金句');
+                return;
+            }
+
+            const confirmed = confirm(`確定要上傳 ${parsedQuotes.length} 句金句到 Firebase 嗎？`);
+            if (!confirmed) return;
+
+            try {
+                const quotesCollection = collection(db, 'quotes');
+                
+                // 批量上傳
+                for (let i = 0; i < parsedQuotes.length; i++) {
+                    const quote = parsedQuotes[i];
+                    const docId = `quote_${Date.now()}_${i}`;
+                    await setDoc(doc(quotesCollection, docId), {
+                        text: quote,
+                        createdAt: new Date().toISOString(),
+                        order: i
+                    });
+                }
+
+                alert(`✅ 成功上傳 ${parsedQuotes.length} 句金句！`);
+                
+                // 清空預覽
+                document.getElementById('previewSection').classList.add('hidden');
+                parsedQuotes = [];
+                document.getElementById('txtFileInput').value = '';
+                
+                // 重新載入現有金句
+                await loadExistingQuotes();
+                
+            } catch (error) {
+                console.error('上傳失敗:', error);
+                alert('上傳失敗: ' + error.message);
+            }
+        };
+
+        // 載入現有金句
+        async function loadExistingQuotes() {
+            if (!firebaseEnabled || !db) return;
+
+            try {
+                const quotesCollection = collection(db, 'quotes');
+                const snapshot = await getDocs(quotesCollection);
+                
+                const quotes = [];
+                snapshot.forEach(doc => {
+                    quotes.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                // 按 order 或創建時間排序
+                quotes.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                displayExistingQuotes(quotes);
+                
+            } catch (error) {
+                console.error('載入金句失敗:', error);
+            }
+        }
+
+        // 顯示現有金句
+        function displayExistingQuotes(quotes) {
+            const list = document.getElementById('existingQuotesList');
+            const count = document.getElementById('quotesCount');
+            
+            count.textContent = quotes.length;
+
+            if (quotes.length === 0) {
+                list.innerHTML = '<p class="text-gray-400 text-center py-8">尚無金句，請上傳 TXT 文件</p>';
+                return;
+            }
+
+            list.innerHTML = quotes.map((quote, index) => `
+                <div class="quote-card p-4 rounded-lg flex items-start gap-3">
+                    <div class="flex-shrink-0 w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold text-sm">
+                        ${index + 1}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-gray-700 whitespace-pre-wrap">${escapeHtml(quote.text)}</p>
+                        <p class="text-xs text-gray-400 mt-2">ID: ${quote.id}</p>
+                    </div>
+                    <button onclick="deleteQuote('${quote.id}')" class="flex-shrink-0 px-3 py-1 text-xs bg-red-100 text-red-600 rounded hover:bg-red-200 transition">
+                        刪除
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 刪除金句
+        window.deleteQuote = async function(quoteId) {
+            if (!confirm('確定要刪除這句金句嗎？')) return;
+
+            try {
+                await deleteDoc(doc(db, 'quotes', quoteId));
+                alert('✅ 刪除成功');
+                await loadExistingQuotes();
+            } catch (error) {
+                console.error('刪除失敗:', error);
+                alert('刪除失敗: ' + error.message);
+            }
+        };
+
+        // HTML 轉義
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
