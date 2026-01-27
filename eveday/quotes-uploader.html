@@ -221,33 +221,49 @@
 
         // 上傳到 Firebase
         window.uploadQuotesToFirebase = async function() {
+            console.log('🚀 開始上傳流程...');
+            console.log('Firebase 啟用狀態:', firebaseEnabled);
+            console.log('資料庫實例:', db);
+            
             if (!firebaseEnabled || !db) {
-                alert('Firebase 未連線');
+                alert('❌ Firebase 未連線');
+                console.error('Firebase 未連線');
                 return;
             }
 
             if (parsedQuotes.length === 0) {
-                alert('沒有可上傳的金句');
+                alert('❌ 沒有可上傳的金句');
+                console.error('金句陣列為空');
                 return;
             }
 
+            console.log(`📝 準備上傳 ${parsedQuotes.length} 句金句`);
             const confirmed = confirm(`確定要上傳 ${parsedQuotes.length} 句金句到 Firebase 嗎？`);
-            if (!confirmed) return;
+            if (!confirmed) {
+                console.log('❌ 用戶取消上傳');
+                return;
+            }
 
             try {
                 const quotesCollection = collection(db, 'quotes');
+                console.log('📂 Collection 建立成功:', quotesCollection);
                 
                 // 批量上傳
                 for (let i = 0; i < parsedQuotes.length; i++) {
                     const quote = parsedQuotes[i];
                     const docId = `quote_${Date.now()}_${i}`;
+                    console.log(`⏳ 正在上傳第 ${i + 1}/${parsedQuotes.length} 句...`);
+                    
                     await setDoc(doc(quotesCollection, docId), {
                         text: quote,
                         createdAt: new Date().toISOString(),
                         order: i
                     });
+                    
+                    console.log(`✅ 第 ${i + 1} 句上傳成功: ${docId}`);
                 }
 
+                console.log('🎉 全部上傳完成！');
                 alert(`✅ 成功上傳 ${parsedQuotes.length} 句金句！`);
                 
                 // 清空預覽
@@ -259,8 +275,10 @@
                 await loadExistingQuotes();
                 
             } catch (error) {
-                console.error('上傳失敗:', error);
-                alert('上傳失敗: ' + error.message);
+                console.error('❌ 上傳失敗詳細錯誤:', error);
+                console.error('錯誤代碼:', error.code);
+                console.error('錯誤訊息:', error.message);
+                alert('❌ 上傳失敗: ' + error.message + '\n錯誤代碼: ' + error.code);
             }
         };
 
