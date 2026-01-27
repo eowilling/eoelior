@@ -13,6 +13,7 @@ window.__firebase_config = {
 
 window.__app_id = "eveday-calendar";
 
-// Gemini API Key - 注意: 這個不應該公開!
-// 在生產環境應該使用後端 API 來呼叫
-window.__gemini_api_key = "YOUR_GEMINI_API_KEY_HERE";
+// Gemini API Key (可以在前端使用,但需要設定 API Key 限制)
+// 請到 https://aistudio.google.com/ > API Keys > 設定 HTTP Referrer Restrictions
+// 允許的網域: https://eowilling.github.io/* 和 http://localhost/*
+window.__gemini_api_key = "AIzaSyAJa3BvmNyR5s0rlIOoOMJOsnr-pNdgVVI";
