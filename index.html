@@ -145,7 +145,7 @@
             z-index: -1;
         }
 
-        /* LOGO 科技感效果 */
+        /* LOGO 科技感效果 - 優化版 */
         .tech-logo-container {
             position: relative;
         }
@@ -153,12 +153,13 @@
         .tech-logo-container::before {
             content: '';
             position: absolute;
-            inset: -4px;
+            inset: -8px;
             background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #d946ef, #6366f1);
             border-radius: 50%;
             animation: logoRotate 4s linear infinite;
-            opacity: 0.6;
-            filter: blur(8px);
+            opacity: 0.2;
+            filter: blur(12px);
+            z-index: 0;
         }
 
         @keyframes logoRotate {
@@ -169,26 +170,29 @@
         .tech-logo-container::after {
             content: '';
             position: absolute;
-            inset: -2px;
+            inset: -6px;
             background: conic-gradient(from 180deg, transparent 0%, #6366f1 50%, transparent 100%);
             border-radius: 50%;
             animation: logoPulse 2s ease-in-out infinite;
+            opacity: 0.15;
+            z-index: 0;
         }
 
         @keyframes logoPulse {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.05); }
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.05); }
         }
 
         .tech-logo {
             position: relative;
-            z-index: 2;
+            z-index: 10;
             transition: all 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
         }
 
         .tech-logo-container:hover .tech-logo {
-            transform: scale(1.1) rotate(5deg);
-            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
+            transform: scale(1.08);
+            filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));
         }
 
         /* 座右銘樣式 */
