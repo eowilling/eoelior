@@ -168,6 +168,11 @@
                                             title="保存使用者名稱">
                                         💾 保存
                                     </button>
+                                    <button onclick="window.location.href='quotes-uploader.html'"
+                                            class="px-3 py-2 sm:py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition text-sm font-semibold"
+                                            title="管理金句庫">
+                                        📝 金句管理
+                                    </button>
                                     <button onclick="exportUserData()"
                                             class="px-3 py-2 sm:py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-semibold"
                                             title="匯出日曆資料">
@@ -3433,6 +3438,7 @@
         let firebaseConfig;
         let firebaseEnabled = false;
 
+        // 強制檢查 Firebase 配置
         try {
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                 firebaseConfig = typeof __firebase_config === 'string'
@@ -3441,12 +3447,36 @@
                 firebaseEnabled = true;
                 console.log('✅ Firebase 配置已載入');
             } else {
-                console.warn('⚠️ 未檢測到 Firebase 配置');
+                console.error('❌ 未檢測到 Firebase 配置');
+                showFirebaseWarning();
                 firebaseEnabled = false;
             }
         } catch (e) {
             console.error('❌ Firebase 配置解析失敗:', e);
+            showFirebaseWarning();
             firebaseEnabled = false;
+        }
+
+        // 顯示 Firebase 警告
+        function showFirebaseWarning() {
+            const warningBanner = document.createElement('div');
+            warningBanner.className = 'fixed top-0 left-0 right-0 bg-red-600 text-white p-4 z-50 shadow-lg';
+            warningBanner.innerHTML = `
+                <div class="max-w-6xl mx-auto flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">⚠️</span>
+                        <div>
+                            <p class="font-bold">Firebase 連線失敗</p>
+                            <p class="text-sm">此應用程式需要 Firebase 連線才能正常運作。請檢查網路連線或 Firebase 配置。</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertBefore(warningBanner, document.body.firstChild);
+            
+            // 禁用主要功能
+            document.getElementById('evedayAppRoot').style.opacity = '0.5';
+            document.getElementById('evedayAppRoot').style.pointerEvents = 'none';
         }
 
         // Firebase 應用程式識別碼
@@ -3465,6 +3495,7 @@
                     console.log('✅ Firebase 匿名登入成功');
                 }).catch((error) => {
                     console.error('❌ Firebase 匿名登入失敗:', error);
+                    showFirebaseWarning();
                 });
                 
                 // 監聽認證狀態
@@ -3478,6 +3509,7 @@
                 
             } catch (e) {
                 console.error('❌ Firebase 初始化失敗:', e);
+                showFirebaseWarning();
                 firebaseEnabled = false;
             }
         }
