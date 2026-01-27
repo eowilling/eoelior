@@ -4,198 +4,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR碼解碼增強工具 - 下載與使用指南</title>
+    <title>QR Code 增強與解碼系統 | 專業級圖像處理工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap');
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
             min-height: 100vh;
+            color: #f7fafc;
+        }
+
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #4fd1c5, #63b3ed);
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            max-width: 800px;
-            width: 100%;
-            text-align: center;
-        }
-
-        h1 {
-            color: #4a5568;
-            margin-bottom: 20px;
-            font-size: 2.5em;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-            text-align: left;
-        }
-
-        .feature-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
+            border-radius: 50%;
+            color: white;
+            font-weight: bold;
+            flex-shrink: 0;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s;
         }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
+        .command-box {
+            background: #0f172a;
+            color: #a5b4fc;
+            border-left: 4px solid #63b3ed;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            color: #e2e8f0;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
         }
 
         .feature-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        h3 {
-            color: #2d3748;
-            margin: 0 0 10px 0;
+        .scroll-smooth {
+            scroll-behavior: smooth;
         }
 
-        p {
-            color: #718096;
-            line-height: 1.6;
-            margin: 0;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
         }
 
-        .download-section {
-            background: #edf2f7;
-            padding: 30px;
-            border-radius: 10px;
-            margin-top: 30px;
+        ::-webkit-scrollbar-track {
+            background: #1a202c;
         }
 
-        .btn {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1em;
-            margin: 10px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 5px;
         }
 
-        .btn:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(90, 103, 216, 0.4);
-        }
-
-        .btn-secondary {
-            background: #fff;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-
-        .btn-secondary:hover {
-            background: #ebf4ff;
-        }
-
-        code {
-            background: #e2e8f0;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            color: #c53030;
-        }
-
-        .steps {
-            text-align: left;
-            margin: 20px 0;
-            padding: 20px;
-            background: #fff;
-            border-radius: 10px;
-        }
-
-        .step-item {
-            margin-bottom: 15px;
-            padding-left: 20px;
-            border-left: 3px solid #667eea;
-        }
-
-        .footer {
-            margin-top: 30px;
-            color: #a0aec0;
-            font-size: 0.9em;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #718096;
         }
     </style>
 </head>
 
-<body>
-    <div class="container">
-        <h1>🚀 強大的 QR 碼解碼工具</h1>
-        <p style="font-size: 1.2em; color: #4a5568;">
-            專為解決模糊、低對比度、破損 QR 碼設計的圖像增強與解碼系統
-        </p>
-
-        <div class="feature-grid">
-            <div class="feature-card">
-                <div class="feature-icon">🔍</div>
-                <h3>極致解碼能力</h3>
-                <p>集成 OpenCV, PyZBar, ZXing, QReader 四大引擎，自動嘗試最佳解碼策略。</p>
+<body class="scroll-smooth">
+    <!-- Header -->
+    <header class="border-b border-white/10 bg-black/20 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide">QR Enhancer</h1>
+                    <p class="text-xs text-blue-300">Pro Edition v2.0</p>
+                </div>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">✨</div>
-                <h3>智能圖像增強</h3>
-                <p>自動評估圖像質量，智能應用二值化、銳化、去噪和對比度增強。</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3>高速批量處理</h3>
-                <p>多線程並行處理引擎，一次處理數千張圖片，速度提升 600% 以上。</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <h3>精準 ROI 選擇</h3>
-                <p>內建圖像預覽與區域選擇工具，輕鬆處理複雜背景中的小 QR 碼。</p>
-            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-gray-300">
+                <a href="#features" class="hover:text-white transition-colors">核心功能</a>
+                <a href="#quick-start" class="hover:text-white transition-colors">快速開始</a>
+                <a href="README_ENHANCED.md" class="hover:text-white transition-colors flex items-center gap-1">
+                    <i class="fas fa-book"></i> 完整文檔
+                </a>
+            </nav>
         </div>
+    </header>
 
-        <div class="download-section">
-            <h2>如何開始使用？</h2>
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-12">
 
-            <div class="steps">
-                <div class="step-item">
-                    <strong>步驟 1:</strong> 確保您的電腦已安裝 Python (建議 3.8 或以上版本)。
-                </div>
-                <div class="step-item">
-                    <strong>步驟 2:</strong> 雙擊資料夾中的 <code>啟動工具.bat</code> 腳本。
-                </div>
-                <div class="step-item">
-                    <strong>步驟 3:</strong> 選擇 <code>[3] 安裝Python依賴</code> 首次運行環境配置。
-                </div>
-                <div class="step-item">
-                    <strong>步驟 4:</strong> 選擇 <code>[1] Python圖形工具</code> 開始體驗強大的解碼功能！
-                </div>
+        <!-- Hero Section -->
+        <div class="text-center mb-16 relative">
+            <div
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -z-10 animate-pulse">
             </div>
-
-            <p style="margin-bottom: 20px;">
-                <small>* 網頁版由於瀏覽器性能限制已停止維護，請使用更強大的 Python 版本以獲得最佳體驗。</small>
+            <h1
+                class="text-5xl md:text-6xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+                重構模糊 . 還原真相
+            </h1>
+            <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-8 leading-relaxed">
+                專為解決低對比度、破損、模糊 QR Code 設計的智慧增強系統。<br>
+                集成四大解碼引擎，提供前所未有的識別率。
             </p>
-
-            <a href="README_ENHANCED.md" class="btn btn-secondary">📖 查看完整說明書</a>
+            <div class="flex justify-center gap-4">
+                <a href="#quick-start"
+                    class="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full font-bold text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:-translate-y-1 transition-all">
+                    立即開始 <i class="fas fa-rocket ml-2"></i>
+                </a>
+                <a href="README_ENHANCED.md"
+                    class="px-8 py-3 bg-white/10 backdrop-blur rounded-full font-bold text-white border border-white/20 hover:bg-white/20 transition-all">
+                    了解更多
+                </a>
+            </div>
         </div>
 
-        <div class="footer">
-            QR Code Decoder Enhanced System v2.0
+        <!-- Features Grid -->
+        <section id="features" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+            <div class="glass-card p-6 rounded-2xl hover:bg-white/15 transition-all duration-300 group">
+                <div class="feature-icon text-blue-400 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">多引擎核心</h3>
+                <p class="text-gray-400 text-sm">OpenCV, PyZBar, ZXing, QReader 四大引擎聯合運作，自動尋找最佳解算。</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl hover:bg-white/15 transition-all duration-300 group">
+                <div class="feature-icon text-purple-400 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-wand-magic-sparkles"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">智慧增強</h3>
+                <p class="text-gray-400 text-sm">自動評估圖像質量，智能應用二值化、銳化、去噪和對比度增強算法。</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl hover:bg-white/15 transition-all duration-300 group">
+                <div class="feature-icon text-pink-400 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">批量處理</h3>
+                <p class="text-gray-400 text-sm">多線程並行架構，支援一鍵處理數千張圖片，效率提升 600% 以上。</p>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl hover:bg-white/15 transition-all duration-300 group">
+                <div class="feature-icon text-green-400 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-crop-simple"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">精準 ROI</h3>
+                <p class="text-gray-400 text-sm">內建圖像預覽與互動式區域選擇 (ROI) 工具，在複雜背景中精準鎖定目標。</p>
+            </div>
+        </section>
+
+        <!-- Use Guide / Quick Start -->
+        <section id="quick-start" class="max-w-4xl mx-auto">
+            <div class="glass-card rounded-3xl p-8 md:p-10 border-t border-blue-500/30 relative overflow-hidden">
+                <!-- Decorative background elements -->
+                <div
+                    class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-b from-blue-500/10 to-transparent rounded-bl-full pointer-events-none">
+                </div>
+
+                <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                    <i class="fas fa-terminal text-blue-400"></i>
+                    快速啟動指南
+                </h2>
+
+                <div class="space-y-8">
+                    <!-- Step 1 -->
+                    <div class="flex gap-4 md:gap-6">
+                        <div class="step-number">1</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold mb-2 text-white">確認運行環境</h3>
+                            <p class="text-gray-400 text-sm mb-2">本工具基於 Python 開發，請確保您的系統已安裝 Python 3.8 或以上版本。</p>
+                            <a href="https://www.python.org/downloads/" target="_blank"
+                                class="text-blue-400 hover:text-blue-300 text-sm inline-flex items-center gap-1 transition-colors">
+                                下載 Python <i class="fas fa-external-link-alt text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="flex gap-4 md:gap-6">
+                        <div class="step-number">2</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold mb-2 text-white">安裝依賴庫</h3>
+                            <p class="text-gray-400 text-sm mb-3">初次使用請執行以下指令安裝所需模組（OpenCV, Pillow 等）。</p>
+                            <div class="command-box rounded-lg p-4 code-font text-sm">
+                                <button class="copy-btn px-3 py-1 rounded text-xs border border-white/10"
+                                    onclick="copyCommand('pip install -r requirements.txt')">
+                                    <i class="fas fa-copy mr-1"></i>複製
+                                </button>
+                                <pre>pip install -r requirements.txt</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="flex gap-4 md:gap-6">
+                        <div class="step-number">3</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold mb-2 text-white">啟動圖形介面</h3>
+                            <p class="text-gray-400 text-sm mb-3">執行主程式以開啟 Enhanced GUI 介面。</p>
+                            <div class="command-box rounded-lg p-4 code-font text-sm">
+                                <button class="copy-btn px-3 py-1 rounded text-xs border border-white/10"
+                                    onclick="copyCommand('python qr_enhancer_tool_enhanced.py')">
+                                    <i class="fas fa-copy mr-1"></i>複製
+                                </button>
+                                <pre>python qr_enhancer_tool_enhanced.py</pre>
+                            </div>
+
+                            <div
+                                class="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-3">
+                                <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+                                <div class="text-sm text-gray-300">
+                                    <strong>小撇步 (Windows):</strong> 您也可以直接雙擊工具目錄下的 <code
+                                        class="bg-gray-700 px-1.5 py-0.5 rounded text-white font-mono">啟動工具.bat</code>
+                                    腳本，透過簡易選單進行操作。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 bg-black/20 py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <p class="text-gray-500 text-sm">
+                QR Code Enhanced Decoder System &copy; 2026<br>
+                Powered by eoElior Tech
+            </p>
         </div>
-    </div>
+    </footer>
+
+    <script>
+        function copyCommand(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.currentTarget;
+                const originalHtml = btn.innerHTML;
+
+                // Change button state
+                btn.innerHTML = '<i class="fas fa-check mr-1"></i>已複製';
+                btn.classList.add('bg-green-500', 'text-white', 'border-transparent');
+                btn.classList.remove('bg-white/10');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('bg-green-500', 'text-white', 'border-transparent');
+                    btn.classList.add('bg-white/10');
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 
 </html>
