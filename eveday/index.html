@@ -2839,11 +2839,11 @@
                     temp.style.fontFamily = "'Inter', 'PingFang TC', 'Microsoft JhengHei', sans-serif";
                     temp.style.boxSizing = 'border-box';
 
-                    // 添加漸層遮罩層
+                    // 添加通透漸層遮罩層 (只在底部加深)
                     const overlay = document.createElement('div');
                     overlay.style.position = 'absolute';
                     overlay.style.inset = '0';
-                    overlay.style.background = 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)';
+                    overlay.style.background = 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)';
                     temp.appendChild(overlay);
 
                     const content = document.createElement('div');
@@ -3260,20 +3260,20 @@
                 mainGlow.style.width = '80%';
                 mainGlow.style.height = '80%';
                 mainGlow.style.borderRadius = '50%';
-                mainGlow.style.background = `radial-gradient(circle, ${theme.accent}30 0%, transparent 70%)`;
-                mainGlow.style.filter = 'blur(100px)';
+                mainGlow.style.background = `radial-gradient(circle, ${theme.accent}40 0%, transparent 80%)`;
+                mainGlow.style.filter = 'blur(120px)';
                 tempCard.appendChild(mainGlow);
 
-                // 添加次光暈效果 (在底部)
+                // 添加次光暈效果 (在角落)
                 const glow2 = document.createElement('div');
                 glow2.style.position = 'absolute';
-                glow2.style.bottom = '-150px';
-                glow2.style.left = '-150px';
-                glow2.style.width = '600px';
-                glow2.style.height = '600px';
+                glow2.style.bottom = '-100px';
+                glow2.style.left = '-100px';
+                glow2.style.width = '700px';
+                glow2.style.height = '700px';
                 glow2.style.borderRadius = '50%';
-                glow2.style.background = `radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)`;
-                glow2.style.filter = 'blur(80px)';
+                glow2.style.background = `radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)`;
+                glow2.style.filter = 'blur(100px)';
                 tempCard.appendChild(glow2);
 
                 // 已移除文字內容 (dateLabel, quoteText)，改由 HTML 實時渲染以確保極高解析度
@@ -3381,12 +3381,12 @@
             // 創建背景圖案 SVG
             function createPatternSVG(patternType, color) {
                 const svgPatterns = {
-                    circle: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='20' fill='${encodeURIComponent(color)}' opacity='0.3'/%3E%3C/svg%3E")`,
-                    wave: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,50 Q25,30 50,50 T100,50' stroke='${encodeURIComponent(color)}' fill='none' stroke-width='2' opacity='0.3'/%3E%3C/svg%3E")`,
-                    dot: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='3' fill='${encodeURIComponent(color)}' opacity='0.4'/%3E%3Ccircle cx='80' cy='80' r='3' fill='${encodeURIComponent(color)}' opacity='0.4'/%3E%3C/svg%3E")`,
-                    star: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='50,10 55,35 80,35 60,50 65,75 50,60 35,75 40,50 20,35 45,35' fill='${encodeURIComponent(color)}' opacity='0.2'/%3E%3C/svg%3E")`,
-                    leaf: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50,20 Q30,40 50,60 Q70,40 50,20' fill='${encodeURIComponent(color)}' opacity='0.25'/%3E%3C/svg%3E")`,
-                    diamond: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='50,10 70,50 50,90 30,50' fill='${encodeURIComponent(color)}' opacity='0.2'/%3E%3C/svg%3E")`
+                    circle: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='15' fill='${encodeURIComponent(color)}' opacity='0.2'/%3E%3C/svg%3E")`,
+                    wave: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,50 Q25,30 50,50 T100,50' stroke='${encodeURIComponent(color)}' fill='none' stroke-width='2' opacity='0.2'/%3E%3C/svg%3E")`,
+                    dot: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='2' fill='${encodeURIComponent(color)}' opacity='0.25'/%3E%3Ccircle cx='80' cy='80' r='2' fill='${encodeURIComponent(color)}' opacity='0.25'/%3E%3C/svg%3E")`,
+                    star: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='50,10 55,35 80,35 60,50 65,75 50,60 35,75 40,50 20,35 45,35' fill='${encodeURIComponent(color)}' opacity='0.15'/%3E%3C/svg%3E")`,
+                    leaf: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50,20 Q30,40 50,60 Q70,40 50,20' fill='${encodeURIComponent(color)}' opacity='0.15'/%3E%3C/svg%3E")`,
+                    diamond: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='50,10 70,50 50,90 30,50' fill='${encodeURIComponent(color)}' opacity='0.15'/%3E%3C/svg%3E")`
                 };
                 return svgPatterns[patternType] || svgPatterns.circle;
             }
@@ -3540,9 +3540,8 @@
                     card.innerHTML = `
                     <div class="rounded-xl shadow-2xl mb-4 relative overflow-hidden min-h-[260px] flex flex-col justify-center transition-all duration-500 hover:scale-[1.01]" 
                          style="${backgroundStyle} border: 1px solid rgba(255,255,255,0.15);">
-                        <!-- 漸層暗化遮罩 (取代原本的均勻模糊，更通透) -->
-                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black to-transparent opacity-40"></div>
-                        <div class="absolute inset-0 bg-black opacity-10"></div>
+                        <!-- 清爽漸層遮罩 (只在底部加深以保護長文字，上方保持鮮豔) -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-50"></div>
                         
                         <!-- 下載按鈕 (絕對定位於右上角) -->
                         <div class="absolute top-3 right-3 z-30">
@@ -3559,11 +3558,11 @@
 
                         <div class="relative z-20 p-6 sm:p-8">
                             <div class="flex items-center justify-between mb-4">
-                                <div class="text-xs sm:text-sm text-white font-bold flex items-center tracking-widest opacity-90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                                <div class="text-xs sm:text-sm text-white font-bold flex items-center tracking-widest opacity-90 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                                     <span class="mr-2 text-yellow-300">✦</span> ${targetDateKey}
                                 </div>
                             </div>
-                            <div class="text-white text-xl sm:text-2xl leading-relaxed whitespace-pre-line font-medium drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
+                            <div class="text-white text-xl sm:text-2xl leading-relaxed whitespace-pre-line font-medium drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                                 ${escapeHtml(quote.quote)}
                             </div>
                         </div>
