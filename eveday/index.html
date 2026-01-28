@@ -327,7 +327,7 @@
                     <div class="rounded-xl shadow-lg p-2 sm:p-2.5 md:p-3 lg:p-3" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <!-- 月曆控制 -->
                         <div class="text-center mb-1.5">
-                            <div class="flex justify-between items-center">
+                            <div class="flex justify-between items-center mb-0.5">
                                 <button onclick="changeMonth(-1)" class="p-1.5 sm:p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -340,6 +340,7 @@
                                     </svg>
                                 </button>
                             </div>
+                            <div class="text-xs sm:text-sm cursor-pointer select-none" style="color: var(--primary); opacity: 0.7;" id="calendarTitle" ondblclick="toggleDeveloperMode()" title="雙擊進入開發者模式">形式曆</div>
                         </div>
 
                         <!-- 星期標題 -->
@@ -354,14 +355,14 @@
                     </div>
 
                         <!-- 月曆網格 -->
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-0.5 md:gap-1 xl:gap-1.5 mb-2">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-0.5 md:gap-1 xl:gap-1.5">
                             <!-- 月曆內容將由 JavaScript 生成 -->
                         </div>
-                        
-                        <!-- 子標題移到下方靠左 -->
-                        <div class="text-left mt-2">
-                            <div class="text-xs sm:text-sm cursor-pointer select-none inline-block" style="color: var(--primary); opacity: 0.7;" id="calendarTitle" ondblclick="toggleDeveloperMode()" title="雙擊進入開發者模式">形式曆</div>
-                        </div>
+                    </div>
+                    
+                    <!-- 副標題移到框線外下方 -->
+                    <div class="text-left mt-2 px-1">
+                        <p class="text-gray-400 text-xs sm:text-sm" style="opacity: 0.7;">人生啤，快樂就好</p>
                     </div>
                 </div>
 
@@ -4242,11 +4243,6 @@
         window.__firebaseDb = db;
         window.__firebaseEnabled = firebaseEnabled;
     </script>
-    
-    <!-- 頁尾標語 -->
-    <footer class="text-center py-8 mt-8">
-        <p class="text-gray-400 text-sm">即使很忙 也要對自己好一點</p>
-    </footer>
 </body>
 </html>
 
