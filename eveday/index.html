@@ -3690,17 +3690,8 @@
 
                 if (!quote) return null;
 
-                // 優先從本地資料夾載入
-                if (storageDirHandle) {
-                    try {
-                        const localImage = await loadImageFromDirectory(dateKey);
-                        if (localImage) return { ...quote, image: localImage };
-                    } catch (e) {
-                        console.warn('從本地資料夾載入失敗，嘗試從 IndexedDB 載入');
-                    }
-                }
-
-                // 如果有圖片引用，從 IndexedDB 載入
+                // 優先從 IndexedDB 載入 (因為那裡存的是「純背景圖」)
+                // 這樣可以避免 UI 上出現重複疊加的文字 (圖片文字 + HTML 渲染文字)
                 if (quote.imageKey && quote.hasImage) {
                     try {
                         const imageBase64 = await loadImageFromDB(quote.imageKey);
@@ -3711,7 +3702,17 @@
                             };
                         }
                     } catch (error) {
-                        console.warn(`載入圖片失敗 (${dateKey}):`, error);
+                        console.warn(`從 IndexedDB 載入圖片失敗 (${dateKey})，嘗試從本地資料夾載入:`, error);
+                    }
+                }
+
+                // 次之從本地資料夾載入 (作為永久備份)
+                if (storageDirHandle) {
+                    try {
+                        const localImage = await loadImageFromDirectory(dateKey);
+                        if (localImage) return { ...quote, image: localImage };
+                    } catch (e) {
+                        console.warn('從本地資料夾載入也失敗');
                     }
                 }
 
