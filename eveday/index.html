@@ -634,8 +634,8 @@
         <!-- 設定 Modal -->
         <div id="settingsModal"
             class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-2 sm:p-4 z-50 hidden overflow-y-auto">
-            <div class="rounded-xl shadow-2xl w-full max-w-[95vw] sm:max-w-md md:max-w-lg p-4 sm:p-6 my-4"
-                style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.5); max-height: 95vh; overflow-y-auto;">
+            <div class="rounded-xl shadow-2xl w-full max-w-[95vw] sm:max-w-md md:max-w-lg p-4 sm:p-6 my-4 relative"
+                style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.5); max-height: 90vh; overflow-y:auto; display: flex; flex-direction: column;">
                 <div class="flex justify-between items-center mb-4 sm:mb-6">
                     <h3 class="text-xl sm:text-2xl font-bold" style="color: var(--primary);">⚙️ 設定</h3>
                     <div class="flex items-center gap-2">
@@ -799,11 +799,13 @@
 
 
 
-                    <!-- 版本號（連點三次開啟開發者模式） -->
-                    <div class="text-center mt-4">
+                    <!-- 版本號 -->
+                    <div class="text-center py-4">
                         <span id="versionText" class="text-xs text-gray-500 cursor-pointer select-none"
                             onclick="handleVersionClick()" title="連續點擊三次開啟開發者模式">v2.0.0</span>
                     </div>
+                    <!-- 底端間隔，確保捲動到底時邊框不會被切掉 -->
+                    <div class="h-4"></div>
                 </div>
             </div>
         </div>
@@ -2208,7 +2210,7 @@
                 }
             }
 
-            // 儲存圖片到本地資料夾
+            // 儲存圖片到本地資料夾 (會儲存完整的帶文字版本)
             async function saveImageToDirectory(dateKey, imageBase64) {
                 if (!storageDirHandle || !imageBase64) return;
 
@@ -2687,8 +2689,16 @@
                                     hasImage: true
                                 };
 
-                                // 同步保存到本地資料夾 (如果已連結)
-                                await saveImageToDirectory(dateKey, imageToSave);
+                                // 同步保存到本地資料夾 (如果已連結，則生成含文字的完整版本)
+                                if (storageDirHandle) {
+                                    try {
+                                        const fullImage = await generateFullQuoteImage(dateKey, quote.quote, imageToSave);
+                                        await saveImageToDirectory(dateKey, fullImage);
+                                    } catch (e) {
+                                        console.warn('生成完整語錄圖片失敗，改為保存背景圖:', e);
+                                        await saveImageToDirectory(dateKey, imageToSave);
+                                    }
+                                }
                             } catch (error) {
                                 console.warn(`保存圖片到 IndexedDB 失敗 (${dateKey}):`, error);
                                 // 如果保存失敗，仍然保存文字
@@ -3007,6 +3017,82 @@
                 }
             }
 
+            // 生成高畫質完整語錄圖片 (合成背景 + 文字) - 用於保存到本地資料夾
+            async function generateFullQuoteImage(dateKey, quote, bgBase64) {
+                const bgSrc = bgBase64.startsWith('data:') ? bgBase64 : `data:image/png;base64,${bgBase64}`;
+
+                // 創建高解析度臨時容器
+                const temp = document.createElement('div');
+                temp.style.position = 'fixed';
+                temp.style.left = '-9999px';
+                temp.style.width = '1200px';
+                temp.style.height = '840px';
+                temp.style.backgroundImage = `url('${bgSrc}')`;
+                temp.style.backgroundSize = 'cover';
+                temp.style.backgroundPosition = 'center';
+                temp.style.display = 'flex';
+                temp.style.flexDirection = 'column';
+                temp.style.justifyContent = 'center';
+                temp.style.padding = '80px';
+                temp.style.color = 'white';
+                temp.style.fontFamily = "'Inter', 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+                temp.style.boxSizing = 'border-box';
+
+                // 添加通透漸層遮罩層 (只在底部加深)
+                const overlay = document.createElement('div');
+                overlay.style.position = 'absolute';
+                overlay.style.inset = '0';
+                overlay.style.background = 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)';
+                temp.appendChild(overlay);
+
+                const content = document.createElement('div');
+                content.style.position = 'relative';
+                content.style.zIndex = '10';
+                content.style.marginTop = 'auto';
+
+                const dateEl = document.createElement('div');
+                dateEl.style.fontSize = '24px';
+                dateEl.style.fontWeight = '700';
+                dateEl.style.marginBottom = '30px';
+                dateEl.style.letterSpacing = '5px';
+                dateEl.style.color = '#fee140';
+                dateEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.5)';
+                dateEl.textContent = `✦ ${dateKey}`;
+                content.appendChild(dateEl);
+
+                const quoteEl = document.createElement('div');
+                quoteEl.style.fontSize = '48px';
+                quoteEl.style.fontWeight = '600';
+                quoteEl.style.lineHeight = '1.6';
+                quoteEl.style.textShadow = '0 4px 20px rgba(0,0,0,0.8)';
+                quoteEl.style.whiteSpace = 'pre-line';
+                quoteEl.textContent = quote;
+                content.appendChild(quoteEl);
+
+                temp.appendChild(content);
+                document.body.appendChild(temp);
+
+                try {
+                    // 等待渲染並捕捉
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    const canvas = await html2canvas(temp, {
+                        width: 1200,
+                        height: 840,
+                        scale: 1.5,
+                        backgroundColor: null,
+                        useCORS: true,
+                        logging: false
+                    });
+
+                    const fullBase64 = canvas.toDataURL('image/png');
+                    document.body.removeChild(temp);
+                    return fullBase64;
+                } catch (error) {
+                    if (temp.parentNode) document.body.removeChild(temp);
+                    throw error;
+                }
+            }
+
             // 下載高畫質完整語錄卡 (合成背景 + 文字)
             async function downloadFullQuoteImage(dateKey, quote, bgSrc) {
                 try {
@@ -3016,72 +3102,10 @@
                     btn.disabled = true;
                     btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
-                    // 創建高解析度臨時容器
-                    const temp = document.createElement('div');
-                    temp.style.position = 'fixed';
-                    temp.style.left = '-9999px';
-                    temp.style.width = '1200px';
-                    temp.style.height = '840px';
-                    temp.style.backgroundImage = `url('${bgSrc}')`;
-                    temp.style.backgroundSize = 'cover';
-                    temp.style.backgroundPosition = 'center';
-                    temp.style.display = 'flex';
-                    temp.style.flexDirection = 'column';
-                    temp.style.justifyContent = 'center';
-                    temp.style.padding = '80px';
-                    temp.style.color = 'white';
-                    temp.style.fontFamily = "'Inter', 'PingFang TC', 'Microsoft JhengHei', sans-serif";
-                    temp.style.boxSizing = 'border-box';
-
-                    // 添加通透漸層遮罩層 (只在底部加深)
-                    const overlay = document.createElement('div');
-                    overlay.style.position = 'absolute';
-                    overlay.style.inset = '0';
-                    overlay.style.background = 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 40%, transparent 100%)';
-                    temp.appendChild(overlay);
-
-                    const content = document.createElement('div');
-                    content.style.position = 'relative';
-                    content.style.zIndex = '10';
-                    content.style.marginTop = 'auto'; // 將內容推到底部，配合漸層遮罩
-
-                    const dateEl = document.createElement('div');
-                    dateEl.style.fontSize = '24px';
-                    dateEl.style.fontWeight = '700';
-                    dateEl.style.marginBottom = '30px';
-                    dateEl.style.letterSpacing = '5px';
-                    dateEl.style.color = '#fee140'; // 亮黃色裝飾
-                    dateEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.5)';
-                    dateEl.textContent = `✦ ${dateKey}`;
-                    content.appendChild(dateEl);
-
-                    const quoteEl = document.createElement('div');
-                    quoteEl.style.fontSize = '48px';
-                    quoteEl.style.fontWeight = '600';
-                    quoteEl.style.lineHeight = '1.6';
-                    quoteEl.style.textShadow = '0 4px 20px rgba(0,0,0,0.8)';
-                    quoteEl.style.whiteSpace = 'pre-line';
-                    quoteEl.textContent = quote;
-                    content.appendChild(quoteEl);
-
-                    temp.appendChild(content);
-                    document.body.appendChild(temp);
-
-                    // 等待渲染並捕捉
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    const canvas = await html2canvas(temp, {
-                        width: 1200,
-                        height: 840,
-                        scale: 2,
-                        backgroundColor: null,
-                        useCORS: true
-                    });
-
-                    const fullBase64 = canvas.toDataURL('image/png');
+                    const fullBase64 = await generateFullQuoteImage(dateKey, quote, bgSrc);
                     downloadQuoteImage(fullBase64, dateKey);
 
                     // 恢復按鈕
-                    document.body.removeChild(temp);
                     btn.disabled = false;
                     btn.innerHTML = originalHTML;
                 } catch (error) {
