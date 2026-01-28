@@ -36,65 +36,106 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #fef3e2 0%, #fef9f3 50%, #e8f5f0 100%);
+        :root {
+            --primary: #00f2ff;
+            --secondary: #7000ff;
+            --accent: #ff0055;
+            --bg: #050510;
+            --card-bg: rgba(20, 20, 35, 0.6);
+            --gold: #ffd700;
+            --warning: #ff9900;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon-glow: 0 0 10px var(--primary), 0 0 20px var(--primary);
         }
         
-        /* 溫暖色調主題 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
+            background-attachment: fixed;
+            color: #fff;
+        }
+        
+        /* 科技風格網格背景 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* 科技風日曆格子 */
         .calendar-day {
             min-height: 110px;
             transition: all 0.3s ease;
-            background: white;
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            backdrop-filter: blur(10px);
         }
         .calendar-day:hover {
-            background: linear-gradient(135deg, #fff7ed 0%, #fef3e2 100%);
+            background: rgba(0, 242, 255, 0.1);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(251, 146, 60, 0.15);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+            border-color: var(--primary);
         }
         
-        /* 週六 - 淺藍色 */
+        /* 週六 - 青色光暈 */
         .calendar-day.saturday {
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            background: rgba(0, 242, 255, 0.05);
+            border-color: rgba(0, 242, 255, 0.3);
         }
         .calendar-day.saturday:hover {
-            background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
+            background: rgba(0, 242, 255, 0.15);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
         }
         
-        /* 週日 - 淺紅色 */
+        /* 週日 - 紅色光暈 */
         .calendar-day.sunday {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            background: rgba(255, 0, 85, 0.05);
+            border-color: rgba(255, 0, 85, 0.3);
         }
         .calendar-day.sunday:hover {
-            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            background: rgba(255, 0, 85, 0.15);
+            box-shadow: 0 0 20px rgba(255, 0, 85, 0.5);
         }
         
-        /* 國定假日 - 深紅色 */
+        /* 國定假日 - 紫色光暈 */
         .calendar-day.holiday {
-            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-            border-color: #ef4444 !important;
+            background: rgba(112, 0, 255, 0.1);
+            border-color: var(--secondary) !important;
         }
         .calendar-day.holiday:hover {
-            background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
+            background: rgba(112, 0, 255, 0.2);
+            box-shadow: 0 0 20px rgba(112, 0, 255, 0.6);
         }
         
-        /* 已解鎖日期 - 藍綠色溫暖調 */
+        /* 已解鎖日期 - 金色光暈 */
         .calendar-day.unlocked {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            border-color: #34d399 !important;
+            background: rgba(255, 215, 0, 0.1);
+            border-color: var(--gold) !important;
         }
         .calendar-day.unlocked:hover {
-            background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 100%);
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
         }
         
-        /* 今天 - 橙黃色溫暖調 */
+        /* 今天 - 青色霓虹 */
         .calendar-day.today {
-            border-color: #fb923c !important;
-            background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+            border-color: var(--primary) !important;
+            background: rgba(0, 242, 255, 0.15);
+            box-shadow: var(--neon-glow);
         }
         
         .calendar-day.has-todos {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            background: rgba(255, 153, 0, 0.1);
+            border-color: var(--warning);
         }
         
         /* 鎖頭圖示動畫 */
@@ -130,8 +171,9 @@
         
         /* 台灣節慶標記 */
         .holiday-badge {
-            background: linear-gradient(135deg, #fca5a5 0%, #fb7185 100%);
+            background: linear-gradient(135deg, #7000ff 0%, #a000ff 100%);
             animation: badgeBounce 1s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(112, 0, 255, 0.5);
         }
         @keyframes badgeBounce {
             0%, 100% { transform: translateY(0); }
@@ -184,17 +226,18 @@
                 </div>
                 <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start mb-4">
                     <div>
-                        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2 cursor-pointer select-none" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 每日日曆</h1>
-                        <p class="text-gray-600">即使很忙 也要對自己好一點<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2">[開發者模式]</span></p>
+                        <h1 class="text-3xl sm:text-4xl font-bold mb-2 cursor-pointer select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 每日日曆</h1>
+                        <p class="text-gray-400">即使很忙 也要對自己好一點<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2">[開發者模式]</span></p>
                     </div>
                     <!-- 使用者選擇區域 -->
                     <div class="w-full lg:w-auto">
-                        <div class="bg-white rounded-lg shadow-md p-3">
+                        <div class="rounded-lg shadow-md p-3" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                                    <span class="text-sm text-gray-600 shrink-0">使用者：</span>
+                                    <span class="text-sm shrink-0" style="color: var(--primary);">使用者：</span>
                                     <input type="text" id="currentUserNameInput" value=""
-                                           class="w-full sm:w-auto px-3 py-2 sm:py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-semibold text-gray-800 min-w-0 sm:min-w-[180px]"
+                                           class="w-full sm:w-auto px-3 py-2 sm:py-1 rounded-lg font-semibold min-w-0 sm:min-w-[180px]"
+                                           style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); color: var(--primary);"
                                            placeholder="輸入使用者名稱">
                                 </div>
                                 <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
@@ -229,17 +272,17 @@
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- 左側/上方：月曆 -->
                 <div class="w-full lg:flex-[2] lg:min-w-0">
-                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
+                    <div class="rounded-xl shadow-lg p-3 sm:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <!-- 月曆控制 -->
                         <div class="flex justify-between items-center mb-4 sm:mb-6">
-                            <button onclick="changeMonth(-1)" class="p-2 rounded-lg hover:bg-gray-100 transition" title="上個月">
-                                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <button onclick="changeMonth(-1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                 </svg>
                             </button>
-                            <h2 class="text-2xl font-bold text-gray-800" id="currentMonthYear"></h2>
-                            <button onclick="changeMonth(1)" class="p-2 rounded-lg hover:bg-gray-100 transition" title="下個月">
-                                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h2 class="text-2xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
+                            <button onclick="changeMonth(1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="下個月">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
@@ -247,13 +290,13 @@
 
                         <!-- 星期標題 -->
                         <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-xs sm:text-sm">
-                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">日</div>
-                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">一</div>
-                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">二</div>
-                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">三</div>
-                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">四</div>
-                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">五</div>
-                            <div class="text-center font-semibold text-gray-600 py-1 sm:py-2">六</div>
+                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">日</div>
+                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">一</div>
+                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">二</div>
+                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">三</div>
+                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">四</div>
+                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">五</div>
+                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">六</div>
                     </div>
 
                         <!-- 月曆網格 -->
@@ -266,14 +309,14 @@
                 <!-- 右側/下方：選中日期的待辦事項 -->
                 <div class="w-full lg:flex-[1] lg:min-w-0 space-y-6">
                     <!-- 選中日期的待辦事項區塊（整合語錄顯示） -->
-                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6">
+                    <div class="rounded-xl shadow-lg p-3 sm:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <div class="mb-4">
                             <div class="mb-1">
-                                <h3 class="text-xl font-bold text-gray-800" id="selectedDateTitle">
+                                <h3 class="text-xl font-bold" style="color: var(--primary);" id="selectedDateTitle">
                                 選擇日期
                             </h3>
                             </div>
-                            <p class="text-xs text-gray-500" id="currentUserDisplay">當前使用者：<span id="currentUserName"></span></p>
+                            <p class="text-xs text-gray-400" id="currentUserDisplay">當前使用者：<span id="currentUserName"></span></p>
             </div>
 
                         <!-- 每日語錄顯示區域（整合在此） -->
@@ -316,23 +359,26 @@
             </div>
 
     <!-- API Key 設置 Modal -->
-    <div id="apiKeyModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">🔑 設置 Gemini API Key</h3>
+    <div id="apiKeyModal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 z-50 hidden">
+        <div class="rounded-xl shadow-2xl w-full max-w-md p-6" style="background: var(--card-bg); border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);">
+            <h3 class="text-2xl font-bold mb-4" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);">🔑 設置 Gemini API Key</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Gemini API Key</label>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--primary);">Gemini API Key</label>
                     <input type="password" id="geminiApiKeyInput" placeholder="輸入您的 Gemini API Key..."
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <p class="text-xs text-gray-500 mt-2">用於生成語錄卡片圖片（可選）</p>
+                           class="w-full px-4 py-2 rounded-lg"
+                           style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); color: var(--primary);">
+                    <p class="text-xs text-gray-400 mt-2">用於生成語錄卡片圖片（可選）</p>
                 </div>
                 <div class="flex gap-3">
                     <button onclick="saveApiKey()"
-                            class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                            class="flex-1 py-2 rounded-lg font-semibold transition"
+                            style="background: var(--primary); color: #000;">
                         保存
                     </button>
                     <button onclick="closeApiKeyModal()"
-                            class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                            class="flex-1 py-2 rounded-lg font-semibold transition"
+                            style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;">
                         取消
                     </button>
                 </div>
@@ -341,23 +387,26 @@
     </div>
 
     <!-- 解鎖日期 Modal -->
-    <div id="unlockDateModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">🔓 解鎖日期</h3>
+    <div id="unlockDateModal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 z-50 hidden">
+        <div class="rounded-xl shadow-2xl w-full max-w-md p-6" style="background: var(--card-bg); border: 2px solid var(--gold); box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);">
+            <h3 class="text-2xl font-bold mb-4" style="color: var(--gold); text-shadow: 0 0 10px var(--gold);">🔓 解鎖日期</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">請輸入日期（格式：MMDD）</label>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--gold);">請輸入日期（格式：MMDD）</label>
                     <input type="text" id="unlockDateInput" placeholder="輸入日期"
                            maxlength="4"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-2xl font-bold tracking-widest">
+                           class="w-full px-4 py-2 rounded-lg text-center text-2xl font-bold tracking-widest"
+                           style="background: rgba(255, 215, 0, 0.1); border: 1px solid var(--gold); color: var(--gold);">
                 </div>
                 <div class="flex gap-3">
                     <button onclick="confirmUnlockDate()"
-                            class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                            class="flex-1 py-2 rounded-lg font-semibold transition"
+                            style="background: var(--gold); color: #000;">
                         解鎖
                     </button>
                     <button onclick="closeUnlockModal()"
-                            class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                            class="flex-1 py-2 rounded-lg font-semibold transition"
+                            style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;">
                         取消
                     </button>
                 </div>
@@ -367,22 +416,25 @@
     </div>
 
     <!-- 新增使用者 Modal -->
-    <div id="addUserModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">新增使用者</h3>
+    <div id="addUserModal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 z-50 hidden">
+        <div class="rounded-xl shadow-2xl w-full max-w-md p-6" style="background: var(--card-bg); border: 2px solid var(--primary); box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);">
+            <h3 class="text-2xl font-bold mb-4" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);">新增使用者</h3>
                 <div class="space-y-4">
                         <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">使用者名稱</label>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--primary);">使用者名稱</label>
                     <input type="text" id="newUserNameInput" placeholder="輸入使用者名稱"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           class="w-full px-4 py-2 rounded-lg"
+                           style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); color: var(--primary);">
                         </div>
                 <div class="flex gap-3">
                     <button onclick="addNewUser()"
-                            class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
+                            class="flex-1 py-2 rounded-lg font-semibold transition"
+                            style="background: var(--primary); color: #000;">
                         新增
                     </button>
                     <button onclick="closeAddUserModal()"
-                            class="flex-1 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold">
+                            class="flex-1 py-2 rounded-lg font-semibold transition"
+                            style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff;">
                         取消
                     </button>
                         </div>
@@ -431,29 +483,42 @@
         let developerMode = localStorage.getItem('developerMode') === 'true';
 
         // 2026年台灣節慶與公眾假期
+        // 2026年台灣節日與假期（已核對正確日期）
         const taiwanHolidays2026 = {
+            // 固定國定假日
             '2026-01-01': { name: '元旦', emoji: '🎊', type: 'public' },
-            '2026-01-28': { name: '農曆除夕', emoji: '🏮', type: 'public' },
-            '2026-01-29': { name: '春節初一', emoji: '🧧', type: 'public' },
-            '2026-01-30': { name: '春節初二', emoji: '🧧', type: 'public' },
-            '2026-01-31': { name: '春節初三', emoji: '🧧', type: 'public' },
-            '2026-02-01': { name: '春節初四', emoji: '🧧', type: 'public' },
-            '2026-02-02': { name: '春節初五', emoji: '🧧', type: 'public' },
-            '2026-02-14': { name: '西洋情人節', emoji: '💝', type: 'special' },
             '2026-02-28': { name: '和平紀念日', emoji: '🕊️', type: 'public' },
-            '2026-03-14': { name: '白色情人節', emoji: '🤍', type: 'special' },
-            '2026-04-03': { name: '兒童節', emoji: '🎈', type: 'public' },
-            '2026-04-04': { name: '清明節', emoji: '🌸', type: 'public' },
+            '2026-04-04': { name: '兒童節', emoji: '🎈', type: 'public' },
+            '2026-04-05': { name: '清明節', emoji: '🌸', type: 'public' },
             '2026-05-01': { name: '勞動節', emoji: '💼', type: 'public' },
-            '2026-05-10': { name: '母親節', emoji: '💐', type: 'special' },
-            '2026-05-24': { name: '端午節', emoji: '🥟', type: 'public' },
-            '2026-08-08': { name: '父親節', emoji: '👨', type: 'special' },
-            '2026-09-07': { name: '中秋節', emoji: '🌕', type: 'public' },
             '2026-10-10': { name: '國慶日', emoji: '🇹🇼', type: 'public' },
+            
+            // 2026年農曆春節（2月16日除夕，2月17日初一）
+            '2026-02-16': { name: '農曆除夕', emoji: '🏮', type: 'public' },
+            '2026-02-17': { name: '春節初一', emoji: '🧧', type: 'public' },
+            '2026-02-18': { name: '春節初二', emoji: '🧧', type: 'public' },
+            '2026-02-19': { name: '春節初三', emoji: '🧧', type: 'public' },
+            '2026-02-20': { name: '春節初四', emoji: '🧧', type: 'public' },
+            '2026-02-21': { name: '春節初五', emoji: '🧧', type: 'public' },
+            
+            // 2026年端午節（6月3日）
+            '2026-06-03': { name: '端午節', emoji: '🥟', type: 'public' },
+            
+            // 2026年中秋節（9月15日）
+            '2026-09-15': { name: '中秋節', emoji: '🌕', type: 'public' },
+            
+            // 2026年雙十連假
+            '2026-10-09': { name: '國慶連假', emoji: '🇹🇼', type: 'public' },
+            
+            // 其他特殊節日
+            '2026-02-14': { name: '西洋情人節', emoji: '💝', type: 'special' },
+            '2026-03-14': { name: '白色情人節', emoji: '🤍', type: 'special' },
+            '2026-05-10': { name: '母親節', emoji: '💐', type: 'special' },
+            '2026-08-08': { name: '父親節', emoji: '👨', type: 'special' },
+            '2026-10-25': { name: '重陽節', emoji: '🍂', type: 'traditional' },
             '2026-10-31': { name: '萬聖節', emoji: '🎃', type: 'special' },
-            '2026-11-01': { name: '重陽節', emoji: '🍂', type: 'traditional' },
-            '2026-12-25': { name: '行憲紀念日', emoji: '📜', type: 'public' },
-            '2026-12-24': { name: '平安夜', emoji: '🎄', type: 'special' }
+            '2026-12-24': { name: '平安夜', emoji: '🎄', type: 'special' },
+            '2026-12-25': { name: '聖誕節', emoji: '🎅', type: 'special' }
         };
 
         // 檢查日期是否為節慶
@@ -2702,33 +2767,55 @@
 
         // 初始化
         async function init() {
-            // 先載入語錄數據
-            await loadQuotesFromFile();
-            dailyQuotes = dailyQuotesData; // 更新變數
+            try {
+                console.log('🚀 開始初始化應用...');
+                
+                // 更新開發者模式指示器
+                updateDeveloperModeIndicator();
+                // 更新重置按鈕顯示狀態
+                updateResetButtonVisibility();
 
-            // 更新開發者模式指示器
-            updateDeveloperModeIndicator();
-            // 更新重置按鈕顯示狀態
-            updateResetButtonVisibility();
-
-            initUsers();
-            renderCalendar();
-            updateMonthYear();
-            renderAllTodosList(); // 初始化時顯示所有待辦事項列表
-
-            // 手機模式下自動選擇今天，桌面模式等待用戶選擇
-            if (isMobile()) {
-                const today = new Date();
-                selectDate(today);
-            } else {
-                renderDailyQuote().catch(err => console.error('渲染語錄失敗:', err)); // 桌面模式不自動選擇
-            }
-
-            // 同步所有已解鎖的語錄到待辦事項
-            syncAllQuotesToTodos().then(() => {
+                initUsers();
+                
+                // 立即渲染日曆（不等待語錄載入）
+                console.log('📅 渲染日曆...');
                 renderCalendar();
-                renderAllTodosList();
-            });
+                updateMonthYear();
+                renderAllTodosList(); // 初始化時顯示所有待辦事項列表
+                console.log('✅ 日曆渲染完成');
+
+                // 異步載入語錄數據（不阻塞日曆顯示）
+                loadQuotesFromFile().then(() => {
+                    dailyQuotes = dailyQuotesData; // 更新變數
+                    console.log('✅ 語錄數據載入完成');
+                }).catch(err => {
+                    console.error('⚠️ 語錄載入失敗，使用默認值:', err);
+                    dailyQuotes = getDefaultQuotes();
+                });
+
+                // 手機模式下自動選擇今天，桌面模式等待用戶選擇
+                if (isMobile()) {
+                    const today = new Date();
+                    selectDate(today);
+                } else {
+                    renderDailyQuote().catch(err => console.error('渲染語錄失敗:', err)); // 桌面模式不自動選擇
+                }
+
+                // 同步所有已解鎖的語錄到待辦事項
+                syncAllQuotesToTodos().then(() => {
+                    renderCalendar();
+                    renderAllTodosList();
+                }).catch(err => {
+                    console.error('⚠️ 同步語錄失敗:', err);
+                });
+                
+                console.log('✅ 初始化完成');
+            } catch (error) {
+                console.error('❌ 初始化失敗:', error);
+                // 即使失敗也要渲染基本日曆
+                renderCalendar();
+                updateMonthYear();
+            }
         }
 
         // 更新月份年份顯示
@@ -2739,11 +2826,18 @@
 
         // 渲染月曆
         function renderCalendar() {
+            console.log('📅 開始渲染月曆...');
             const calendarGrid = document.getElementById('calendarGrid');
+            if (!calendarGrid) {
+                console.error('❌ 錯誤：找不到 calendarGrid 元素！');
+                return;
+            }
+            
             calendarGrid.innerHTML = '';
 
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
+            console.log(`渲染 ${year}年${month + 1}月`);
 
             // 當月第一天
             const firstDay = new Date(year, month, 1);
@@ -2921,19 +3015,19 @@
                     if (dayIndex !== -1) {
                         const dayCountLabel = document.createElement('div');
                         // 固定在格子左下角，避免把格子高度撐開/溢出
-                        dayCountLabel.className = 'absolute bottom-1 left-1 z-10 inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] sm:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none';
+                        dayCountLabel.className = 'absolute bottom-1 left-1 z-10 inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] sm:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none unlock-animation';
                         dayCountLabel.textContent = `第${dayIndex + 1}天`;
                         dayElement.appendChild(dayCountLabel);
                     }
                     // 加入 unlocked 類別用於樣式
-                    dayElement.classList.add('unlocked', 'unlock-animation');
+                    dayElement.classList.add('unlocked');
                 }
 
                 // 顯示節慶標記（已在上面檢查過）
                 if (holidayInfo) {
                     const holidayBadge = document.createElement('div');
-                    // 固定在格子左上角
-                    holidayBadge.className = 'absolute top-1 left-1 z-10 holiday-badge inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-white text-[9px] sm:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
+                    // 固定在格子右下角
+                    holidayBadge.className = 'absolute bottom-1 right-1 z-10 holiday-badge inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-white text-[9px] sm:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
                     holidayBadge.title = holidayInfo.name;
                     holidayBadge.textContent = `${holidayInfo.emoji} ${holidayInfo.name}`;
                     dayElement.appendChild(holidayBadge);
@@ -2945,6 +3039,8 @@
 
                 calendarGrid.appendChild(dayElement);
             }
+            
+            console.log(`✅ 月曆渲染完成，共 ${daysInMonth} 天`);
         }
 
         // 選擇日期
