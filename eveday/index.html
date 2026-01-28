@@ -731,15 +731,17 @@
 
         // 使用者管理
         function initUsers() {
-            // 如果沒有使用者，創建預設使用者
-            if (users.length === 0) {
-                users = ['default'];
+            // 如果當前使用者存在但不在列表中，加入列表
+            if (currentUserId && !users.includes(currentUserId)) {
+                users.push(currentUserId);
                 saveUsers();
             }
-
-            // 如果當前使用者不存在，使用第一個使用者
-            if (!users.includes(currentUserId)) {
-                currentUserId = users[0];
+            
+            // 如果沒有使用者且沒有當前使用者，創建預設使用者
+            if (users.length === 0 && !currentUserId) {
+                users = ['default'];
+                currentUserId = 'default';
+                saveUsers();
                 saveCurrentUser();
             }
 
@@ -3493,14 +3495,7 @@
                     dayNumberContainer.appendChild(lockButton);
                 }
 
-                // 今天的標籤
-                // 手機：移到下一行（w-full）；sm 以上維持同一行
-                if (isToday(date)) {
-                    const todayLabel = document.createElement('div');
-                    todayLabel.className = 'w-full sm:w-auto text-[10px] sm:text-xs bg-blue-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 block sm:inline-block font-semibold whitespace-nowrap leading-none text-center sm:text-left';
-                    todayLabel.textContent = 'Today';
-                    dayNumberContainer.appendChild(todayLabel);
-                }
+                // 今天的標籤 - 已移除，只透過邊框顏色區分
 
                 dayElement.appendChild(dayNumberContainer);
 
@@ -3559,7 +3554,7 @@
                         const dayCountLabel = document.createElement('div');
                         // 固定在格子左下角，避免把格子高度撐開/溢出
                         dayCountLabel.className = 'absolute bottom-0.5 sm:bottom-1 left-0.5 sm:left-1 z-10 inline-flex items-center justify-center px-1 sm:px-1.5 md:px-2 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] sm:text-[10px] md:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none unlock-animation';
-                        dayCountLabel.textContent = `第${dayIndex + 1}天`;
+                        dayCountLabel.textContent = `#${dayIndex + 1}`;
                         dayElement.appendChild(dayCountLabel);
                     }
                     // 加入 unlocked 類別用於樣式
@@ -3569,8 +3564,8 @@
                 // 顯示節慶標記（已在上面檢查過）
                 if (holidayInfo) {
                     const holidayBadge = document.createElement('div');
-                    // 固定在格子右上角，避免與右下角的待辦數量擠在一起
-                    holidayBadge.className = 'absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-20 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 md:px-2 py-0.5 rounded-full text-white text-[8px] sm:text-[9px] md:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
+                    // 固定在格子右上角，避免與右下角的待辦數量擠在一起，字體放大
+                    holidayBadge.className = 'absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-20 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 rounded-full text-white text-[10px] sm:text-xs md:text-sm font-bold shadow-md whitespace-nowrap leading-none';
                     holidayBadge.title = holidayInfo.name;
                     holidayBadge.textContent = `${holidayInfo.emoji} ${holidayInfo.name}`;
                     dayElement.appendChild(holidayBadge);
