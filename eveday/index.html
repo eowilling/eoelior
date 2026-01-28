@@ -28,7 +28,8 @@
             }
         })();
     </script>
-    <title>每日日曆</title>
+    <title>形式曆</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
     <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
     <script src="firebase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.min.js"></script>
@@ -215,30 +216,10 @@
         <div class="w-full mx-auto">
         <!-- Header -->
             <header class="mb-8">
-                <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center mb-4">
-                    <div>
-                        <h1 class="text-3xl sm:text-4xl font-bold mb-2 select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle">📅 形式曆</h1>
-                        <p class="text-gray-400">即使很忙 也要對自己好一點<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2 cursor-pointer" onclick="toggleDeveloperMode()" title="點擊切換開發者模式">[開發者模式]</span></p>
-                    </div>
-                    <!-- 使用者和設定區域 -->
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-2 px-4 py-2 rounded-lg" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
-                            <span id="firebaseStatusDot" class="w-2 h-2 rounded-full" style="background: #ef4444;" title="Firebase 未連接"></span>
-                            <span class="text-sm" style="color: var(--primary);">使用者：</span>
-                            <span class="font-semibold" style="color: var(--primary);" id="currentUserDisplayName">Loading...</span>
-                        </div>
-                        <button onclick="openSettingsModal()" 
-                                class="px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition"
-                                style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); color: var(--primary);"
-                                title="設定">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            設定
-                        </button>
-                    </div>
-            </div>
+                <div class="text-center">
+                    <h1 class="text-3xl sm:text-4xl font-bold select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle">📅 <span id="calendarTitle">形式曆</span></h1>
+                    <span id="devModeIndicator" class="hidden text-red-500 font-bold text-sm cursor-pointer" onclick="toggleDeveloperMode()" title="點擊切換開發者模式">[開發者模式]</span>
+                </div>
         </header>
 
             <!-- 版面：手機一頁式（垂直），桌面左右式 -->
@@ -284,10 +265,28 @@
                     <!-- 選中日期的待辦事項區塊（整合語錄顯示） -->
                     <div class="rounded-xl shadow-lg p-3 sm:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <div class="mb-4">
-                            <div class="mb-1">
-                                <h3 class="text-xl font-bold" style="color: var(--primary);" id="selectedDateTitle">
-                                選擇日期
-                            </h3>
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold" style="color: var(--primary);" id="selectedDateTitle">
+                                    選擇日期
+                                    </h3>
+                                </div>
+                                <!-- 使用者和設定 -->
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-1 px-2 py-1 rounded" style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2);">
+                                        <span id="firebaseStatusDot" class="w-1.5 h-1.5 rounded-full" style="background: #ef4444;" title="Firebase 未連接"></span>
+                                        <span class="text-xs" style="color: var(--primary);" id="currentUserDisplayName">Loading...</span>
+                                    </div>
+                                    <button onclick="openSettingsModal()" 
+                                            class="p-1.5 rounded transition"
+                                            style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color: var(--primary);"
+                                            title="設定">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <p class="text-xs text-gray-400" id="currentUserDisplay">當前使用者：<span id="currentUserName"></span></p>
             </div>
@@ -436,6 +435,22 @@
                                style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary); color: var(--primary);"
                                placeholder="輸入使用者名稱">
                         <button onclick="saveUserNameFromSettings()"
+                                class="px-4 py-2 rounded-lg font-semibold transition"
+                                style="background: var(--primary); color: #000;">
+                            💾 保存
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 月曆名稱設定 -->
+                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">月曆名稱</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="calendarTitleInput" 
+                               class="flex-1 px-3 py-2 rounded-lg"
+                               style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary); color: var(--primary);"
+                               placeholder="輸入月曆名稱">
+                        <button onclick="saveCalendarTitle()"
                                 class="px-4 py-2 rounded-lg font-semibold transition"
                                 style="background: var(--primary); color: #000;">
                             💾 保存
@@ -768,8 +783,13 @@
         function openSettingsModal() {
             const modal = document.getElementById('settingsModal');
             const input = document.getElementById('settingsUserNameInput');
+            const calendarTitleInput = document.getElementById('calendarTitleInput');
             const themeSelector = document.getElementById('themeSelector');
             input.value = currentUserId;
+            
+            // 載入當前月曆名稱
+            const currentTitle = localStorage.getItem('calendarTitle') || '形式曆';
+            calendarTitleInput.value = currentTitle;
             
             // 載入當前主題設定
             const currentTheme = localStorage.getItem('appTheme') || 'cyberpunk';
@@ -793,6 +813,29 @@
             localStorage.setItem('currentUserId', currentUserId);
             updateUserDisplay();
             alert('使用者名稱已保存');
+        }
+
+        // 月曆名稱功能
+        function saveCalendarTitle() {
+            const input = document.getElementById('calendarTitleInput');
+            const newTitle = input.value.trim();
+            if (newTitle === '') {
+                alert('請輸入月曆名稱');
+                return;
+            }
+            localStorage.setItem('calendarTitle', newTitle);
+            updateCalendarTitle();
+            alert('月曆名稱已保存');
+        }
+
+        function updateCalendarTitle() {
+            const title = localStorage.getItem('calendarTitle') || '形式曆';
+            const titleElement = document.getElementById('calendarTitle');
+            if (titleElement) {
+                titleElement.textContent = title;
+            }
+            // 同時更新網頁標題
+            document.title = title;
         }
 
         // Firebase 連接狀態更新
@@ -2999,6 +3042,9 @@
                 // 載入主題設定
                 loadTheme();
                 
+                // 載入月曆名稱
+                updateCalendarTitle();
+                
                 // 更新開發者模式指示器
                 updateDeveloperModeIndicator();
                 // 更新重置按鈕顯示狀態
@@ -3921,6 +3967,11 @@
         window.__firebaseDb = db;
         window.__firebaseEnabled = firebaseEnabled;
     </script>
+    
+    <!-- 頁尾標語 -->
+    <footer class="text-center py-8 mt-8">
+        <p class="text-gray-400 text-sm">即使很忙 也要對自己好一點</p>
+    </footer>
 </body>
 </html>
 
