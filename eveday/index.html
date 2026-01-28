@@ -3097,7 +3097,36 @@
             glow2.style.filter = 'blur(80px)';
             tempCard.appendChild(glow2);
 
-            // 不添加文字內容，只保留背景和裝飾
+            // 添加文字內容
+            const contentContainer = document.createElement('div');
+            contentContainer.style.position = 'relative';
+            contentContainer.style.zIndex = '10';
+            contentContainer.style.maxWidth = '800px';
+            contentContainer.style.padding = '60px';
+            contentContainer.style.textAlign = 'center';
+
+            // 添加日期標籤
+            const dateLabel = document.createElement('div');
+            dateLabel.style.fontSize = '20px';
+            dateLabel.style.fontWeight = '600';
+            dateLabel.style.marginBottom = '40px';
+            dateLabel.style.opacity = '0.9';
+            dateLabel.style.letterSpacing = '2px';
+            dateLabel.textContent = `✨ ${dateKey}`;
+            contentContainer.appendChild(dateLabel);
+
+            // 添加語錄文字
+            const quoteText = document.createElement('div');
+            quoteText.style.fontSize = '36px';
+            quoteText.style.fontWeight = '600';
+            quoteText.style.lineHeight = '1.6';
+            quoteText.style.textShadow = '0 4px 20px rgba(0,0,0,0.3)';
+            quoteText.style.whiteSpace = 'pre-line';
+            quoteText.style.wordBreak = 'break-word';
+            quoteText.textContent = quote;
+            contentContainer.appendChild(quoteText);
+
+            tempCard.appendChild(contentContainer);
 
             // 根據意境添加額外的視覺元素
             if (theme.name.includes('湖面') || theme.name.includes('原野')) {
