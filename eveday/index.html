@@ -132,7 +132,7 @@
         /* 平板 - 中等格子 */
         @media (min-width: 641px) and (max-width: 1024px) {
             .calendar-day {
-                min-height: 85px;
+                min-height: 90px;
             }
         }
         
@@ -307,7 +307,7 @@
             html.is-large .calendar-day {
                 font-size: 1.1rem;
             }
-        }
+        };
     </style>
 </head>
 <body class="bg-gray-50">
@@ -316,7 +316,7 @@
         <!-- Header -->
             <header class="mb-2 sm:mb-3 lg:mb-4">
                 <div class="text-center">
-                    <!-- 開發者模式標籤移至待辦事項窗口 -->
+                    <!-- 開發者模式指示器已移動到待辦事項窗口 -->
                 </div>
         </header>
 
@@ -374,9 +374,7 @@
                                 </div>
                                 <!-- 使用者和設定 -->
                                 <div class="flex items-center gap-1 sm:gap-2">
-                                    <!-- 開發者模式標籤 -->
-                                    <span id="devModeIndicator" class="hidden text-red-500 font-bold text-xs cursor-pointer px-2 py-1 rounded" onclick="toggleDeveloperMode()" style="background: rgba(255, 0, 0, 0.1); border: 1px solid rgba(255, 0, 0, 0.3);" title="點擊切換開發者模式">DEV</span>
-                                    
+                                    <span id="devModeIndicator" class="hidden text-red-500 font-bold text-xs cursor-pointer px-2 py-1 rounded" style="background: rgba(255, 0, 0, 0.1); border: 1px solid rgba(255, 0, 0, 0.3);" onclick="toggleDeveloperMode()" title="點擊關閉開發者模式">DEV</span>
                                     <div class="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-xs sm:text-sm" style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2);">
                                         <span id="firebaseStatusDot" class="w-1.5 h-1.5 rounded-full" style="background: #ef4444;" title="Firebase 未連接"></span>
                                         <span class="text-xs" style="color: var(--primary);" id="currentUserDisplayName">Loading...</span>
@@ -3182,11 +3180,11 @@
                 // 確保元素已添加到 DOM（等待一小段時間讓瀏覽器渲染）
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                // 使用 html2canvas 轉換為圖片（降低 scale 以減少圖片大小）
+                // 使用 html2canvas 轉換為圖片（提高 scale 以提升品質）
                 const canvas = await html2canvas(tempCard, {
-                    width: 1000,
-                    height: 700,
-                    scale: 1.5, // 降低 scale 從 2 到 1.5，減少圖片大小
+                    width: 1200,
+                    height: 840,
+                    scale: 2.5, // 提高 scale 從 1.5 到 2.5，增加圖片清晰度
                     backgroundColor: null,
                     useCORS: true,
                     logging: false,
