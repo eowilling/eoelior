@@ -19,8 +19,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Create firebase-config.js from secrets
+      - name: Create firebase-config.js for all apps
         run: |
+          # 為 eveday 創建配置
           cat > eveday/firebase-config.js << 'EOF'
           // Firebase 配置 (由 GitHub Actions 自動生成)
           window.__firebase_config = {
@@ -32,15 +33,46 @@ jobs:
             appId: "${{ secrets.FIREBASE_APP_ID }}",
             measurementId: "${{ secrets.FIREBASE_MEASUREMENT_ID }}"
           };
-
           window.__app_id = "eveday-calendar";
           window.__gemini_api_key = "${{ secrets.GEMINI_API_KEY }}";
           EOF
           
-      - name: Verify firebase-config.js was created
+          # 為 rebox (抽獎箱) 創建配置
+          cat > rebox/firebase-config.js << 'EOF'
+          window.__firebase_config = {
+            apiKey: "${{ secrets.FIREBASE_API_KEY }}",
+            authDomain: "${{ secrets.FIREBASE_AUTH_DOMAIN }}",
+            projectId: "${{ secrets.FIREBASE_PROJECT_ID }}",
+            storageBucket: "${{ secrets.FIREBASE_STORAGE_BUCKET }}",
+            messagingSenderId: "${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}",
+            appId: "${{ secrets.FIREBASE_APP_ID }}",
+            measurementId: "${{ secrets.FIREBASE_MEASUREMENT_ID }}",
+            databaseURL: "https://${{ secrets.FIREBASE_PROJECT_ID }}.asia-southeast1.firebasedatabase.app/"
+          };
+          EOF
+          
+          # 為 buytonobuy (輪盤) 創建配置
+          cat > buytonobuy/firebase-config.js << 'EOF'
+          window.__firebase_config = {
+            apiKey: "${{ secrets.FIREBASE_API_KEY }}",
+            authDomain: "${{ secrets.FIREBASE_AUTH_DOMAIN }}",
+            projectId: "${{ secrets.FIREBASE_PROJECT_ID }}",
+            storageBucket: "${{ secrets.FIREBASE_STORAGE_BUCKET }}",
+            messagingSenderId: "${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}",
+            appId: "${{ secrets.FIREBASE_APP_ID }}",
+            measurementId: "${{ secrets.FIREBASE_MEASUREMENT_ID }}",
+            databaseURL: "https://${{ secrets.FIREBASE_PROJECT_ID }}.asia-southeast1.firebasedatabase.app/"
+          };
+          EOF
+          
+      - name: Verify firebase-config.js files were created
         run: |
+          echo "=== eveday/firebase-config.js ==="
           ls -la eveday/firebase-config.js
-          cat eveday/firebase-config.js
+          echo "=== rebox/firebase-config.js ==="
+          ls -la rebox/firebase-config.js
+          echo "=== buytonobuy/firebase-config.js ==="
+          ls -la buytonobuy/firebase-config.js
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
