@@ -57,10 +57,11 @@ https://github.com/eowilling/eoelior/settings/secrets/actions
 ### Gemini API
 
 1. **GEMINI_API_KEY**
-
-   ```
-   AIzaSyAJa3BvmNyR5s0rlIOoOMJOsnr-pNdgVVI
-   ```
+   - 前往 [Google AI Studio](https://aistudio.google.com/app/apikey)
+   - 創建新的 API 金鑰
+   - 複製金鑰並添加到 GitHub Secrets
+   - ⚠️ **重要：切勿在此文件或任何文件中貼上實際的 API 金鑰！**
+   - 格式範例：`AIzaSy...YOUR_KEY_HERE`
 
 ---
 
