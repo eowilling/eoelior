@@ -3503,7 +3503,7 @@
                 if (uncompletedCount > 0) {
                     const todoCount = document.createElement('div');
                     // 固定在格子右下角，避免擠壓內容/溢出
-                    todoCount.className = 'absolute bottom-0.5 sm:bottom-1 right-0.5 sm:right-1 z-10 text-[9px] sm:text-[10px] md:text-xs bg-yellow-400 text-yellow-900 rounded-full px-1 sm:px-1.5 md:px-2 py-0.5 font-semibold whitespace-nowrap leading-none';
+                    todoCount.className = 'absolute bottom-0.5 sm:bottom-1 right-0.5 sm:right-1 z-15 text-[9px] sm:text-[10px] md:text-xs bg-yellow-400 text-yellow-900 rounded-full px-1 sm:px-1.5 md:px-2 py-0.5 font-semibold whitespace-nowrap leading-none';
                     todoCount.textContent = uncompletedCount;
                     dayElement.appendChild(todoCount);
                 }
@@ -3556,8 +3556,8 @@
                 // 顯示節慶標記（已在上面檢查過）
                 if (holidayInfo) {
                     const holidayBadge = document.createElement('div');
-                    // 固定在格子右下角
-                    holidayBadge.className = 'absolute bottom-0.5 sm:bottom-1 right-0.5 sm:right-1 z-10 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 md:px-2 py-0.5 rounded-full text-white text-[8px] sm:text-[9px] md:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
+                    // 固定在格子右上角，避免與右下角的待辦數量擠在一起
+                    holidayBadge.className = 'absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-20 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 md:px-2 py-0.5 rounded-full text-white text-[8px] sm:text-[9px] md:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
                     holidayBadge.title = holidayInfo.name;
                     holidayBadge.textContent = `${holidayInfo.emoji} ${holidayInfo.name}`;
                     dayElement.appendChild(holidayBadge);
