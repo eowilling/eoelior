@@ -290,7 +290,6 @@
                                     </button>
                                 </div>
                             </div>
-                            <p class="text-xs text-gray-400" id="currentUserDisplay">當前使用者：<span id="currentUserName"></span></p>
             </div>
 
                         <!-- 每日語錄顯示區域（整合在此） -->
@@ -311,6 +310,12 @@
                                        id="newTodoInput"
                                        placeholder="輸入待辦事項..."
                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2">
+                                <div class="mb-2">
+                                    <label class="block text-xs text-gray-500 mb-1">提醒時間（選填）</label>
+                                    <input type="time"
+                                           id="todoTimeInput"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
                                 <button onclick="addTodo()"
                                         class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold">
                                     ➕ 新增
@@ -460,6 +465,18 @@
                     </div>
                 </div>
 
+                <!-- 顯示模式設定 -->
+                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">顯示模式</label>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm" style="color: var(--primary);">月曆全螢幕模式</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="fullscreenModeToggle" onchange="toggleFullscreenMode(this.checked)" class="sr-only peer">
+                            <div class="w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style="background: rgba(0, 242, 255, 0.3);"></div>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- 主題設定 -->
                 <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
                     <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">主題</label>
@@ -473,6 +490,19 @@
                         <option value="purple">💜 夢幻紫</option>
                         <option value="dark">🌑 純黑</option>
                     </select>
+                </div>
+
+                <!-- 通知設定 -->
+                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">通知設定</label>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm" style="color: var(--primary);">啟用通知</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="notificationToggle" onchange="toggleNotifications(this.checked)" class="sr-only peer">
+                            <div class="w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style="background: rgba(0, 242, 255, 0.3);"></div>
+                        </label>
+                    </div>
+                    <p class="text-xs" style="color: var(--primary); opacity: 0.6;">允許網頁發送提醒通知</p>
                 </div>
 
                 <!-- 功能按鈕 -->
@@ -787,6 +817,9 @@
             const input = document.getElementById('settingsUserNameInput');
             const calendarTitleInput = document.getElementById('calendarTitleInput');
             const themeSelector = document.getElementById('themeSelector');
+            const fullscreenToggle = document.getElementById('fullscreenModeToggle');
+            const notificationToggle = document.getElementById('notificationToggle');
+            
             input.value = currentUserId;
             
             // 載入當前月曆名稱
@@ -796,6 +829,16 @@
             // 載入當前主題設定
             const currentTheme = localStorage.getItem('appTheme') || 'cyberpunk';
             themeSelector.value = currentTheme;
+            
+            // 載入全螢幕模式狀態
+            if (fullscreenToggle) {
+                fullscreenToggle.checked = isFullscreenMode;
+            }
+            
+            // 載入通知設定
+            if (notificationToggle) {
+                notificationToggle.checked = notificationsEnabled;
+            }
             
             modal.classList.remove('hidden');
         }
@@ -861,6 +904,95 @@
                     statusDot.style.background = '#ef4444'; // 紅色
                     statusDot.title = 'Firebase 未連接';
                 }
+            }
+        }
+
+        // 全螢幕模式功能
+        let isFullscreenMode = false;
+        function toggleFullscreenMode(enabled) {
+            isFullscreenMode = enabled;
+            localStorage.setItem('fullscreenMode', enabled.toString());
+            
+            const todoPanel = document.querySelector('.w-full.lg\\:flex-\\[1\\]');
+            if (todoPanel) {
+                if (enabled) {
+                    todoPanel.classList.add('hidden');
+                } else {
+                    todoPanel.classList.remove('hidden');
+                }
+            }
+        }
+
+        function loadFullscreenMode() {
+            const saved = localStorage.getItem('fullscreenMode');
+            isFullscreenMode = saved === 'true';
+            const toggle = document.getElementById('fullscreenModeToggle');
+            if (toggle) {
+                toggle.checked = isFullscreenMode;
+            }
+            if (isFullscreenMode) {
+                toggleFullscreenMode(true);
+            }
+        }
+
+        // 通知功能
+        let notificationsEnabled = false;
+        async function toggleNotifications(enabled) {
+            if (enabled) {
+                if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        notificationsEnabled = true;
+                        localStorage.setItem('notificationsEnabled', 'true');
+                        alert('✅ 通知已啟用！');
+                    } else {
+                        document.getElementById('notificationToggle').checked = false;
+                        alert('❌ 需要通知權限才能使用此功能');
+                    }
+                } else {
+                    alert('❌ 您的瀏覽器不支援通知功能');
+                    document.getElementById('notificationToggle').checked = false;
+                }
+            } else {
+                notificationsEnabled = false;
+                localStorage.setItem('notificationsEnabled', 'false');
+            }
+        }
+
+        function loadNotificationSettings() {
+            const saved = localStorage.getItem('notificationsEnabled');
+            notificationsEnabled = saved === 'true';
+            const toggle = document.getElementById('notificationToggle');
+            if (toggle) {
+                toggle.checked = notificationsEnabled;
+            }
+        }
+
+        function scheduleNotification(todo, dateKey, time) {
+            if (!notificationsEnabled) return;
+            
+            const [year, month, day] = dateKey.split('-').map(Number);
+            const [hours, minutes] = time.split(':').map(Number);
+            const notificationTime = new Date(year, month - 1, day, hours, minutes);
+            const now = new Date();
+            const delay = notificationTime.getTime() - now.getTime();
+            
+            if (delay > 0) {
+                setTimeout(() => {
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('📅 形式曆提醒', {
+                            body: todo,
+                            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📅</text></svg>',
+                            tag: `todo-${dateKey}-${Date.now()}`
+                        });
+                    }
+                }, delay);
+                
+                // 保存提醒到localStorage
+                const reminders = JSON.parse(localStorage.getItem('todoReminders') || '{}');
+                if (!reminders[dateKey]) reminders[dateKey] = [];
+                reminders[dateKey].push({ todo, time: notificationTime.toISOString() });
+                localStorage.setItem('todoReminders', JSON.stringify(reminders));
             }
         }
 
@@ -3057,6 +3189,12 @@
                 // 載入月曆名稱
                 updateCalendarTitle();
                 
+                // 載入全螢幕模式設定
+                loadFullscreenMode();
+                
+                // 載入通知設定
+                loadNotificationSettings();
+                
                 // 更新開發者模式指示器
                 updateDeveloperModeIndicator();
                 // 更新重置按鈕顯示狀態
@@ -3338,6 +3476,15 @@
             selectedDate = date;
             const dateKey = formatDateKey(date);
 
+            // 如果是全螢幕模式，點擊日期時退出全螢幕
+            if (isFullscreenMode) {
+                isFullscreenMode = false;
+                localStorage.setItem('fullscreenMode', 'false');
+                const toggle = document.getElementById('fullscreenModeToggle');
+                if (toggle) toggle.checked = false;
+                toggleFullscreenMode(false);
+            }
+
             // 更新標題
             const dateStr = `${date.getFullYear()} 年 ${date.getMonth() + 1} 月 ${date.getDate()} 日`;
             const dayOfWeek = dayNames[date.getDay()];
@@ -3451,6 +3598,7 @@
                                 ${escapeHtml(todoText)}
                                 ${isCompleted ? '<span class="text-lg">🎉</span>' : ''}
                             </span>
+                            ${typeof todo === 'object' && todo.time ? `<span class="text-xs text-blue-600 mt-1">🔔 ${todo.time}</span>` : ''}
                             ${isFailed ? '<span class="text-xs text-amber-700 mt-1 flex items-center gap-1">💪 你還是很棒</span>' : ''}
                         </div>
                         <!-- 刪除按鈕（垃圾桶） -->
@@ -3709,7 +3857,9 @@
             }
 
             const input = document.getElementById('newTodoInput');
+            const timeInput = document.getElementById('todoTimeInput');
             const todoText = input.value.trim();
+            const todoTime = timeInput.value;
 
             if (!todoText) {
                 alert('請輸入待辦事項');
@@ -3722,13 +3872,21 @@
                 todos[dateKey] = [];
             }
 
-            // 使用物件格式儲存待辦事項
-            todos[dateKey].push({ text: todoText, status: 'pending' });
+            // 使用物件格式儲存待辦事項（包含時間）
+            const newTodo = { text: todoText, status: 'pending' };
+            if (todoTime) {
+                newTodo.time = todoTime;
+                // 設定通知
+                scheduleNotification(todoText, dateKey, todoTime);
+            }
+            
+            todos[dateKey].push(newTodo);
             saveTodos();
             renderTodos(dateKey);
             renderCalendar();
             renderAllTodosList(); // 更新所有待辦事項列表
             input.value = '';
+            timeInput.value = '';
         }
 
         // 標記為完成（點擊第二次可取消）
