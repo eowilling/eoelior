@@ -765,6 +765,38 @@
                         <p class="text-xs" style="color: var(--primary); opacity: 0.6;">允許網頁發送提醒通知</p>
                     </div>
 
+                    <!-- 本地存儲設定 (永久保存) -->
+                    <div class="p-3 sm:p-4 rounded-lg"
+                        style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                        <label class="block text-xs sm:text-sm font-semibold mb-2"
+                            style="color: var(--primary);">本地資料夾存儲 (永久保存)</label>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-xs sm:text-sm"
+                                style="color: var(--primary);">
+                                <div class="flex flex-col">
+                                    <span class="flex items-center gap-1">
+                                        狀態：<span id="storageDirStatus" class="font-bold">未連結</span>
+                                    </span>
+                                    <span id="storageDirPath"
+                                        class="text-[10px] opacity-50 truncate max-w-[150px]"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="linkStorageDirBtn" onclick="requestStorageDirectory()"
+                                        class="px-3 py-1.5 rounded bg-blue-600 text-white text-xs hover:bg-blue-700 transition shadow-lg">
+                                        🔗 連結資料夾
+                                    </button>
+                                    <button id="unlinkStorageDirBtn" onclick="unlinkStorageDirectory()"
+                                        class="px-3 py-1.5 rounded bg-red-600 text-white text-xs hover:bg-red-700 transition shadow-lg hidden">
+                                        ❌ 解除
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-[10px] sm:text-xs opacity-60" style="color: var(--primary);">
+                                💡 連結後將自動存檔至本地資料夾（如 `quote_2024-01-29.png`），且不受 30 天清理限制。
+                            </p>
+                        </div>
+                    </div>
+
 
 
                     <!-- 版本號（連點三次開啟開發者模式） -->
@@ -1099,6 +1131,8 @@
                 if (notificationToggle) {
                     notificationToggle.checked = notificationsEnabled;
                 }
+
+                updateStorageDirUI();
 
                 modal.classList.remove('hidden');
             }
@@ -2078,10 +2112,10 @@
                 return formatDateKey(today);
             }
 
-            // IndexedDB 圖片存儲管理
+            // IndexedDB 圖片存儲管理 (版本 2：新增 config store 儲存資料夾句柄)
             let imageDB = null;
             const DB_NAME = 'QuoteImagesDB';
-            const DB_VERSION = 1;
+            const DB_VERSION = 2;
             const STORE_NAME = 'images';
 
             // 初始化 IndexedDB
@@ -2094,11 +2128,7 @@
 
                     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-                    request.onerror = () => {
-                        console.error('IndexedDB 初始化失敗:', request.error);
-                        reject(request.error);
-                    };
-
+                    request.onerror = () => reject(request.error);
                     request.onsuccess = () => {
                         imageDB = request.result;
                         resolve(imageDB);
@@ -2110,7 +2140,165 @@
                             const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'key' });
                             objectStore.createIndex('dateKey', 'dateKey', { unique: false });
                         }
+                        if (!db.objectStoreNames.contains('config')) {
+                            db.createObjectStore('config', { keyPath: 'key' });
+                        }
                     };
+                });
+            }
+
+            // --- 本地資料夾存儲 (File System Access API) ---
+            let storageDirHandle = null;
+
+            // 請求訪問本地資料夾
+            async function requestStorageDirectory() {
+                try {
+                    if (!window.showDirectoryPicker) {
+                        alert('您的瀏覽器不支援此功能，請使用 Chrome 或 Edge 瀏覽器。');
+                        return;
+                    }
+
+                    storageDirHandle = await window.showDirectoryPicker({
+                        mode: 'readwrite'
+                    });
+
+                    // 儲存 Handle 到 IndexedDB (localStorage 不支援)
+                    await saveHandleToDB('storageDirHandle', storageDirHandle);
+
+                    updateStorageDirUI();
+                    alert('✅ 資料夾連結成功！語錄小卡將同步存儲至此。');
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error('資料夾選擇失敗:', error);
+                        alert('選擇資料夾時發生錯誤');
+                    }
+                }
+            }
+
+            // 解除連結
+            async function unlinkStorageDirectory() {
+                if (confirm('確定要解除本地資料夾連結嗎？圖片將僅保留於瀏覽器快取中。')) {
+                    storageDirHandle = null;
+                    await deleteHandleFromDB('storageDirHandle');
+                    updateStorageDirUI();
+                }
+            }
+
+            // 更新 UI 狀態
+            function updateStorageDirUI() {
+                const status = document.getElementById('storageDirStatus');
+                const pathText = document.getElementById('storageDirPath');
+                const linkBtn = document.getElementById('linkStorageDirBtn');
+                const unlinkBtn = document.getElementById('unlinkStorageDirBtn');
+
+                if (storageDirHandle) {
+                    status.textContent = '已連結';
+                    status.classList.add('text-green-400');
+                    status.classList.remove('text-red-400');
+                    pathText.textContent = storageDirHandle.name;
+                    linkBtn.textContent = '🔄 更換資料夾';
+                    unlinkBtn.classList.remove('hidden');
+                } else {
+                    status.textContent = '未連結';
+                    status.classList.add('text-red-400');
+                    status.classList.remove('text-green-400');
+                    pathText.textContent = '';
+                    linkBtn.textContent = '🔗 連結資料夾';
+                    unlinkBtn.classList.add('hidden');
+                }
+            }
+
+            // 儲存圖片到本地資料夾
+            async function saveImageToDirectory(dateKey, imageBase64) {
+                if (!storageDirHandle || !imageBase64) return;
+
+                try {
+                    // 檢查權限 (如果之前點擊過，可能需要重新授權)
+                    if (await storageDirHandle.queryPermission({ mode: 'readwrite' }) !== 'granted') {
+                        // 如果在自動保存時沒有權限，我們不能彈窗，所以跳過
+                        return;
+                    }
+
+                    const fileName = `quote_${dateKey}.png`;
+                    const fileHandle = await storageDirHandle.getFileHandle(fileName, { create: true });
+                    const writable = await fileHandle.createWritable();
+
+                    // Convert base64 to Blob
+                    const base64Data = imageBase64.startsWith('data:') ? imageBase64.split(',')[1] : imageBase64;
+                    const byteCharacters = atob(base64Data);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: 'image/png' });
+
+                    await writable.write(blob);
+                    await writable.close();
+                    console.log(`✅ 已永久存儲圖片至本地：${fileName}`);
+                } catch (error) {
+                    console.warn('自動保存到本地資料夾失敗:', error);
+                }
+            }
+
+            // 從本地資料夾載入圖片
+            async function loadImageFromDirectory(dateKey) {
+                if (!storageDirHandle) return null;
+
+                try {
+                    if (await storageDirHandle.queryPermission({ mode: 'read' }) !== 'granted') {
+                        return null;
+                    }
+
+                    const fileName = `quote_${dateKey}.png`;
+                    const fileHandle = await storageDirHandle.getFileHandle(fileName);
+                    const file = await fileHandle.getFile();
+
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = () => resolve(null);
+                        reader.readAsDataURL(file);
+                    });
+                } catch (error) {
+                    // 檔案不存在或其他錯誤
+                    return null;
+                }
+            }
+
+            // 輔助：儲存 Handle 到 IndexedDB
+            async function saveHandleToDB(key, handle) {
+                const db = await initImageDB();
+                return new Promise((resolve, reject) => {
+                    const transaction = db.transaction(['config'], 'readwrite');
+                    const store = transaction.objectStore('config');
+                    store.put({ key, handle });
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject();
+                });
+            }
+
+            // 輔助：從 IndexedDB 載入 Handle
+            async function loadHandleFromDB(key) {
+                const db = await initImageDB();
+                if (!db.objectStoreNames.contains('config')) return null;
+                return new Promise((resolve) => {
+                    const transaction = db.transaction(['config'], 'readonly');
+                    const store = transaction.objectStore('config');
+                    const request = store.get(key);
+                    request.onsuccess = () => resolve(request.result ? request.result.handle : null);
+                    request.onerror = () => resolve(null);
+                });
+            }
+
+            // 輔助：刪除 Handle
+            async function deleteHandleFromDB(key) {
+                const db = await initImageDB();
+                return new Promise((resolve) => {
+                    const transaction = db.transaction(['config'], 'readwrite');
+                    const store = transaction.objectStore('config');
+                    store.delete(key);
+                    transaction.oncomplete = () => resolve();
                 });
             }
 
@@ -2232,9 +2420,12 @@
                 }
             }
 
-            // 清理舊圖片（基於日期）
-            async function cleanupOldImages(keepDays = 30) {
+            // 清理舊圖片 (已修改：永久保存模式下不清理)
+            async function cleanupOldImages(keepDays = 3650) { // 預設保留 10 年
                 try {
+                    // 如果用戶有設定本地資料夾，我們絕對不清理 IndexedDB 中的對應快取
+                    // 或者更好的做法是：我們現在預設不主動清理，除非儲存空間爆滿
+                    // 為了回答用戶需求，我們將清理天數設定得極大
                     const db = await initImageDB();
                     const today = new Date();
                     const cutoffDate = new Date(today);
@@ -2360,8 +2551,8 @@
                 });
             }
 
-            // 清理舊的語錄數據（只保留最近 N 天的完整數據，其他的移除圖片引用）
-            async function cleanupOldQuoteData(quotesData, keepDays = 30) {
+            // 清理舊的語錄數據 (已修改：延長保留期限)
+            async function cleanupOldQuoteData(quotesData, keepDays = 3650) {
                 const today = new Date();
                 const cutoffDate = new Date(today);
                 cutoffDate.setDate(today.getDate() - keepDays);
@@ -2408,8 +2599,8 @@
                 return cleanedData;
             }
 
-            // 同步版本（用於不需要異步清理的場合）
-            function cleanupOldQuoteDataSync(quotesData, keepDays = 30) {
+            // 同步版本 (已修改：延長保留期限)
+            function cleanupOldQuoteDataSync(quotesData, keepDays = 3650) {
                 const today = new Date();
                 const cutoffDate = new Date(today);
                 cutoffDate.setDate(today.getDate() - keepDays);
@@ -2495,6 +2686,9 @@
                                     imageKey: imageKey, // 只保存引用，不保存圖片數據
                                     hasImage: true
                                 };
+
+                                // 同步保存到本地資料夾 (如果已連結)
+                                await saveImageToDirectory(dateKey, imageToSave);
                             } catch (error) {
                                 console.warn(`保存圖片到 IndexedDB 失敗 (${dateKey}):`, error);
                                 // 如果保存失敗，仍然保存文字
@@ -2522,11 +2716,11 @@
                     // 合併處理後的數據
                     const finalData = { ...mergedData, ...processedData };
 
-                    // 再次清理（確保不超過限制）
-                    const finalCleanedData = cleanupOldQuoteDataSync(finalData, 30);
+                    // 再次清理（確保不超過限制，預設已改為 10 年）
+                    const finalCleanedData = cleanupOldQuoteDataSync(finalData);
 
                     // 清理 IndexedDB 中的舊圖片
-                    await cleanupOldImages(30);
+                    await cleanupOldImages();
 
                     // 保存到 localStorage（只包含文字和引用）
                     localStorage.setItem(key, JSON.stringify(finalCleanedData));
@@ -3472,6 +3666,16 @@
 
                 if (!quote) return null;
 
+                // 優先從本地資料夾載入
+                if (storageDirHandle) {
+                    try {
+                        const localImage = await loadImageFromDirectory(dateKey);
+                        if (localImage) return { ...quote, image: localImage };
+                    } catch (e) {
+                        console.warn('從本地資料夾載入失敗，嘗試從 IndexedDB 載入');
+                    }
+                }
+
                 // 如果有圖片引用，從 IndexedDB 載入
                 if (quote.imageKey && quote.hasImage) {
                     try {
@@ -3618,10 +3822,19 @@
                 console.log('語錄列表已更新');
             });
 
-            // 初始化
             async function init() {
                 try {
                     console.log('🚀 開始初始化應用...');
+
+                    // 嘗試從 IndexedDB 恢復 Folder Handle
+                    try {
+                        storageDirHandle = await loadHandleFromDB('storageDirHandle');
+                        if (storageDirHandle) {
+                            console.log('📦 已恢復本地存儲資料夾連結：', storageDirHandle.name);
+                        }
+                    } catch (e) {
+                        console.warn('無法恢復資料夾連結');
+                    }
 
                     // 載入主題設定
                     loadTheme();
