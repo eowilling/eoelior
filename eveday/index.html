@@ -113,9 +113,9 @@
             z-index: -1;
         }
         
-        /* 科技風日曆格子 - 響應式調整（縮小以顯示完整月曆） */
+        /* 科技風日曆格子 - 響應式調整（增大格子以利用更多空間） */
         .calendar-day {
-            min-height: 75px;
+            min-height: 85px;
             transition: all 0.3s ease;
             background: var(--card-bg);
             border: 1px solid rgba(0, 242, 255, 0.2);
@@ -125,28 +125,28 @@
         /* 手機 - 較小的格子 */
         @media (max-width: 640px) {
             .calendar-day {
-                min-height: 55px;
+                min-height: 65px;
             }
         }
         
         /* 平板 - 中等格子 */
         @media (min-width: 641px) and (max-width: 1024px) {
             .calendar-day {
-                min-height: 65px;
+                min-height: 75px;
             }
         }
         
         /* 標準桌面 - 適中格子 */
         @media (min-width: 1025px) and (max-width: 1920px) {
             .calendar-day {
-                min-height: 70px;
+                min-height: 82px;
             }
         }
         
         /* 大螢幕 - 較大的格子 */
         @media (min-width: 1921px) {
             .calendar-day {
-                min-height: 90px;
+                min-height: 105px;
             }
         }
         
@@ -327,20 +327,19 @@
                     <div class="rounded-xl shadow-lg p-2 sm:p-2.5 md:p-3 lg:p-3" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <!-- 月曆控制 -->
                         <div class="text-center mb-1.5">
-                            <div class="flex justify-between items-center mb-0.5">
+                            <div class="flex justify-between items-center">
                                 <button onclick="changeMonth(-1)" class="p-1.5 sm:p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-2xl xl:text-3xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
+                                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
                                 <button onclick="changeMonth(1)" class="p-1.5 sm:p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="下個月">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
                             </div>
-                            <div class="text-xs sm:text-sm cursor-pointer select-none" style="color: var(--primary); opacity: 0.7;" id="calendarTitle" ondblclick="toggleDeveloperMode()" title="雙擊進入開發者模式">形式曆</div>
                         </div>
 
                         <!-- 星期標題 -->
@@ -355,8 +354,13 @@
                     </div>
 
                         <!-- 月曆網格 -->
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-0.5 md:gap-1 xl:gap-1.5">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-0.5 md:gap-1 xl:gap-1.5 mb-2">
                             <!-- 月曆內容將由 JavaScript 生成 -->
+                        </div>
+                        
+                        <!-- 子標題移到下方靠左 -->
+                        <div class="text-left mt-2">
+                            <div class="text-xs sm:text-sm cursor-pointer select-none inline-block" style="color: var(--primary); opacity: 0.7;" id="calendarTitle" ondblclick="toggleDeveloperMode()" title="雙擊進入開發者模式">形式曆</div>
                         </div>
                     </div>
                 </div>
