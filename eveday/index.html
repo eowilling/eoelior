@@ -2478,12 +2478,11 @@
             }
 
             // 載入每日語錄記錄（從 localStorage，圖片引用從 IndexedDB 載入）
-            async function loadDailyQuotes() {
+            function loadDailyQuotes() {
                 const key = `dailyQuotes_${currentUserId}`;
                 const quotesData = JSON.parse(localStorage.getItem(key) || '{}');
 
-                // 異步載入圖片（如果需要的話）
-                // 這裡先返回數據結構，圖片在顯示時再載入
+                // 返回數據結構，圖片在顯示時再從 IndexedDB 異步載入
                 return quotesData;
             }
 
@@ -3685,7 +3684,7 @@
 
             // 獲取指定日期的語錄（從 IndexedDB 載入圖片）
             async function getQuoteForDate(dateKey) {
-                const quotesData = await loadDailyQuotes();
+                const quotesData = loadDailyQuotes();
                 const quote = quotesData[dateKey];
 
                 if (!quote) return null;
