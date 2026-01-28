@@ -2839,22 +2839,24 @@
                     temp.style.fontFamily = "'Inter', 'PingFang TC', 'Microsoft JhengHei', sans-serif";
                     temp.style.boxSizing = 'border-box';
 
-                    // 添加暗色疊加層以提升文字可讀性
+                    // 添加漸層遮罩層
                     const overlay = document.createElement('div');
                     overlay.style.position = 'absolute';
                     overlay.style.inset = '0';
-                    overlay.style.backgroundColor = 'rgba(0,0,0,0.15)';
+                    overlay.style.background = 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)';
                     temp.appendChild(overlay);
 
                     const content = document.createElement('div');
                     content.style.position = 'relative';
                     content.style.zIndex = '10';
+                    content.style.marginTop = 'auto'; // 將內容推到底部，配合漸層遮罩
 
                     const dateEl = document.createElement('div');
                     dateEl.style.fontSize = '24px';
                     dateEl.style.fontWeight = '700';
-                    dateEl.style.marginBottom = '50px';
-                    dateEl.style.letterSpacing = '3px';
+                    dateEl.style.marginBottom = '30px';
+                    dateEl.style.letterSpacing = '5px';
+                    dateEl.style.color = '#fee140'; // 亮黃色裝飾
                     dateEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.5)';
                     dateEl.textContent = `✦ ${dateKey}`;
                     content.appendChild(dateEl);
@@ -2862,8 +2864,8 @@
                     const quoteEl = document.createElement('div');
                     quoteEl.style.fontSize = '48px';
                     quoteEl.style.fontWeight = '600';
-                    quoteEl.style.lineHeight = '1.7';
-                    quoteEl.style.textShadow = '0 4px 20px rgba(0,0,0,0.7)';
+                    quoteEl.style.lineHeight = '1.6';
+                    quoteEl.style.textShadow = '0 4px 20px rgba(0,0,0,0.8)';
                     quoteEl.style.whiteSpace = 'pre-line';
                     quoteEl.textContent = quote;
                     content.appendChild(quoteEl);
@@ -3222,11 +3224,11 @@
                 const tempCard = document.createElement('div');
                 tempCard.style.position = 'fixed';
                 tempCard.style.left = '-9999px';
-                tempCard.style.width = '1000px';
-                tempCard.style.height = '700px';
+                tempCard.style.width = '1200px';
+                tempCard.style.height = '840px';
                 tempCard.style.padding = '0';
                 tempCard.style.background = theme.gradient;
-                tempCard.style.borderRadius = '30px';
+                tempCard.style.borderRadius = '0'; // 生成底圖時不需要圓角，避免合成時邊緣出現白邊
                 tempCard.style.boxShadow = '0 30px 80px rgba(0,0,0,0.4)';
                 tempCard.style.display = 'flex';
                 tempCard.style.flexDirection = 'column';
@@ -3536,10 +3538,11 @@
                     }
 
                     card.innerHTML = `
-                    <div class="rounded-xl shadow-2xl mb-4 relative overflow-hidden min-h-[240px] flex flex-col justify-center transition-all duration-500 hover:scale-[1.01]" 
-                         style="${backgroundStyle} border: 1px solid rgba(255,255,255,0.1);">
-                        <!-- 玻璃擬態遮罩層 -->
-                        <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-[2px]"></div>
+                    <div class="rounded-xl shadow-2xl mb-4 relative overflow-hidden min-h-[260px] flex flex-col justify-center transition-all duration-500 hover:scale-[1.01]" 
+                         style="${backgroundStyle} border: 1px solid rgba(255,255,255,0.15);">
+                        <!-- 漸層暗化遮罩 (取代原本的均勻模糊，更通透) -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black to-transparent opacity-40"></div>
+                        <div class="absolute inset-0 bg-black opacity-10"></div>
                         
                         <!-- 下載按鈕 (絕對定位於右上角) -->
                         <div class="absolute top-3 right-3 z-30">
