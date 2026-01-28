@@ -115,7 +115,7 @@
         
         /* 科技風日曆格子 - 響應式調整（增大格子以利用更多空間） */
         .calendar-day {
-            min-height: 110px;
+            min-height: 95px;
             transition: all 0.3s ease;
             background: var(--card-bg);
             border: 1px solid rgba(0, 242, 255, 0.2);
@@ -125,28 +125,28 @@
         /* 手機 - 較小的格子 */
         @media (max-width: 640px) {
             .calendar-day {
-                min-height: 85px;
+                min-height: 75px;
             }
         }
         
         /* 平板 - 中等格子 */
         @media (min-width: 641px) and (max-width: 1024px) {
             .calendar-day {
-                min-height: 100px;
+                min-height: 85px;
             }
         }
         
         /* 標準桌面 - 適中格子 */
         @media (min-width: 1025px) and (max-width: 1920px) {
             .calendar-day {
-                min-height: 110px;
+                min-height: 98px;
             }
         }
         
         /* 大螢幕 - 較大的格子 */
         @media (min-width: 1921px) {
             .calendar-day {
-                min-height: 135px;
+                min-height: 120px;
             }
         }
         
@@ -316,7 +316,7 @@
         <!-- Header -->
             <header class="mb-2 sm:mb-3 lg:mb-4">
                 <div class="text-center">
-                    <span id="devModeIndicator" class="hidden text-red-500 font-bold text-sm cursor-pointer" onclick="toggleDeveloperMode()" title="點擊切換開發者模式">[開發者模式]</span>
+                    <!-- 開發者模式標籤移至待辦事項窗口 -->
                 </div>
         </header>
 
@@ -374,6 +374,9 @@
                                 </div>
                                 <!-- 使用者和設定 -->
                                 <div class="flex items-center gap-1 sm:gap-2">
+                                    <!-- 開發者模式標籤 -->
+                                    <span id="devModeIndicator" class="hidden text-red-500 font-bold text-xs cursor-pointer px-2 py-1 rounded" onclick="toggleDeveloperMode()" style="background: rgba(255, 0, 0, 0.1); border: 1px solid rgba(255, 0, 0, 0.3);" title="點擊切換開發者模式">DEV</span>
+                                    
                                     <div class="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-xs sm:text-sm" style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2);">
                                         <span id="firebaseStatusDot" class="w-1.5 h-1.5 rounded-full" style="background: #ef4444;" title="Firebase 未連接"></span>
                                         <span class="text-xs" style="color: var(--primary);" id="currentUserDisplayName">Loading...</span>
