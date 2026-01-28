@@ -113,9 +113,9 @@
             z-index: -1;
         }
         
-        /* 科技風日曆格子 - 響應式調整 */
+        /* 科技風日曆格子 - 響應式調整（縮小以顯示完整月曆） */
         .calendar-day {
-            min-height: 110px;
+            min-height: 75px;
             transition: all 0.3s ease;
             background: var(--card-bg);
             border: 1px solid rgba(0, 242, 255, 0.2);
@@ -125,21 +125,28 @@
         /* 手機 - 較小的格子 */
         @media (max-width: 640px) {
             .calendar-day {
-                min-height: 80px;
+                min-height: 55px;
             }
         }
         
         /* 平板 - 中等格子 */
         @media (min-width: 641px) and (max-width: 1024px) {
             .calendar-day {
-                min-height: 100px;
+                min-height: 65px;
+            }
+        }
+        
+        /* 標準桌面 - 適中格子 */
+        @media (min-width: 1025px) and (max-width: 1920px) {
+            .calendar-day {
+                min-height: 70px;
             }
         }
         
         /* 大螢幕 - 較大的格子 */
         @media (min-width: 1921px) {
             .calendar-day {
-                min-height: 140px;
+                min-height: 90px;
             }
         }
         
@@ -304,23 +311,23 @@
     </style>
 </head>
 <body class="bg-gray-50">
-    <div id="evedayAppRoot" class="min-h-screen p-3 sm:p-4 md:p-6 lg:p-6 xl:p-8">
+    <div id="evedayAppRoot" class="min-h-screen p-2 sm:p-3 md:p-4 lg:p-4 xl:p-5">
         <div class="w-full mx-auto">
         <!-- Header -->
-            <header class="mb-4 sm:mb-6 lg:mb-8">
+            <header class="mb-2 sm:mb-3 lg:mb-4">
                 <div class="text-center">
                     <span id="devModeIndicator" class="hidden text-red-500 font-bold text-sm cursor-pointer" onclick="toggleDeveloperMode()" title="點擊切換開發者模式">[開發者模式]</span>
                 </div>
         </header>
 
             <!-- 版面：手機一頁式（垂直），桌面左右式，響應式間距 -->
-            <div class="flex flex-col lg:flex-row gap-4 lg:gap-6 xl:gap-8">
+            <div class="flex flex-col lg:flex-row gap-3 lg:gap-4 xl:gap-5">
                 <!-- 左側/上方：月曆 -->
                 <div class="w-full lg:flex-[2] lg:min-w-0">
-                    <div class="rounded-xl shadow-lg p-2 sm:p-3 md:p-4 lg:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
+                    <div class="rounded-xl shadow-lg p-2 sm:p-2.5 md:p-3 lg:p-3" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <!-- 月曆控制 -->
-                        <div class="text-center mb-2">
-                            <div class="flex justify-between items-center mb-1">
+                        <div class="text-center mb-1.5">
+                            <div class="flex justify-between items-center mb-0.5">
                                 <button onclick="changeMonth(-1)" class="p-1.5 sm:p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -337,7 +344,7 @@
                         </div>
 
                         <!-- 星期標題 -->
-                        <div class="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2 mb-2 text-xs sm:text-sm md:text-base">
+                        <div class="grid grid-cols-7 gap-0.5 sm:gap-0.5 md:gap-1 mb-1.5 text-xs sm:text-sm md:text-base">
                             <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">日</div>
                             <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">一</div>
                             <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">二</div>
@@ -348,7 +355,7 @@
                     </div>
 
                         <!-- 月曆網格 -->
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2 xl:gap-3">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-0.5 md:gap-1 xl:gap-1.5">
                             <!-- 月曆內容將由 JavaScript 生成 -->
                         </div>
                     </div>
@@ -668,8 +675,8 @@
         // 狀態管理
         let currentDate = new Date();
         let selectedDate = null;
-        let currentUserId = localStorage.getItem('currentUserId') || 'Happy Bunny';
-        let users = JSON.parse(localStorage.getItem('users') || '["Happy Bunny"]');
+        let currentUserId = localStorage.getItem('currentUserId') || 'default';
+        let users = JSON.parse(localStorage.getItem('users') || '["default"]');
         let todos = {};
 
         // 開發者模式
@@ -3379,7 +3386,7 @@
                 const dayElement = document.createElement('div');
 
                 // 避免徽章/文字溢出月曆格子
-                let classes = 'calendar-day relative overflow-hidden rounded-lg p-2 cursor-pointer border-2 border-transparent';
+                let classes = 'calendar-day relative overflow-hidden rounded-lg p-1.5 cursor-pointer border-2 border-transparent';
 
                 const todayKey = getTodayKey();
                 const isUnlocked = checkDateUnlocked(dateKey);
@@ -3424,7 +3431,7 @@
                 // 日期數字和 Today 標籤容器（同一行）
                 const dayNumberContainer = document.createElement('div');
                 // 手機：讓 Today 強制換到下一行（用 flex-wrap + Today 標籤 w-full）
-                dayNumberContainer.className = 'flex flex-wrap items-center gap-1 mb-1';
+                dayNumberContainer.className = 'flex flex-wrap items-center gap-0.5 mb-0.5';
 
                 const dayNumber = document.createElement('div');
                 dayNumber.className = 'font-bold text-sm sm:text-base md:text-lg';
@@ -3450,7 +3457,7 @@
                 }
                 
                 const lunarLabel = document.createElement('div');
-                lunarLabel.className = 'text-[9px] sm:text-[10px] md:text-[11px] text-gray-500 mt-0.5';
+                lunarLabel.className = 'text-[9px] sm:text-[10px] md:text-[11px] text-gray-500';
                 lunarLabel.textContent = lunarText;
                 dayNumberContainer.appendChild(lunarLabel);
 
