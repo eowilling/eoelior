@@ -2660,19 +2660,40 @@
         // 下載語錄圖片
         function downloadQuoteImage(imageBase64, dateKey) {
             try {
+                // 將 base64 轉換為 Blob
+                const byteString = atob(imageBase64.split(',')[1]);
+                const mimeString = imageBase64.split(',')[0].split(':')[1].split(';')[0];
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: mimeString });
+                
+                // 建立 Blob URL
+                const url = URL.createObjectURL(blob);
+                
                 // 建立下載連結
                 const link = document.createElement('a');
-                link.href = imageBase64;
+                link.href = url;
                 link.download = `每日語錄_${dateKey}.png`;
+                link.style.display = 'none';
                 
                 // 觸發下載
                 document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
+                
+                // 清理
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 100);
                 
                 console.log(`✅ 語錄圖片已下載：每日語錄_${dateKey}.png`);
             } catch (error) {
                 console.error('下載圖片失敗:', error);
+                // 如果自動下載失敗，提供手動下載選項
+                alert('自動下載失敗，請手動保存圖片。');
             }
         }
 
