@@ -115,7 +115,7 @@
         
         /* 科技風日曆格子 - 響應式調整（增大格子以利用更多空間） */
         .calendar-day {
-            min-height: 95px;
+            min-height: 110px;
             transition: all 0.3s ease;
             background: var(--card-bg);
             border: 1px solid rgba(0, 242, 255, 0.2);
@@ -125,28 +125,28 @@
         /* 手機 - 較小的格子 */
         @media (max-width: 640px) {
             .calendar-day {
-                min-height: 70px;
+                min-height: 85px;
             }
         }
         
         /* 平板 - 中等格子 */
         @media (min-width: 641px) and (max-width: 1024px) {
             .calendar-day {
-                min-height: 80px;
+                min-height: 100px;
             }
         }
         
         /* 標準桌面 - 適中格子 */
         @media (min-width: 1025px) and (max-width: 1920px) {
             .calendar-day {
-                min-height: 92px;
+                min-height: 110px;
             }
         }
         
         /* 大螢幕 - 較大的格子 */
         @media (min-width: 1921px) {
             .calendar-day {
-                min-height: 115px;
+                min-height: 135px;
             }
         }
         
@@ -635,7 +635,7 @@
                 </div>
 
                 <!-- 功能按鈕 -->
-                <div class="space-y-2">
+                <div class="space-y-2 sm:space-y-3">
                     <button onclick="exportUserData(); closeSettingsModal();"
                             class="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold flex items-center justify-between transition text-sm"
                             style="background: rgba(112, 0, 255, 0.1); border: 1px solid rgba(112, 0, 255, 0.5); color: var(--secondary);">
