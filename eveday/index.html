@@ -217,7 +217,6 @@
         <!-- Header -->
             <header class="mb-8">
                 <div class="text-center">
-                    <h1 class="text-3xl sm:text-4xl font-bold select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle">📅 <span id="calendarTitle">形式曆</span></h1>
                     <span id="devModeIndicator" class="hidden text-red-500 font-bold text-sm cursor-pointer" onclick="toggleDeveloperMode()" title="點擊切換開發者模式">[開發者模式]</span>
                 </div>
         </header>
@@ -228,19 +227,22 @@
                 <div class="w-full lg:flex-[2] lg:min-w-0">
                     <div class="rounded-xl shadow-lg p-3 sm:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <!-- 月曆控制 -->
-                        <div class="flex justify-between items-center mb-4 sm:mb-6">
-                            <button onclick="changeMonth(-1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <h2 class="text-2xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
-                            <button onclick="changeMonth(1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="下個月">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-                    </div>
+                        <div class="text-center mb-4 sm:mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <button onclick="changeMonth(-1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <h2 class="text-2xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
+                                <button onclick="changeMonth(1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="下個月">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="text-sm cursor-pointer select-none" style="color: var(--primary); opacity: 0.7;" id="calendarTitle" ondblclick="toggleDeveloperMode()" title="雙擊進入開發者模式">形式曆</div>
+                        </div>
 
                         <!-- 星期標題 -->
                         <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-xs sm:text-sm">
@@ -829,13 +831,23 @@
         }
 
         function updateCalendarTitle() {
-            const title = localStorage.getItem('calendarTitle') || '形式曆';
+            const customTitle = localStorage.getItem('calendarTitle') || '';
             const titleElement = document.getElementById('calendarTitle');
+            
             if (titleElement) {
-                titleElement.textContent = title;
+                if (customTitle && customTitle !== '形式曆') {
+                    titleElement.textContent = customTitle;
+                } else {
+                    titleElement.textContent = '形式曆';
+                }
             }
-            // 同時更新網頁標題
-            document.title = title;
+            
+            // 更新網頁標題
+            if (customTitle && customTitle !== '形式曆') {
+                document.title = '形式曆 - ' + customTitle;
+            } else {
+                document.title = '形式曆';
+            }
         }
 
         // Firebase 連接狀態更新
