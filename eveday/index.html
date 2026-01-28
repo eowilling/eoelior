@@ -2480,10 +2480,32 @@
             // 載入每日語錄記錄（從 localStorage，圖片引用從 IndexedDB 載入）
             function loadDailyQuotes() {
                 const key = `dailyQuotes_${currentUserId}`;
-                const quotesData = JSON.parse(localStorage.getItem(key) || '{}');
+                const data = localStorage.getItem(key);
+                if (!data) return {};
 
-                // 返回數據結構，圖片在顯示時再從 IndexedDB 異步載入
-                return quotesData;
+                try {
+                    const quotesData = JSON.parse(data);
+                    // 數據清洗：移除所有記錄中的 image 屬性（避免舊格式數據導致 UI 文字重疊）
+                    // 圖片數據現在存放於 IndexedDB，localStorage 僅保存文字與引用 Key
+                    let hasOldData = false;
+                    Object.keys(quotesData).forEach(dk => {
+                        if (quotesData[dk].image) {
+                            delete quotesData[dk].image;
+                            hasOldData = true;
+                        }
+                    });
+
+                    // 如果發現舊數據，順便保存一下已清洗的結果
+                    if (hasOldData) {
+                        localStorage.setItem(key, JSON.stringify(quotesData));
+                        console.log('已清理舊格式語錄圖片數據，轉向使用 IndexedDB。');
+                    }
+
+                    return quotesData;
+                } catch (e) {
+                    console.error('載入語錄數據失敗:', e);
+                    return {};
+                }
             }
 
             // 同步版本（用於不需要異步的地方）
@@ -2648,8 +2670,8 @@
                     // 先載入現有數據
                     const existingData = loadDailyQuotesSync();
 
-                    // 先清理舊數據
-                    const cleanedExistingData = cleanupOldQuoteData(existingData, 30);
+                    // 先清理舊數據 (已延長為 10 年)
+                    const cleanedExistingData = cleanupOldQuoteData(existingData, 3650);
 
                     // 合併數據
                     const mergedData = { ...cleanedExistingData };
@@ -2799,24 +2821,29 @@
             async function claimDailyQuoteForDate(dateKey) {
                 const quotesData = loadDailyQuotes();
 
-                // 如果該日期已經領取過，不重複領取
-                if (quotesData[dateKey] && quotesData[dateKey].image) {
-                    const quote = quotesData[dateKey];
-                    // 確保已加入到待辦事項
-                    if (quote.quote && quote.image) {
-                        if (!todos[dateKey]) {
-                            todos[dateKey] = [];
+                // 如果該日期已經領取過且有正確的 Key，不重複領取 (除非開發者模式想強制重發)
+                if (quotesData[dateKey] && (quotesData[dateKey].imageKey || quotesData[dateKey].image)) {
+                    // 如果只有 old 格式的 image，我們這次還是讓它重新生成一次背景以校正
+                    if (quotesData[dateKey].image && !quotesData[dateKey].imageKey) {
+                        console.log('檢測到舊格式語錄，允許重新生成以校正背景...');
+                    } else {
+                        const quote = quotesData[dateKey];
+                        // 確保已加入到待辦事項
+                        if (quote.quote && quote.image) {
+                            if (!todos[dateKey]) {
+                                todos[dateKey] = [];
+                            }
+                            const exists = todos[dateKey].some(todo => {
+                                if (typeof todo === 'string') return false;
+                                return todo.isDailyQuote === true && todo.text === quote.quote;
+                            });
+                            if (!exists) {
+                                await addDailyQuoteToTodos(dateKey, quote.quote, quote.image);
+                            }
                         }
-                        const exists = todos[dateKey].some(todo => {
-                            if (typeof todo === 'string') return false;
-                            return todo.isDailyQuote === true && todo.text === quote.quote;
-                        });
-                        if (!exists) {
-                            await addDailyQuoteToTodos(dateKey, quote.quote, quote.image);
-                        }
+                        renderDailyQuote(dateKey).catch(err => console.error('渲染語錄失敗:', err));
+                        return;
                     }
-                    renderDailyQuote(dateKey).catch(err => console.error('渲染語錄失敗:', err));
-                    return;
                 }
 
                 // 從未使用的語錄中隨機選擇
