@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>金句管理系統 | 每日日曆</title>
+    <title>語錄設定 | 形式曆</title>
     <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
     <script src="firebase-config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,8 +30,8 @@
         <header class="mb-8">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">📝 金句管理系統</h1>
-                    <p class="text-gray-600">上傳、管理你的勵志金句庫</p>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">📝 語錄設定</h1>
+                    <p class="text-gray-600">上傳、管理你的勵志語錄庫</p>
                 </div>
                 <a href="index.html" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                     ← 返回日曆
@@ -46,7 +46,7 @@
 
         <!-- 上傳區域 -->
         <div id="uploadSection" class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">📤 上傳金句 TXT 文件</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📤 上傳語錄 TXT 文件</h2>
             <div class="space-y-4">
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-400 transition">
                     <input type="file" id="txtFileInput" accept=".txt" class="hidden" onchange="handleFileSelect(event)">
