@@ -217,7 +217,7 @@
             <header class="mb-8">
                 <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center mb-4">
                     <div>
-                        <h1 class="text-3xl sm:text-4xl font-bold mb-2 cursor-pointer select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle" ondblclick="window.location.href='quotes-uploader.html'" title="雙擊進入金句管理">📅 形式曆</h1>
+                        <h1 class="text-3xl sm:text-4xl font-bold mb-2 select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle">📅 形式曆</h1>
                         <p class="text-gray-400">即使很忙 也要對自己好一點<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2 cursor-pointer" onclick="toggleDeveloperMode()" title="點擊切換開發者模式">[開發者模式]</span></p>
                     </div>
                     <!-- 使用者和設定區域 -->
@@ -466,6 +466,15 @@
                         <span>📥 匯出資料</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </button>
+
+                    <button id="quotesManagerButton" onclick="window.location.href='quotes-uploader.html'"
+                            class="w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-between transition hidden"
+                            style="background: rgba(255, 165, 0, 0.1); border: 1px solid rgba(255, 165, 0, 0.5); color: #ffa500;">
+                        <span>📝 語錄設定</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
                     </button>
 
@@ -1397,10 +1406,12 @@
             }
         }
 
-        // 更新重置按鈕的顯示狀態
+        // 更新重置按鈕和語錄設定按鈕的顯示狀態
         function updateResetButtonVisibility() {
             const resetBtn = document.getElementById('resetButton');
             const settingsResetBtn = document.getElementById('settingsResetButton');
+            const quotesManagerBtn = document.getElementById('quotesManagerButton');
+            
             if (resetBtn) {
                 if (developerMode) {
                     resetBtn.classList.remove('hidden');
@@ -1413,6 +1424,13 @@
                     settingsResetBtn.classList.remove('hidden');
                 } else {
                     settingsResetBtn.classList.add('hidden');
+                }
+            }
+            if (quotesManagerBtn) {
+                if (developerMode) {
+                    quotesManagerBtn.classList.remove('hidden');
+                } else {
+                    quotesManagerBtn.classList.add('hidden');
                 }
             }
         }
