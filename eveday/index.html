@@ -597,6 +597,16 @@
             if (userNameInput) {
                 userNameInput.value = currentUserId;
             }
+            // 同時更新顯示名稱
+            updateUserDisplay();
+        }
+
+        // 更新使用者顯示名稱
+        function updateUserDisplay() {
+            const displayName = document.getElementById('currentUserDisplayName');
+            if (displayName) {
+                displayName.textContent = currentUserId;
+            }
         }
 
         // 保存當前使用者名稱（如果名稱改變，會創建新的使用者）
