@@ -9,20 +9,61 @@
             return window.innerWidth <= 768;
         }
 
+        function isTablet() {
+            return window.innerWidth > 768 && window.innerWidth <= 1024;
+        }
+
+        function isLargeScreen() {
+            return window.innerWidth > 1920;
+        }
+
+        // 動態調整viewport和樣式
+        function adjustForScreenSize() {
+            const meta = document.querySelector('meta[name="viewport"]');
+            if (!meta) return;
+
+            const width = window.innerWidth;
+            const root = document.documentElement;
+
+            // 移除所有設備類型class
+            root.classList.remove('is-mobile', 'is-tablet', 'is-desktop', 'is-large');
+
+            if (width <= 768) {
+                // 手機
+                meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+                root.classList.add('is-mobile');
+                root.style.fontSize = '14px';
+            } else if (width <= 1024) {
+                // 平板
+                meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+                root.classList.add('is-tablet');
+                root.style.fontSize = '15px';
+            } else if (width <= 1920) {
+                // 標準桌面
+                root.classList.add('is-desktop');
+                root.style.fontSize = '16px';
+            } else {
+                // 大螢幕
+                root.classList.add('is-large');
+                root.style.fontSize = '18px';
+            }
+        }
+
+        // 初始化調整
         (function () {
             try {
-                const meta = document.querySelector('meta[name="viewport"]');
-                if (!meta) return;
-
-                if (isMobile()) {
-                    // 手機解析度模式
-                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
-                    document.documentElement.classList.add('is-mobile');
-                } else {
-                    // 桌面解析度模式
-                    meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-                    document.documentElement.classList.add('is-desktop');
-                }
+                adjustForScreenSize();
+                
+                // 監聽螢幕大小變化
+                window.addEventListener('resize', function() {
+                    clearTimeout(window.resizeTimer);
+                    window.resizeTimer = setTimeout(adjustForScreenSize, 250);
+                });
+                
+                // 監聽旋轉
+                window.addEventListener('orientationchange', function() {
+                    setTimeout(adjustForScreenSize, 100);
+                });
             } catch (_) {
                 // ignore errors
             }
@@ -72,7 +113,7 @@
             z-index: -1;
         }
         
-        /* 科技風日曆格子 */
+        /* 科技風日曆格子 - 響應式調整 */
         .calendar-day {
             min-height: 110px;
             transition: all 0.3s ease;
@@ -80,6 +121,28 @@
             border: 1px solid rgba(0, 242, 255, 0.2);
             backdrop-filter: blur(10px);
         }
+        
+        /* 手機 - 較小的格子 */
+        @media (max-width: 640px) {
+            .calendar-day {
+                min-height: 80px;
+            }
+        }
+        
+        /* 平板 - 中等格子 */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .calendar-day {
+                min-height: 100px;
+            }
+        }
+        
+        /* 大螢幕 - 較大的格子 */
+        @media (min-width: 1921px) {
+            .calendar-day {
+                min-height: 140px;
+            }
+        }
+        
         .calendar-day:hover {
             background: rgba(0, 242, 255, 0.1);
             transform: translateY(-2px);
@@ -208,74 +271,103 @@
             html.is-mobile body {
                 overflow-x: hidden;
             }
+            
+            /* 減少內距 */
+            #evedayAppRoot {
+                padding: 0.75rem !important;
+            }
+            
+            /* 月曆標題調整 */
+            #currentMonthYear {
+                font-size: 1.5rem !important;
+            }
+        }
+        
+        /* 平板解析度模式 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            html.is-tablet #evedayAppRoot {
+                padding: 1.5rem !important;
+            }
+        }
+        
+        /* 大螢幕模式 */
+        @media (min-width: 1921px) {
+            html.is-large #evedayAppRoot {
+                max-width: 2000px;
+                margin: 0 auto;
+            }
+            
+            html.is-large .calendar-day {
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <div id="evedayAppRoot" class="min-h-screen p-4 md:p-8">
+    <div id="evedayAppRoot" class="min-h-screen p-3 sm:p-4 md:p-6 lg:p-6 xl:p-8">
         <div class="w-full mx-auto">
         <!-- Header -->
-            <header class="mb-8">
+            <header class="mb-4 sm:mb-6 lg:mb-8">
                 <div class="text-center">
                     <span id="devModeIndicator" class="hidden text-red-500 font-bold text-sm cursor-pointer" onclick="toggleDeveloperMode()" title="點擊切換開發者模式">[開發者模式]</span>
                 </div>
         </header>
 
-            <!-- 版面：手機一頁式（垂直），桌面左右式 -->
-            <div class="flex flex-col lg:flex-row gap-6">
+            <!-- 版面：手機一頁式（垂直），桌面左右式，響應式間距 -->
+            <div class="flex flex-col lg:flex-row gap-4 lg:gap-6 xl:gap-8">
                 <!-- 左側/上方：月曆 -->
                 <div class="w-full lg:flex-[2] lg:min-w-0">
-                    <div class="rounded-xl shadow-lg p-3 sm:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
+                    <div class="rounded-xl shadow-lg p-2 sm:p-3 md:p-4 lg:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
                         <!-- 月曆控制 -->
                         <div class="text-center mb-2">
                             <div class="flex justify-between items-center mb-1">
-                                <button onclick="changeMonth(-1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button onclick="changeMonth(-1)" class="p-1.5 sm:p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="上個月">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <h2 class="text-2xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
-                                <button onclick="changeMonth(1)" class="p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="下個月">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-2xl xl:text-3xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
+                                <button onclick="changeMonth(1)" class="p-1.5 sm:p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="下個月">
+                                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
                             </div>
-                            <div class="text-sm cursor-pointer select-none" style="color: var(--primary); opacity: 0.7;" id="calendarTitle" ondblclick="toggleDeveloperMode()" title="雙擊進入開發者模式">形式曆</div>
+                            <div class="text-xs sm:text-sm cursor-pointer select-none" style="color: var(--primary); opacity: 0.7;" id="calendarTitle" ondblclick="toggleDeveloperMode()" title="雙擊進入開發者模式">形式曆</div>
                         </div>
 
                         <!-- 星期標題 -->
-                        <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-xs sm:text-sm">
-                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">日</div>
-                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">一</div>
-                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">二</div>
-                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">三</div>
-                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">四</div>
-                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">五</div>
-                            <div class="text-center font-semibold py-1 sm:py-2" style="color: var(--primary);">六</div>
+                        <div class="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2 mb-2 text-xs sm:text-sm md:text-base">
+                            <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">日</div>
+                            <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">一</div>
+                            <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">二</div>
+                            <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">三</div>
+                            <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">四</div>
+                            <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">五</div>
+                            <div class="text-center font-semibold py-1 sm:py-1.5 md:py-2" style="color: var(--primary);">六</div>
                     </div>
 
                         <!-- 月曆網格 -->
-                        <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2">
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2 xl:gap-3">
                             <!-- 月曆內容將由 JavaScript 生成 -->
                         </div>
                     </div>
                 </div>
 
                 <!-- 右側/下方：選中日期的待辦事項 -->
-                <div class="w-full lg:flex-[1] lg:min-w-0 space-y-6">
+                <div class="w-full lg:flex-[1] lg:min-w-0 space-y-4 lg:space-y-6">
                     <!-- 選中日期的待辦事項區塊（整合語錄顯示） -->
-                    <div class="rounded-xl shadow-lg p-3 sm:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
-                        <div class="mb-4">
+                    <div class="rounded-xl shadow-lg p-2 sm:p-3 md:p-4 lg:p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
+                        <div class="mb-3 sm:mb-4">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="flex-1">
-                                    <h3 class="text-xl font-bold" style="color: var(--primary);" id="selectedDateTitle">
+                                    <h3 class="text-lg sm:text-xl font-bold" style="color: var(--primary);" id="selectedDateTitle">
                                     選擇日期
                                     </h3>
                                 </div>
                                 <!-- 使用者和設定 -->
-                                <div class="flex items-center gap-2">
-                                    <div class="flex items-center gap-1 px-2 py-1 rounded" style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2);">
+                                <div class="flex items-center gap-1 sm:gap-2">
+                                    <div class="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-xs sm:text-sm" style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2);">
                                         <span id="firebaseStatusDot" class="w-1.5 h-1.5 rounded-full" style="background: #ef4444;" title="Firebase 未連接"></span>
                                         <span class="text-xs" style="color: var(--primary);" id="currentUserDisplayName">Loading...</span>
                                     </div>
@@ -3335,7 +3427,7 @@
                 dayNumberContainer.className = 'flex flex-wrap items-center gap-1 mb-1';
 
                 const dayNumber = document.createElement('div');
-                dayNumber.className = 'font-bold';
+                dayNumber.className = 'font-bold text-sm sm:text-base md:text-lg';
                 dayNumber.style.color = 'white';
                 dayNumber.textContent = day;
                 dayNumberContainer.appendChild(dayNumber);
@@ -3358,7 +3450,7 @@
                 }
                 
                 const lunarLabel = document.createElement('div');
-                lunarLabel.className = 'text-[10px] text-gray-500 mt-0.5';
+                lunarLabel.className = 'text-[9px] sm:text-[10px] md:text-[11px] text-gray-500 mt-0.5';
                 lunarLabel.textContent = lunarText;
                 dayNumberContainer.appendChild(lunarLabel);
 
@@ -3382,7 +3474,7 @@
                 // 手機：移到下一行（w-full）；sm 以上維持同一行
                 if (isToday(date)) {
                     const todayLabel = document.createElement('div');
-                    todayLabel.className = 'w-full sm:w-auto text-xs sm:text-xs bg-blue-500 text-white rounded-full px-2 sm:px-2 py-0.5 block sm:inline-block font-semibold whitespace-nowrap leading-none text-center sm:text-left';
+                    todayLabel.className = 'w-full sm:w-auto text-[10px] sm:text-xs bg-blue-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 block sm:inline-block font-semibold whitespace-nowrap leading-none text-center sm:text-left';
                     todayLabel.textContent = 'Today';
                     dayNumberContainer.appendChild(todayLabel);
                 }
@@ -3401,7 +3493,7 @@
                 if (uncompletedCount > 0) {
                     const todoCount = document.createElement('div');
                     // 固定在格子右下角，避免擠壓內容/溢出
-                    todoCount.className = 'absolute bottom-1 right-1 z-10 text-[10px] sm:text-xs bg-yellow-400 text-yellow-900 rounded-full px-1.5 sm:px-2 py-0.5 font-semibold whitespace-nowrap leading-none';
+                    todoCount.className = 'absolute bottom-0.5 sm:bottom-1 right-0.5 sm:right-1 z-10 text-[9px] sm:text-[10px] md:text-xs bg-yellow-400 text-yellow-900 rounded-full px-1 sm:px-1.5 md:px-2 py-0.5 font-semibold whitespace-nowrap leading-none';
                     todoCount.textContent = uncompletedCount;
                     dayElement.appendChild(todoCount);
                 }
@@ -3443,7 +3535,7 @@
                     if (dayIndex !== -1) {
                         const dayCountLabel = document.createElement('div');
                         // 固定在格子左下角，避免把格子高度撐開/溢出
-                        dayCountLabel.className = 'absolute bottom-1 left-1 z-10 inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] sm:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none unlock-animation';
+                        dayCountLabel.className = 'absolute bottom-0.5 sm:bottom-1 left-0.5 sm:left-1 z-10 inline-flex items-center justify-center px-1 sm:px-1.5 md:px-2 py-0.5 sm:py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] sm:text-[10px] md:text-xs font-bold shadow-md transform transition-transform hover:scale-105 whitespace-nowrap leading-none unlock-animation';
                         dayCountLabel.textContent = `第${dayIndex + 1}天`;
                         dayElement.appendChild(dayCountLabel);
                     }
@@ -3455,7 +3547,7 @@
                 if (holidayInfo) {
                     const holidayBadge = document.createElement('div');
                     // 固定在格子右下角
-                    holidayBadge.className = 'absolute bottom-1 right-1 z-10 holiday-badge inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-white text-[9px] sm:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
+                    holidayBadge.className = 'absolute bottom-0.5 sm:bottom-1 right-0.5 sm:right-1 z-10 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 md:px-2 py-0.5 rounded-full text-white text-[8px] sm:text-[9px] md:text-[10px] font-bold shadow-md whitespace-nowrap leading-none';
                     holidayBadge.title = holidayInfo.name;
                     holidayBadge.textContent = `${holidayInfo.emoji} ${holidayInfo.name}`;
                     dayElement.appendChild(holidayBadge);
