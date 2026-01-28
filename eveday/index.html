@@ -333,7 +333,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl font-bold" style="color: var(--primary);" id="currentMonthYear"></h2>
+                                <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-3xl xl:text-4xl font-bold cursor-pointer select-none" style="color: var(--primary);" id="currentMonthYear" title="雙擊切換全螢幕模式"></h2>
                                 <button onclick="changeMonth(1)" class="p-1.5 sm:p-2 rounded-lg transition" style="background: rgba(0, 242, 255, 0.1); color: var(--primary);" title="下個月">
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -1861,6 +1861,19 @@
                     if (e.key === 'Enter') {
                         confirmUnlockDate();
                     }
+                });
+            }
+
+            // 雙擊年月標題切換全螢幕模式
+            const monthYearTitle = document.getElementById('currentMonthYear');
+            if (monthYearTitle) {
+                monthYearTitle.addEventListener('dblclick', function() {
+                    isFullscreenMode = !isFullscreenMode;
+                    const toggle = document.getElementById('fullscreenModeToggle');
+                    if (toggle) {
+                        toggle.checked = isFullscreenMode;
+                    }
+                    toggleFullscreenMode(isFullscreenMode);
                 });
             }
         });
