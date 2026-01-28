@@ -2786,10 +2786,9 @@
                 return selectedQuote;
             }
 
-            // 下載語錄圖片
+            // 下載語錄圖片 (原始版本)
             function downloadQuoteImage(imageBase64, dateKey) {
                 try {
-                    // 將 base64 轉換為 Blob
                     const byteString = atob(imageBase64.split(',')[1]);
                     const mimeString = imageBase64.split(',')[0].split(':')[1].split(';')[0];
                     const ab = new ArrayBuffer(byteString.length);
@@ -2798,33 +2797,103 @@
                         ia[i] = byteString.charCodeAt(i);
                     }
                     const blob = new Blob([ab], { type: mimeString });
-
-                    // 建立 Blob URL
                     const url = URL.createObjectURL(blob);
-
-                    // 建立下載連結
                     const link = document.createElement('a');
                     link.href = url;
                     link.download = `每日語錄_${dateKey}.png`;
                     link.style.display = 'none';
-
-                    // 觸發下載
                     document.body.appendChild(link);
                     link.click();
-
-                    // 清理
                     setTimeout(() => {
                         document.body.removeChild(link);
                         URL.revokeObjectURL(url);
                     }, 100);
-
-                    console.log(`✅ 語錄圖片已下載：每日語錄_${dateKey}.png`);
                 } catch (error) {
                     console.error('下載圖片失敗:', error);
-                    // 如果自動下載失敗，提供手動下載選項
-                    alert('自動下載失敗，請手動保存圖片。');
                 }
             }
+
+            // 下載高畫質完整語錄卡 (合成背景 + 文字)
+            async function downloadFullQuoteImage(dateKey, quote, bgSrc) {
+                try {
+                    // 顯示生成中提示
+                    const btn = event.currentTarget;
+                    const originalHTML = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+                    // 創建高解析度臨時容器
+                    const temp = document.createElement('div');
+                    temp.style.position = 'fixed';
+                    temp.style.left = '-9999px';
+                    temp.style.width = '1200px';
+                    temp.style.height = '840px';
+                    temp.style.backgroundImage = `url('${bgSrc}')`;
+                    temp.style.backgroundSize = 'cover';
+                    temp.style.backgroundPosition = 'center';
+                    temp.style.display = 'flex';
+                    temp.style.flexDirection = 'column';
+                    temp.style.justifyContent = 'center';
+                    temp.style.padding = '80px';
+                    temp.style.color = 'white';
+                    temp.style.fontFamily = "'Inter', 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+                    temp.style.boxSizing = 'border-box';
+
+                    // 添加暗色疊加層以提升文字可讀性
+                    const overlay = document.createElement('div');
+                    overlay.style.position = 'absolute';
+                    overlay.style.inset = '0';
+                    overlay.style.backgroundColor = 'rgba(0,0,0,0.15)';
+                    temp.appendChild(overlay);
+
+                    const content = document.createElement('div');
+                    content.style.position = 'relative';
+                    content.style.zIndex = '10';
+
+                    const dateEl = document.createElement('div');
+                    dateEl.style.fontSize = '24px';
+                    dateEl.style.fontWeight = '700';
+                    dateEl.style.marginBottom = '50px';
+                    dateEl.style.letterSpacing = '3px';
+                    dateEl.style.textShadow = '0 2px 10px rgba(0,0,0,0.5)';
+                    dateEl.textContent = `✦ ${dateKey}`;
+                    content.appendChild(dateEl);
+
+                    const quoteEl = document.createElement('div');
+                    quoteEl.style.fontSize = '48px';
+                    quoteEl.style.fontWeight = '600';
+                    quoteEl.style.lineHeight = '1.7';
+                    quoteEl.style.textShadow = '0 4px 20px rgba(0,0,0,0.7)';
+                    quoteEl.style.whiteSpace = 'pre-line';
+                    quoteEl.textContent = quote;
+                    content.appendChild(quoteEl);
+
+                    temp.appendChild(content);
+                    document.body.appendChild(temp);
+
+                    // 等待渲染並捕捉
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    const canvas = await html2canvas(temp, {
+                        width: 1200,
+                        height: 840,
+                        scale: 2,
+                        backgroundColor: null,
+                        useCORS: true
+                    });
+
+                    const fullBase64 = canvas.toDataURL('image/png');
+                    downloadQuoteImage(fullBase64, dateKey);
+
+                    // 恢復按鈕
+                    document.body.removeChild(temp);
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                } catch (error) {
+                    console.error('合成下載失敗:', error);
+                    alert('下載失敗，請稍後再試');
+                }
+            }
+
 
             // 領取語錄並生成圖片
             async function claimDailyQuoteWithImage() {
@@ -3181,59 +3250,32 @@
                 bgPattern.style.backgroundSize = '200px 200px';
                 tempCard.appendChild(bgPattern);
 
-                // 添加光暈效果
-                const glow1 = document.createElement('div');
-                glow1.style.position = 'absolute';
-                glow1.style.top = '-100px';
-                glow1.style.right = '-100px';
-                glow1.style.width = '400px';
-                glow1.style.height = '400px';
-                glow1.style.borderRadius = '50%';
-                glow1.style.background = `radial-gradient(circle, ${theme.accent}40 0%, transparent 70%)`;
-                glow1.style.filter = 'blur(60px)';
-                tempCard.appendChild(glow1);
+                // 添加主光暈效果 (在中心稍微偏上方)
+                const mainGlow = document.createElement('div');
+                mainGlow.style.position = 'absolute';
+                mainGlow.style.top = '10%';
+                mainGlow.style.left = '10%';
+                mainGlow.style.width = '80%';
+                mainGlow.style.height = '80%';
+                mainGlow.style.borderRadius = '50%';
+                mainGlow.style.background = `radial-gradient(circle, ${theme.accent}30 0%, transparent 70%)`;
+                mainGlow.style.filter = 'blur(100px)';
+                tempCard.appendChild(mainGlow);
 
+                // 添加次光暈效果 (在底部)
                 const glow2 = document.createElement('div');
                 glow2.style.position = 'absolute';
                 glow2.style.bottom = '-150px';
                 glow2.style.left = '-150px';
-                glow2.style.width = '500px';
-                glow2.style.height = '500px';
+                glow2.style.width = '600px';
+                glow2.style.height = '600px';
                 glow2.style.borderRadius = '50%';
                 glow2.style.background = `radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)`;
                 glow2.style.filter = 'blur(80px)';
                 tempCard.appendChild(glow2);
 
-                // 添加文字內容
-                const contentContainer = document.createElement('div');
-                contentContainer.style.position = 'relative';
-                contentContainer.style.zIndex = '10';
-                contentContainer.style.maxWidth = '800px';
-                contentContainer.style.padding = '60px';
-                contentContainer.style.textAlign = 'center';
+                // 已移除文字內容 (dateLabel, quoteText)，改由 HTML 實時渲染以確保極高解析度
 
-                // 添加日期標籤
-                const dateLabel = document.createElement('div');
-                dateLabel.style.fontSize = '20px';
-                dateLabel.style.fontWeight = '600';
-                dateLabel.style.marginBottom = '40px';
-                dateLabel.style.opacity = '0.9';
-                dateLabel.style.letterSpacing = '2px';
-                dateLabel.textContent = `✨ ${dateKey}`;
-                contentContainer.appendChild(dateLabel);
-
-                // 添加語錄文字
-                const quoteText = document.createElement('div');
-                quoteText.style.fontSize = '36px';
-                quoteText.style.fontWeight = '600';
-                quoteText.style.lineHeight = '1.6';
-                quoteText.style.textShadow = '0 4px 20px rgba(0,0,0,0.3)';
-                quoteText.style.whiteSpace = 'pre-line';
-                quoteText.style.wordBreak = 'break-word';
-                quoteText.textContent = quote;
-                contentContainer.appendChild(quoteText);
-
-                tempCard.appendChild(contentContainer);
 
                 // 根據意境添加額外的視覺元素
                 if (theme.name.includes('湖面') || theme.name.includes('原野')) {
@@ -3494,26 +3536,38 @@
                     }
 
                     card.innerHTML = `
-                    <div class="rounded-xl p-6 shadow-md mb-4 relative overflow-hidden min-h-[200px] flex flex-col justify-center" style="${backgroundStyle}">
-                        <div class="relative z-10 bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="text-sm text-white font-semibold flex items-center drop-shadow-lg">
-                                    <span class="mr-1">✨</span> ${targetDateKey}
+                    <div class="rounded-xl shadow-2xl mb-4 relative overflow-hidden min-h-[240px] flex flex-col justify-center transition-all duration-500 hover:scale-[1.01]" 
+                         style="${backgroundStyle} border: 1px solid rgba(255,255,255,0.1);">
+                        <!-- 玻璃擬態遮罩層 -->
+                        <div class="absolute inset-0 bg-black bg-opacity-20 backdrop-blur-[2px]"></div>
+                        
+                        <!-- 下載按鈕 (絕對定位於右上角) -->
+                        <div class="absolute top-3 right-3 z-30">
+                            ${quote.image ? `
+                                <button onclick="downloadFullQuoteImage('${targetDateKey}', \`${quote.quote.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`, '${imageSrc}')" 
+                                        class="p-2 bg-black bg-opacity-40 hover:bg-opacity-60 text-white rounded-full transition-all backdrop-blur-md border border-white border-opacity-20 group"
+                                        title="下載高畫質語錄卡">
+                                    <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                    </svg>
+                                </button>
+                            ` : ''}
                         </div>
-                                ${quote.image ? `
-                                    <button onclick="downloadQuoteImage('${quote.image.startsWith('data:') ? quote.image : 'data:image/png;base64,' + quote.image}', '${targetDateKey}')" 
-                                            class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-all shadow-lg font-semibold flex items-center gap-1">
-                                        <span>💾</span> 下載
-                                    </button>
-                                ` : ''}
+
+                        <div class="relative z-20 p-6 sm:p-8">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="text-xs sm:text-sm text-white font-bold flex items-center tracking-widest opacity-90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                                    <span class="mr-2 text-yellow-300">✦</span> ${targetDateKey}
+                                </div>
                             </div>
-                            <div class="text-white text-lg leading-relaxed whitespace-pre-line font-medium drop-shadow-lg">
+                            <div class="text-white text-xl sm:text-2xl leading-relaxed whitespace-pre-line font-medium drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]">
                                 ${escapeHtml(quote.quote)}
                             </div>
                         </div>
                     </div>
                 `;
                 } else if (isToday && !isUnlocked && !developerMode) {
+
                     // 今天未解鎖：手機模式下顯示打卡按鈕，桌面模式顯示提示文字
                     if (isMobile()) {
                         // 手機模式：顯示打卡按鈕（會打開解鎖日期 Modal）
