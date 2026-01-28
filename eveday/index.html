@@ -551,27 +551,27 @@
     </div>
 
     <!-- 設定 Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 z-50 hidden">
-        <div class="rounded-xl shadow-2xl w-full max-w-lg p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.5);">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-bold" style="color: var(--primary);">⚙️ 設定</h3>
+    <div id="settingsModal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-2 sm:p-4 z-50 hidden overflow-y-auto">
+        <div class="rounded-xl shadow-2xl w-full max-w-[95vw] sm:max-w-md md:max-w-lg p-4 sm:p-6 my-4" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.5); max-height: 95vh; overflow-y-auto;">
+            <div class="flex justify-between items-center mb-4 sm:mb-6">
+                <h3 class="text-xl sm:text-2xl font-bold" style="color: var(--primary);">⚙️ 設定</h3>
                 <button onclick="closeSettingsModal()" class="p-2 rounded-lg hover:bg-opacity-20 transition" style="color: var(--primary); background: rgba(0, 242, 255, 0.1);">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
-            <div class="space-y-4">
+            <div class="space-y-3 sm:space-y-4">
                 <!-- 使用者名稱設定 -->
-                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">使用者名稱</label>
-                    <div class="flex gap-2">
+                <div class="p-3 sm:p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-xs sm:text-sm font-semibold mb-2" style="color: var(--primary);">使用者名稱</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" id="settingsUserNameInput" 
-                               class="flex-1 px-3 py-2 rounded-lg"
+                               class="flex-1 px-3 py-2 rounded-lg text-sm"
                                style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary); color: var(--primary);"
                                placeholder="輸入使用者名稱">
                         <button onclick="saveUserNameFromSettings()"
-                                class="px-4 py-2 rounded-lg font-semibold transition"
+                                class="px-4 py-2 rounded-lg font-semibold transition text-sm whitespace-nowrap"
                                 style="background: var(--primary); color: #000;">
                             💾 保存
                         </button>
@@ -579,15 +579,15 @@
                 </div>
 
                 <!-- 月曆名稱設定 -->
-                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">月曆名稱</label>
-                    <div class="flex gap-2">
+                <div class="p-3 sm:p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-xs sm:text-sm font-semibold mb-2" style="color: var(--primary);">月曆名稱</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <input type="text" id="calendarTitleInput" 
-                               class="flex-1 px-3 py-2 rounded-lg"
+                               class="flex-1 px-3 py-2 rounded-lg text-sm"
                                style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary); color: var(--primary);"
                                placeholder="輸入月曆名稱">
                         <button onclick="saveCalendarTitle()"
-                                class="px-4 py-2 rounded-lg font-semibold transition"
+                                class="px-4 py-2 rounded-lg font-semibold transition text-sm whitespace-nowrap"
                                 style="background: var(--primary); color: #000;">
                             💾 保存
                         </button>
@@ -595,10 +595,10 @@
                 </div>
 
                 <!-- 顯示模式設定 -->
-                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">顯示模式</label>
+                <div class="p-3 sm:p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-xs sm:text-sm font-semibold mb-2" style="color: var(--primary);">顯示模式</label>
                     <div class="flex items-center justify-between">
-                        <span class="text-sm" style="color: var(--primary);">月曆全螢幕模式</span>
+                        <span class="text-xs sm:text-sm" style="color: var(--primary);">月曆全螢幕模式</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="fullscreenModeToggle" onchange="toggleFullscreenMode(this.checked)" class="sr-only peer">
                             <div class="w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style="background: rgba(0, 242, 255, 0.3);"></div>
@@ -607,10 +607,10 @@
                 </div>
 
                 <!-- 主題設定 -->
-                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">主題</label>
+                <div class="p-3 sm:p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-xs sm:text-sm font-semibold mb-2" style="color: var(--primary);">主題</label>
                     <select id="themeSelector" onchange="changeTheme(this.value)"
-                            class="w-full px-3 py-2 rounded-lg"
+                            class="w-full px-3 py-2 rounded-lg text-sm"
                             style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary); color: var(--primary);">
                         <option value="cyberpunk">🌃 賽博龐克 (預設)</option>
                         <option value="ocean">🌊 海洋藍</option>
@@ -622,10 +622,10 @@
                 </div>
 
                 <!-- 通知設定 -->
-                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">通知設定</label>
+                <div class="p-3 sm:p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-xs sm:text-sm font-semibold mb-2" style="color: var(--primary);">通知設定</label>
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm" style="color: var(--primary);">啟用通知</span>
+                        <span class="text-xs sm:text-sm" style="color: var(--primary);">啟用通知</span>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="notificationToggle" onchange="toggleNotifications(this.checked)" class="sr-only peer">
                             <div class="w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-cyan-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style="background: rgba(0, 242, 255, 0.3);"></div>
@@ -637,7 +637,7 @@
                 <!-- 功能按鈕 -->
                 <div class="space-y-2">
                     <button onclick="exportUserData(); closeSettingsModal();"
-                            class="w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-between transition"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold flex items-center justify-between transition text-sm"
                             style="background: rgba(112, 0, 255, 0.1); border: 1px solid rgba(112, 0, 255, 0.5); color: var(--secondary);">
                         <span>📥 匯出資料</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -646,7 +646,7 @@
                     </button>
 
                     <button id="quotesManagerButton" onclick="window.location.href='quotes-uploader.html'"
-                            class="w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-between transition hidden"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold flex items-center justify-between transition hidden text-sm"
                             style="background: rgba(255, 165, 0, 0.1); border: 1px solid rgba(255, 165, 0, 0.5); color: #ffa500;">
                         <span>📝 語錄設定</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -655,7 +655,7 @@
                     </button>
 
                     <button id="settingsResetButton" onclick="closeSettingsModal(); setTimeout(openResetModal, 300);"
-                            class="w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-between transition hidden"
+                            class="w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg font-semibold flex items-center justify-between transition hidden text-sm"
                             style="background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.5); color: var(--accent);">
                         <span>🔄 重置所有數據</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -754,6 +754,28 @@
         // 檢查日期是否為節慶
         function getHolidayInfo(dateKey) {
             return taiwanHolidays2026[dateKey] || null;
+        }
+
+        // 獲取節日簡稱（用於月曆顯示）
+        function getHolidayShortName(holidayName) {
+            const shortNames = {
+                '西洋情人節': '情人節',
+                '白色情人節': '白色情人節',
+                '和平紀念日': '和平紀念',
+                '農曆除夕': '除夕',
+                '春節初一': '春節',
+                '春節初二': '初二',
+                '春節初三': '初三',
+                '春節初四': '初四',
+                '春節初五': '初五',
+                '國慶連假': '國慶假',
+                '重陽節': '重陽',
+                '萬聖節': '萬聖',
+                '平安夜': '平安夜',
+                '母親節': '母親節',
+                '父親節': '父親節'
+            };
+            return shortNames[holidayName] || holidayName;
         }
 
         // 使用者管理
@@ -2767,11 +2789,6 @@
                 // 自動將語錄加入到待辦事項中並標記為完成
                 addDailyQuoteToTodos(todayKey, selectedQuote, imageBase64);
 
-                // 自動下載語錄圖片
-                if (imageBase64) {
-                    downloadQuoteImage(imageBase64, todayKey);
-                }
-
                 // 如果用戶正在查看今天的日期，更新顯示；否則自動選擇今天並顯示
                 if (selectedDate && formatDateKey(selectedDate) === todayKey) {
                     renderDailyQuote(todayKey).catch(err => console.error('渲染語錄失敗:', err));
@@ -3347,6 +3364,12 @@
                                 <div class="text-sm text-white font-semibold flex items-center drop-shadow-lg">
                                     <span class="mr-1">✨</span> ${targetDateKey}
                         </div>
+                                ${quote.image ? `
+                                    <button onclick="downloadQuoteImage('${quote.image.startsWith('data:') ? quote.image : 'data:image/png;base64,' + quote.image}', '${targetDateKey}')" 
+                                            class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-all shadow-lg font-semibold flex items-center gap-1">
+                                        <span>💾</span> 下載
+                                    </button>
+                                ` : ''}
                             </div>
                             <div class="text-white text-lg leading-relaxed whitespace-pre-line font-medium drop-shadow-lg">
                                 ${escapeHtml(quote.quote)}
@@ -3672,21 +3695,15 @@
                 // 顯示節慶標記（已在上面檢查過）
                 if (holidayInfo) {
                     const holidayBadge = document.createElement('div');
-                    // 固定在格子右上角，避免與右下角的待辦數量擠在一起，字體放大，限制最大寬度
-                    holidayBadge.className = 'absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-20 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 rounded-full text-white font-bold shadow-md whitespace-nowrap leading-none overflow-hidden max-w-[90%]';
+                    // 固定在格子右上角，使用簡短名稱避免遮擋日期
+                    holidayBadge.className = 'absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-20 holiday-badge inline-flex items-center gap-0.5 px-1 sm:px-1.5 py-0.5 rounded-full text-white font-bold shadow-md whitespace-nowrap leading-none text-[9px] sm:text-[10px]';
                     
-                    // 根據名稱長度調整字體大小
-                    const nameLength = holidayInfo.name.length;
-                    let fontSize = 'text-[10px] sm:text-xs md:text-sm';
-                    if (nameLength > 6) {
-                        fontSize = 'text-[8px] sm:text-[10px] md:text-xs';
-                    } else if (nameLength > 4) {
-                        fontSize = 'text-[9px] sm:text-[11px] md:text-sm';
-                    }
-                    holidayBadge.className += ` ${fontSize}`;
+                    // 使用簡短名稱
+                    const shortName = getHolidayShortName(holidayInfo.name);
                     
+                    // title 屬性顯示完整名稱
                     holidayBadge.title = holidayInfo.name;
-                    holidayBadge.textContent = `${holidayInfo.emoji} ${holidayInfo.name}`;
+                    holidayBadge.textContent = `${holidayInfo.emoji} ${shortName}`;
                     dayElement.appendChild(holidayBadge);
                 }
 
