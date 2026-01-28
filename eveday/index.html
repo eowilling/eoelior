@@ -2657,6 +2657,25 @@
             return selectedQuote;
         }
 
+        // 下載語錄圖片
+        function downloadQuoteImage(imageBase64, dateKey) {
+            try {
+                // 建立下載連結
+                const link = document.createElement('a');
+                link.href = imageBase64;
+                link.download = `每日語錄_${dateKey}.png`;
+                
+                // 觸發下載
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                console.log(`✅ 語錄圖片已下載：每日語錄_${dateKey}.png`);
+            } catch (error) {
+                console.error('下載圖片失敗:', error);
+            }
+        }
+
         // 領取語錄並生成圖片
         async function claimDailyQuoteWithImage() {
             const todayKey = getTodayKey();
@@ -2726,6 +2745,11 @@
 
                 // 自動將語錄加入到待辦事項中並標記為完成
                 addDailyQuoteToTodos(todayKey, selectedQuote, imageBase64);
+
+                // 自動下載語錄圖片
+                if (imageBase64) {
+                    downloadQuoteImage(imageBase64, todayKey);
+                }
 
                 // 如果用戶正在查看今天的日期，更新顯示；否則自動選擇今天並顯示
                 if (selectedDate && formatDateKey(selectedDate) === todayKey) {
@@ -3627,8 +3651,19 @@
                 // 顯示節慶標記（已在上面檢查過）
                 if (holidayInfo) {
                     const holidayBadge = document.createElement('div');
-                    // 固定在格子右上角，避免與右下角的待辦數量擠在一起，字體放大
-                    holidayBadge.className = 'absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-20 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 rounded-full text-white text-[10px] sm:text-xs md:text-sm font-bold shadow-md whitespace-nowrap leading-none';
+                    // 固定在格子右上角，避免與右下角的待辦數量擠在一起，字體放大，限制最大寬度
+                    holidayBadge.className = 'absolute top-0.5 sm:top-1 right-0.5 sm:right-1 z-20 holiday-badge inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 md:px-2.5 py-0.5 sm:py-1 rounded-full text-white font-bold shadow-md whitespace-nowrap leading-none overflow-hidden max-w-[90%]';
+                    
+                    // 根據名稱長度調整字體大小
+                    const nameLength = holidayInfo.name.length;
+                    let fontSize = 'text-[10px] sm:text-xs md:text-sm';
+                    if (nameLength > 6) {
+                        fontSize = 'text-[8px] sm:text-[10px] md:text-xs';
+                    } else if (nameLength > 4) {
+                        fontSize = 'text-[9px] sm:text-[11px] md:text-sm';
+                    }
+                    holidayBadge.className += ` ${fontSize}`;
+                    
                     holidayBadge.title = holidayInfo.name;
                     holidayBadge.textContent = `${holidayInfo.emoji} ${holidayInfo.name}`;
                     dayElement.appendChild(holidayBadge);
