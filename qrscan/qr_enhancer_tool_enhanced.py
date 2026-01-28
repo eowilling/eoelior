@@ -15,6 +15,7 @@ from queue import Queue
 import time
 from datetime import datetime
 import hashlib
+import webbrowser
 
 # 可選依賴
 try:
@@ -220,6 +221,16 @@ class ImagePreprocessor:
         adjusted = cv2.convertScaleAbs(image, alpha=1.0, beta=adjustment)
         return adjusted
     
+    def invert_image(self, image):
+        """反轉圖像顏色 (處理黑底白碼)"""
+        return cv2.bitwise_not(image)
+    
+    def upscale_image(self, image, factor=2.0):
+        """放大圖像 (處理過小的QR碼)"""
+        height, width = image.shape[:2]
+        new_size = (int(width * factor), int(height * factor))
+        return cv2.resize(image, new_size, interpolation=cv2.INTER_CUBIC)
+    
     def perspective_correction(self, image):
         """透視校正"""
         try:
@@ -272,6 +283,10 @@ class ImagePreprocessor:
                 processed = self.adjust_brightness(processed)
             elif method == 'perspective':
                 processed = self.perspective_correction(processed)
+            elif method == 'invert':
+                processed = self.invert_image(processed)
+            elif method == 'upscale':
+                processed = self.upscale_image(processed)
         
         return processed
 
@@ -444,9 +459,16 @@ class QRDecoder:
         preprocessor = ImagePreprocessor()
         preprocess_methods = [
             ['grayscale'],
+            ['grayscale', 'upscale'],
             ['grayscale', 'denoise', 'binarize'],
+            ['grayscale', 'invert'],
+            ['grayscale', 'invert', 'binarize'],
             ['grayscale', 'sharpen'],
-            ['grayscale', 'contrast']
+            ['grayscale', 'upscale', 'sharpen'],
+            ['grayscale', 'contrast'],
+            ['grayscale', 'brightness_adjust', 'contrast'],
+            ['grayscale', 'perspective'],
+            ['grayscale', 'perspective', 'binarize']
         ]
         
         for methods in preprocess_methods:
@@ -483,9 +505,10 @@ class QRCodeEnhancerGUI:
     
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("QR碼圖像增強工具 - 增強版")
-        self.root.geometry("1000x800")
+        self.root.title("QRscan Willing")
+        self.root.geometry("1000x700")
         self.root.resizable(True, True)
+        self.root.minsize(800, 600)
         
         # 初始化模塊
         self.preprocessor = ImagePreprocessor()
@@ -511,24 +534,95 @@ class QRCodeEnhancerGUI:
         # 批量處理結果
         self.batch_results = []
         
+        # 檢查引擎狀態
+        self.engine_status = self.check_engines()
+        
         # 創建界面
         self.create_widgets()
+        
+        # 顯示引擎警告 (如果有)
+        self.show_engine_warnings()
+
+    def check_engines(self):
+        """檢查解碼引擎可用性"""
+        status = {
+            'opencv': self.decoder.detection_engines.get('opencv') is not None,
+            'pyzbar': self.decoder.detection_engines.get('pyzbar') is not None,
+            'zxing': self.decoder.detection_engines.get('zxing') is not None,
+            'qreader': self.decoder.detection_engines.get('qreader') is not None
+        }
+        return status
+    
+    def show_engine_warnings(self):
+        """顯示引擎缺失警告"""
+        missing = [name for name, available in self.engine_status.items() if not available]
+        if missing:
+            warning_msg = f"注意：以下解碼引擎未安裝或無法使用：\n{', '.join(missing)}\n\n這可能會降低破損或模糊 QR 碼的判讀成功率。"
+            if 'pyzbar' in missing:
+                warning_msg += "\n\npyzbar 失敗通常是因為缺少 Visual C++ Redistributable。"
+            self.result_text.insert(tk.END, f"⚠️ {warning_msg}\n\n")
     
     def create_widgets(self):
         """創建用戶界面"""
+        # 創建頂層容器以支援捲動
+        self.main_container = ttk.Frame(self.root)
+        self.main_container.pack(fill=tk.BOTH, expand=True)
+        
         # 創建標籤頁
-        notebook = ttk.Notebook(self.root)
-        notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.notebook = ttk.Notebook(self.main_container)
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # 單張處理標籤頁
-        single_frame = ttk.Frame(notebook)
-        notebook.add(single_frame, text="單張處理")
-        self.create_single_processing_tab(single_frame)
+        self.single_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.single_tab, text="單張判讀")
+        self.create_scrollable_frame(self.single_tab, self.create_single_processing_ui)
         
         # 批量處理標籤頁
-        batch_frame = ttk.Frame(notebook)
-        notebook.add(batch_frame, text="批量處理")
-        self.create_batch_processing_tab(batch_frame)
+        self.batch_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.batch_tab, text="批量判讀")
+        self.create_scrollable_frame(self.batch_tab, self.create_batch_processing_ui)
+
+    def create_scrollable_frame(self, parent, content_func):
+        """為標籤頁創建可捲動的框架"""
+        canvas = tk.Canvas(parent, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(parent, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=parent.winfo_width())
+        
+        def _on_canvas_configure(event):
+            # 更新內部框架寬度以匹配畫布
+            canvas.itemconfig(canvas.find_withtag("all")[0], width=event.width)
+
+        canvas.bind("<Configure>", _on_canvas_configure)
+        
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # 支援滑鼠滾輪
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        content_func(scrollable_frame)
+
+    def create_single_processing_ui(self, parent):
+        """單張處理介面內容"""
+        self.create_single_processing_tab(parent)
+
+    def create_batch_processing_ui(self, parent):
+        """批量處理介面內容"""
+        self.create_batch_processing_tab(parent)
     
     def create_single_processing_tab(self, parent):
         """創建單張處理標籤頁"""
@@ -574,21 +668,21 @@ class QRCodeEnhancerGUI:
         original_frame = ttk.LabelFrame(image_frame, text="原始圖像")
         original_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        self.original_canvas = tk.Canvas(original_frame, bg='gray', height=250)
+        self.original_canvas = tk.Canvas(original_frame, bg='gray', height=200)
         self.original_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # 處理後圖像
-        processed_frame = ttk.LabelFrame(image_frame, text="處理後圖像")
+        # 判讀後圖像
+        processed_frame = ttk.LabelFrame(image_frame, text="判讀後圖像")
         processed_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        self.processed_canvas = tk.Canvas(processed_frame, bg='gray', height=250)
+        self.processed_canvas = tk.Canvas(processed_frame, bg='gray', height=200)
         self.processed_canvas.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         # 結果顯示
-        result_frame = ttk.LabelFrame(parent, text="解碼結果")
+        result_frame = ttk.LabelFrame(parent, text="解碼結果日誌")
         result_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
-        self.result_text = tk.Text(result_frame, wrap=tk.WORD, height=8)
+        self.result_text = tk.Text(result_frame, wrap=tk.WORD, height=5)
         scrollbar = ttk.Scrollbar(result_frame, orient=tk.VERTICAL, command=self.result_text.yview)
         self.result_text.configure(yscrollcommand=scrollbar.set)
         self.result_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -599,7 +693,7 @@ class QRCodeEnhancerGUI:
         button_frame.pack(fill=tk.X, padx=10, pady=10)
         
         ttk.Button(button_frame, text="評估圖像質量", command=self.assess_image_quality).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="開始處理", command=self.start_processing).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="開始判讀", command=self.start_processing).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="重置", command=self.reset_tool).pack(side=tk.LEFT, padx=5)
     
     def create_batch_processing_tab(self, parent):
@@ -666,6 +760,11 @@ class QRCodeEnhancerGUI:
         if file_path:
             self.input_image_path.set(file_path)
             self.display_image(file_path, canvas='original')
+            
+            # 自動評估並嘗試讀取
+            quality = self.assess_image_quality()
+            if quality and quality.get('laplacian_var', 0) >= 50:
+                self.start_processing()
     
     def browse_output_dir(self):
         """瀏覽選擇輸出目錄"""
@@ -747,6 +846,9 @@ class QRCodeEnhancerGUI:
             self.input_image_path.set(cropped_path)
             self.display_image(cropped_path, canvas='original')
             
+            # 自動讀取裁剪後的內容
+            self.start_processing()
+            
             messagebox.showinfo("成功", f"ROI已保存到: {cropped_path}")
     
     def display_image(self, image_path, canvas='original'):
@@ -788,9 +890,12 @@ class QRCodeEnhancerGUI:
             self.result_text.insert(tk.END, f"對比度: {quality['contrast']}\n")
             self.result_text.insert(tk.END, f"亮度: {quality['brightness']}\n\n")
             self.result_text.insert(tk.END, f"建議: {quality['recommendation']}\n")
+            
+            return quality
         
         except Exception as e:
             messagebox.showerror("錯誤", f"評估失敗: {str(e)}")
+            return None
     
     def start_processing(self):
         """開始處理圖像"""
@@ -862,17 +967,27 @@ class QRCodeEnhancerGUI:
             self.root.after(0, self.display_image, processed_path, 'processed')
             
             # 解碼QR碼
-            self.result_text.insert(tk.END, "\n開始解碼QR碼...\n")
+            self.result_text.insert(tk.END, "\n開始嘗試多策略判讀...\n")
+            available_engines = [name for name, av in self.engine_status.items() if av]
+            self.result_text.insert(tk.END, f"使用引擎: {', '.join(available_engines)}\n")
+            
             results = self.decoder.decode_multi_strategy(processed, early_stop=self.early_stop.get())
             
             processing_time = time.time() - start_time
             
             if results:
-                self.result_text.insert(tk.END, f"\n✅ 成功檢測到 {len(results)} 個QR碼 (耗時: {processing_time:.2f}秒):\n")
+                self.result_text.insert(tk.END, f"\n✅ 成功判讀 {len(results)} 個內容 (耗時: {processing_time:.2f}秒):\n")
+                self.result_text.insert(tk.END, "已自動複製到剪貼簿！\n")
+                
+                # 自動複製到剪貼簿
+                primary_data = results[0]['data']
+                self.root.clipboard_clear()
+                self.root.clipboard_append(primary_data)
+
                 for i, result in enumerate(results):
-                    self.result_text.insert(tk.END, f"\nQR碼 #{i+1}:\n")
+                    self.result_text.insert(tk.END, f"\n內容 #{i+1}:\n")
                     self.result_text.insert(tk.END, f"  引擎: {result['engine']}\n")
-                    self.result_text.insert(tk.END, f"  內容: {result['data']}\n")
+                    self.result_text.insert(tk.END, f"  數據: {result['data']}\n")
                     self.result_text.insert(tk.END, f"  置信度: {result['confidence']}\n")
                 
                 # 保存解碼結果
@@ -898,9 +1013,9 @@ class QRCodeEnhancerGUI:
                 self.result_text.insert(tk.END, "3. 嘗試不同的預處理方法組合\n")
         
         except Exception as e:
-            self.result_text.insert(tk.END, f"\n處理失敗: {str(e)}")
-            messagebox.showerror("錯誤", f"處理失敗: {str(e)}")
-    
+            self.result_text.insert(tk.END, f"\n判讀失敗: {str(e)}")
+            messagebox.showerror("錯誤", f"判讀失敗: {str(e)}")
+
     def start_batch_processing(self):
         """開始批量處理"""
         input_dir = self.batch_input_dir.get()
