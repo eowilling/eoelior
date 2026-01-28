@@ -215,55 +215,27 @@
         <div class="w-full mx-auto">
         <!-- Header -->
             <header class="mb-8">
-                <!-- 返回主頁按鈕 -->
-                <div class="mb-4">
-                    <a href="../index.html" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg hover:from-orange-600 hover:to-pink-600 transition font-semibold shadow-md">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        返回玩具盒子
-                    </a>
-                </div>
-                <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-start mb-4">
+                <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center mb-4">
                     <div>
-                        <h1 class="text-3xl sm:text-4xl font-bold mb-2 cursor-pointer select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 每日日曆</h1>
+                        <h1 class="text-3xl sm:text-4xl font-bold mb-2 cursor-pointer select-none" style="color: var(--primary); text-shadow: 0 0 10px var(--primary);" id="pageTitle" ondblclick="toggleDeveloperMode()" title="雙擊切換開發者模式">📅 形式曆</h1>
                         <p class="text-gray-400">即使很忙 也要對自己好一點<span id="devModeIndicator" class="hidden text-red-500 font-bold ml-2">[開發者模式]</span></p>
                     </div>
-                    <!-- 使用者選擇區域 -->
-                    <div class="w-full lg:w-auto">
-                        <div class="rounded-lg shadow-md p-3" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
-                            <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                                <div class="flex items-center gap-2 w-full sm:w-auto">
-                                    <span class="text-sm shrink-0" style="color: var(--primary);">使用者：</span>
-                                    <input type="text" id="currentUserNameInput" value=""
-                                           class="w-full sm:w-auto px-3 py-2 sm:py-1 rounded-lg font-semibold min-w-0 sm:min-w-[180px]"
-                                           style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); color: var(--primary);"
-                                           placeholder="輸入使用者名稱">
-                                </div>
-                                <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
-                                    <button onclick="saveCurrentUserName()"
-                                            class="px-3 py-2 sm:py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-semibold"
-                                            title="保存使用者名稱">
-                                        💾 保存
-                                    </button>
-                                    <button onclick="window.location.href='quotes-uploader.html'"
-                                            class="px-3 py-2 sm:py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition text-sm font-semibold"
-                                            title="管理金句庫">
-                                        📝 金句管理
-                                    </button>
-                                    <button onclick="exportUserData()"
-                                            class="px-3 py-2 sm:py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-semibold"
-                                            title="匯出日曆資料">
-                                        📥 匯出資料
-                                    </button>
-                                    <button id="resetButton" onclick="openResetModal()"
-                                            class="px-3 py-2 sm:py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-semibold hidden col-span-2 sm:col-auto"
-                                            title="重置所有數據（開發者模式）">
-                                        🔄 重置
-                                    </button>
-                                </div>
-                            </div>
+                    <!-- 使用者和設定區域 -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2 px-4 py-2 rounded-lg" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
+                            <span class="text-sm" style="color: var(--primary);">使用者：</span>
+                            <span class="font-semibold" style="color: var(--primary);" id="currentUserDisplayName">Loading...</span>
                         </div>
+                        <button onclick="openSettingsModal()" 
+                                class="px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition"
+                                style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); color: var(--primary);"
+                                title="設定">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            設定
+                        </button>
                     </div>
             </div>
         </header>
@@ -346,8 +318,8 @@
             </div>
 
                     <!-- 所有待辦事項日期列表區塊（獨立區塊，只在桌面模式顯示） -->
-                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-6 hidden lg:block">
-                        <h4 class="font-semibold text-gray-700 mb-4 flex items-center text-lg">
+                    <div class="rounded-xl shadow-lg p-3 sm:p-6 hidden lg:block" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.3);">
+                        <h4 class="font-semibold mb-4 flex items-center text-lg" style="color: var(--primary);">
                             <span class="mr-2">📋</span> 所有待辦事項
                         </h4>
                         <div id="allTodosContent" class="space-y-2 max-h-[400px] overflow-y-auto">
@@ -442,20 +414,81 @@
                 </div>
     </div>
 
+    <!-- 設定 Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 z-50 hidden">
+        <div class="rounded-xl shadow-2xl w-full max-w-lg p-6" style="background: var(--card-bg); border: 1px solid rgba(0, 242, 255, 0.5);">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold" style="color: var(--primary);">⚙️ 設定</h3>
+                <button onclick="closeSettingsModal()" class="p-2 rounded-lg hover:bg-opacity-20 transition" style="color: var(--primary); background: rgba(0, 242, 255, 0.1);">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <!-- 使用者名稱設定 -->
+                <div class="p-4 rounded-lg" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--primary);">使用者名稱</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="settingsUserNameInput" 
+                               class="flex-1 px-3 py-2 rounded-lg"
+                               style="background: rgba(0, 0, 0, 0.3); border: 1px solid var(--primary); color: var(--primary);"
+                               placeholder="輸入使用者名稱">
+                        <button onclick="saveUserNameFromSettings()"
+                                class="px-4 py-2 rounded-lg font-semibold transition"
+                                style="background: var(--primary); color: #000;">
+                            💾 保存
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 功能按鈕 -->
+                <div class="space-y-2">
+                    <button onclick="window.location.href='quotes-uploader.html'"
+                            class="w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-between transition"
+                            style="background: rgba(255, 165, 0, 0.1); border: 1px solid rgba(255, 165, 0, 0.5); color: #ffa500;">
+                        <span>📝 金句管理</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    
+                    <button onclick="exportUserData(); closeSettingsModal();"
+                            class="w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-between transition"
+                            style="background: rgba(112, 0, 255, 0.1); border: 1px solid rgba(112, 0, 255, 0.5); color: var(--secondary);">
+                        <span>📥 匯出資料</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                    </button>
+
+                    <button id="settingsResetButton" onclick="closeSettingsModal(); setTimeout(openResetModal, 300);"
+                            class="w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-between transition hidden"
+                            style="background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.5); color: var(--accent);">
+                        <span>🔄 重置所有數據</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 重置確認 Modal -->
     <div id="resetModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-2xl font-bold text-red-600 mb-4">⚠️ 重置所有數據</h3>
+        <div class="rounded-xl shadow-2xl w-full max-w-md p-6" style="background: var(--card-bg); border: 1px solid rgba(255, 0, 85, 0.5);">
+            <h3 class="text-2xl font-bold mb-4" style="color: var(--accent);">⚠️ 重置所有數據</h3>
             <div class="space-y-4">
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p class="text-sm text-red-800 font-semibold mb-2">此操作將清除：</p>
-                    <ul class="text-sm text-red-700 space-y-1 list-disc list-inside">
+                <div class="rounded-lg p-4" style="background: rgba(255, 0, 85, 0.1); border: 1px solid rgba(255, 0, 85, 0.3);">
+                    <p class="text-sm font-semibold mb-2" style="color: var(--accent);">此操作將清除：</p>
+                    <ul class="text-sm space-y-1 list-disc list-inside" style="color: var(--accent);">
                         <li>所有使用者的待辦事項</li>
                         <li>所有使用者的解鎖記錄</li>
                         <li>所有使用者的每日語錄</li>
                         <li>所有自訂使用者（保留默認使用者）</li>
                     </ul>
-                    <p class="text-sm text-red-800 font-semibold mt-3">⚠️ 此操作無法復原！</p>
+                    <p class="text-sm font-semibold mt-3" style="color: var(--accent);">⚠️ 此操作無法復原！</p>
                 </div>
                 <div class="flex gap-3">
                     <button onclick="confirmReset()"
@@ -698,6 +731,31 @@
             document.getElementById('selectedDateTitle').textContent = '選擇日期';
             document.getElementById('todoList').innerHTML = '<p class="text-gray-400 text-sm text-center py-8">請選擇日期查看待辦事項</p>';
             document.getElementById('addTodoForm').classList.add('hidden');
+        }
+
+        // 設定 Modal 功能
+        function openSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            const input = document.getElementById('settingsUserNameInput');
+            input.value = currentUserId;
+            modal.classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function saveUserNameFromSettings() {
+            const input = document.getElementById('settingsUserNameInput');
+            const newUserId = input.value.trim();
+            if (newUserId === '') {
+                alert('請輸入使用者名稱');
+                return;
+            }
+            currentUserId = newUserId;
+            localStorage.setItem('currentUserId', currentUserId);
+            updateUserDisplay();
+            alert('使用者名稱已保存');
         }
 
         // 重置功能
@@ -1200,11 +1258,19 @@
         // 更新重置按鈕的顯示狀態
         function updateResetButtonVisibility() {
             const resetBtn = document.getElementById('resetButton');
+            const settingsResetBtn = document.getElementById('settingsResetButton');
             if (resetBtn) {
                 if (developerMode) {
                     resetBtn.classList.remove('hidden');
                 } else {
                     resetBtn.classList.add('hidden');
+                }
+            }
+            if (settingsResetBtn) {
+                if (developerMode) {
+                    settingsResetBtn.classList.remove('hidden');
+                } else {
+                    settingsResetBtn.classList.add('hidden');
                 }
             }
         }
@@ -2908,7 +2974,8 @@
                 dayNumberContainer.className = 'flex flex-wrap items-center gap-1 mb-1';
 
                 const dayNumber = document.createElement('div');
-                dayNumber.className = 'font-semibold text-gray-800';
+                dayNumber.className = 'font-bold';
+                dayNumber.style.color = 'white';
                 dayNumber.textContent = day;
                 dayNumberContainer.appendChild(dayNumber);
 

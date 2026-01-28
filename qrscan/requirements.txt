@@ -13,10 +13,10 @@ pyzbar>=0.1.9
 
 # 可選依賴 - 增強功能
 # 如果需要ZXing支持,請安裝:
-# pyzxing>=0.1.0
+pyzxing>=0.1.0
 
 # 如果需要QReader支持,請安裝:
-# qreader>=3.0.0
+qreader>=3.0.0
 
 # 批量處理結果導出
 pandas>=1.5.0
