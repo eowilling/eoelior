@@ -4396,7 +4396,7 @@
             try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
-                db = getFirestore(app, 'eveday');  // 使用 eveday 資料庫
+                db = getFirestore(app);  // 使用預設 Firestore 資料庫
                 
                 // 自動匿名登入
                 signInAnonymously(auth).then(() => {
