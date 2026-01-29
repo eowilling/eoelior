@@ -26,6 +26,25 @@ def check_dependencies():
     except FileNotFoundError:
         return False
 
+def format_time_str(seconds):
+    """將秒數轉為 MM:SS 或 HH:MM:SS"""
+    m, s = divmod(int(seconds), 60)
+    h, m = divmod(m, 60)
+    if h > 0:
+        return f"{h:02d}:{m:02d}:{s:02d}"
+    return f"{m:02d}:{s:02d}"
+
+def parse_time_str(time_str):
+    """將 HH:MM:SS 或 MM:SS 轉為秒數"""
+    try:
+        parts = list(map(int, time_str.strip().split(':')))
+        if len(parts) == 1: return parts[0] # SS
+        if len(parts) == 2: return parts[0]*60 + parts[1] # MM:SS
+        if len(parts) == 3: return parts[0]*3600 + parts[1]*60 + parts[2] # HH:MM:SS
+        return 0.0
+    except:
+        return 0.0
+
 def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivity=1.0):
     # 1. 計算參考基準 (串接所有參考片段)
     ref_segments = []
@@ -79,16 +98,22 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
     if not chunks: return vocals_audio
     return reduce(lambda a, b: a + b, chunks)
 
-def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, progress_bar, status_text):
+def get_video_duration(file_path):
+    try:
+        clip = VideoFileClip(str(file_path))
+        duration = clip.duration
+        clip.close()
+        return duration
+    except:
+        return 0
+
+def process_video(input_path, mode, vocal_vol, ref_ranges, target_ranges, progress_bar, status_text):
     temp_dir = Path(tempfile.mkdtemp())
-    input_path = temp_dir / uploaded_file.name
+    # input_path 已經是暫存好的檔案路徑
+    
     output_filename = f"{input_path.stem}_fixed.mp4"
     output_path = temp_dir / output_filename
     
-    status_text.text("📂 讀取檔案中 (手機請勿鎖定螢幕)...")
-    with open(input_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
-        
     try:
         status_text.markdown("🧠 **AI 分離音軌中...**")
         progress_bar.progress(10)
@@ -154,48 +179,88 @@ def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, pro
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 st.title("🎤 ScreamKiller")
-st.caption("演唱會尖叫聲消除神器 (v2.1 多段增強版)")
+st.caption("演唱會尖叫聲消除神器 (v2.2 直覺操作版)")
 
-mode = st.radio("選擇模式", ["手動調整模式", "智慧參考模式 (推薦)"])
-vocal_vol = 0.2
-ref_ranges = []
-target_ranges = []
+# 1. 先上傳
+uploaded_file = st.file_uploader("步驟 1: 請先上傳影片 (MP4/MOV)", type=["mp4", "mov"])
 
-if mode == "手動調整模式":
-    vocal_vol = st.slider("人聲保留比例", 0.0, 1.0, 0.2)
-else:
-    st.info("💡 請設定參考與加強抑制區段")
+if uploaded_file:
+    # 立即寫入暫存以取得資訊
+    # 使用 session_state 避免重複寫入? 簡單起見先直接寫
+    temp_dir_upload = Path(tempfile.gettempdir()) / "scream_killer_uploads"
+    temp_dir_upload.mkdir(exist_ok=True)
+    temp_file_path = temp_dir_upload / uploaded_file.name
     
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("**1. 歌手聲音參考 (越多段越準)**")
-        if 'ref_count' not in st.session_state: st.session_state.ref_count = 1
+    with open(temp_file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
         
-        for i in range(st.session_state.ref_count):
-            fc1, fc2 = st.columns(2)
-            s = fc1.number_input(f"參考{i+1} 開始", 0.0, value=10.0, key=f"rs_{i}")
-            e = fc2.number_input(f"參考{i+1} 結束", 0.0, value=15.0, key=f"re_{i}")
-            ref_ranges.append((s, e))
-            
-        if st.button("➕ 增加參考段"): st.session_state.ref_count += 1
+    duration = get_video_duration(temp_file_path)
+    dur_str = format_time_str(duration)
+    st.success(f"📂 已讀取影片: {uploaded_file.name} (長度: {dur_str})")
 
-    with c2:
-        st.markdown("**2. 尖叫加強抑制區 (可選)**")
-        if 'target_count' not in st.session_state: st.session_state.target_count = 0
-        
-        for i in range(st.session_state.target_count):
-            tc1, tc2 = st.columns(2)
-            s = tc1.number_input(f"抑制{i+1} 開始", 0.0, value=0.0, key=f"ts_{i}")
-            e = tc2.number_input(f"抑制{i+1} 結束", 0.0, value=5.0, key=f"te_{i}")
-            target_ranges.append((s, e))
-            
-        if st.button("➕ 增加抑制段"): st.session_state.target_count += 1
+    st.markdown("---")
+    st.subheader("步驟 2: 設定調音參數")
+    
+    mode = st.radio("選擇模式", ["手動調整模式", "智慧參考模式 (推薦)"])
+    vocal_vol = 0.2
+    ref_ranges = []
+    target_ranges = []
 
-uploaded_file = st.file_uploader("上傳影片 (MP4)", type=["mp4", "mov"])
-if uploaded_file and st.button("🚀 開始處理", type="primary"):
-    if not check_dependencies(): st.error("❌ 系統缺少 FFmpeg")
+    if mode == "手動調整模式":
+        vocal_vol = st.slider("人聲保留比例", 0.0, 1.0, 0.2)
+        if st.button("🚀 開始處理", type="primary"):
+             if not check_dependencies(): st.error("❌ 系統缺少 FFmpeg")
+             else:
+                pb = st.progress(0)
+                stt = st.empty()
+                data, name = process_video(temp_file_path, mode, vocal_vol, [], [], pb, stt)
+                if data: st.download_button("⬇️ 下載影片", data, name, "video/mp4")
+                shutil.rmtree(temp_dir_upload, ignore_errors=True) # Clean up uploaded temp file
+
     else:
-        pb = st.progress(0)
-        stt = st.empty()
-        data, name = process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, pb, stt)
-        if data: st.download_button("⬇️ 下載影片", data, name, "video/mp4")
+        st.info(f"💡 請使用時間碼輸入範圍 (例如: 00:00 - {dur_str})")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("**1. 歌手聲音參考** (用於建立人聲模型)")
+            if 'ref_count' not in st.session_state: st.session_state.ref_count = 1
+            
+            for i in range(st.session_state.ref_count):
+                cols = st.columns([0.45, 0.1, 0.45])
+                s_str = cols[0].text_input(f"參考{i+1} 開始", value="00:10", key=f"rs_{i}", placeholder="MM:SS")
+                cols[1].markdown("<div style='text-align: center; padding-top: 10px;'>至</div>", unsafe_allow_html=True)
+                e_str = cols[2].text_input(f"參考{i+1} 結束", value="00:15", key=f"re_{i}", placeholder="MM:SS")
+                
+                s_sec = parse_time_str(s_str)
+                e_sec = parse_time_str(e_str)
+                ref_ranges.append((s_sec, e_sec))
+                
+            if st.button("➕ 增加參考段"): st.session_state.ref_count += 1
+
+        with c2:
+            st.markdown("**2. 加強抑制區** (重點消除尖叫)")
+            if 'target_count' not in st.session_state: st.session_state.target_count = 0
+            
+            for i in range(st.session_state.target_count):
+                cols = st.columns([0.45, 0.1, 0.45])
+                s_str = cols[0].text_input(f"抑制{i+1} 開始", value="00:00", key=f"ts_{i}", placeholder="MM:SS")
+                cols[1].markdown("<div style='text-align: center; padding-top: 10px;'>至</div>", unsafe_allow_html=True)
+                e_str = cols[2].text_input(f"抑制{i+1} 結束", value="00:05", key=f"te_{i}", placeholder="MM:SS")
+                
+                s_sec = parse_time_str(s_str)
+                e_sec = parse_time_str(e_str)
+                target_ranges.append((s_sec, e_sec))
+                
+            if st.button("➕ 增加抑制段"): st.session_state.target_count += 1
+            
+        st.markdown("---")
+        if st.button("🚀 開始處理", type="primary"):
+            if not check_dependencies(): st.error("❌ 系統缺少 FFmpeg")
+            else:
+                pb = st.progress(0)
+                stt = st.empty()
+                data, name = process_video(temp_file_path, mode, vocal_vol, ref_ranges, target_ranges, pb, stt)
+                if data: st.download_button("⬇️ 下載影片", data, name, "video/mp4")
+                shutil.rmtree(temp_dir_upload, ignore_errors=True) # Clean up uploaded temp file
+else:
+    st.info("👋 請先上傳影片以開始使用")
