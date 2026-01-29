@@ -1,0 +1,18 @@
+啟動有線
+scrcpy --new-display=1920x1080/240
+
+
+啟動無線
+scrcpy --new-display=1920x1080/240 --tcpip
+
+重啟DEX
+adb disconnect
+
+
+參考1
+https://www.reddit.com/r/SamsungDex/comments/1ppoxhe/samsung_dex_on_pc_is_gone_heres_how_to_run_full/?utm_source=chatgpt.com
+
+
+參考2
+https://www.reddit.com/r/SamsungDex/comments/1omaa21/found_a_proper_way_to_use_wireless_dex_on_windows/
+

@@ -1,0 +1,10 @@
+{
+    "scrcpy_path": "D:\\EO\\KeepTool\\scrcpy-win64-v3.3.4",
+    "resolution": "1920x1080",
+    "refresh_rate": "240",
+    "keyboard_mode": "uhid",
+    "display_mode": "mirror",
+    "legacy_paste": true,
+    "no_clipboard_autosync": false,
+    "raw_key_events": true
+}
