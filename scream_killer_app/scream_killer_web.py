@@ -62,7 +62,7 @@ def process_video(uploaded_file, mode, vocal_vol, ref_times, progress_bar, statu
     try:
         status_text.markdown("🧠 **AI 分離音軌中...**")
         progress_bar.progress(10)
-        cmd = ["demucs", "-n", "htdemucs", "-o", str(temp_dir), str(input_path)]
+        cmd = ["demucs", "-n", "htdemucs", "--two-stems=vocals", "-o", str(temp_dir), str(input_path)]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode != 0: raise Exception(f"Demucs Error: {stderr.decode()}")
@@ -72,9 +72,7 @@ def process_video(uploaded_file, mode, vocal_vol, ref_times, progress_bar, statu
         if not track_dir.exists(): raise Exception("無法找到音軌")
 
         vocals = AudioSegment.from_wav(track_dir / "vocals.wav")
-        drums = AudioSegment.from_wav(track_dir / "drums.wav")
-        bass = AudioSegment.from_wav(track_dir / "bass.wav")
-        other = AudioSegment.from_wav(track_dir / "other.wav")
+        no_vocals = AudioSegment.from_wav(track_dir / "no_vocals.wav")
 
         status_text.text("🎚️ 智慧混音中...")
         if mode == "手動調整模式":
@@ -85,7 +83,7 @@ def process_video(uploaded_file, mode, vocal_vol, ref_times, progress_bar, statu
             vocals_pre = vocals - 6
             vocals_processed = apply_smart_limiter(vocals_pre, ref_times[0], ref_times[1])
 
-        instrumental = drums + bass + other + 1.5
+        instrumental = no_vocals + 1.5
         final_mix = vocals_processed.overlay(instrumental)
         mixed_audio_path = temp_dir / "final_mix.mp3"
         final_mix.export(mixed_audio_path, format="mp3", bitrate="320k")
