@@ -265,8 +265,21 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
     if not chunks: return vocals_audio
     return reduce(lambda a, b: a + b, chunks)
 
+import re
+
 def get_video_duration(file_path):
+    """使用 FFmpeg 直接讀取影片長度 (比 MoviePy 更穩健)"""
     try:
+        # 使用 ffmpeg -i 讀取資訊 (輸出在 stderr)
+        cmd = ["ffmpeg", "-i", str(file_path)]
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        
+        # 尋找 "Duration: 00:00:00.00"
+        match = re.search(r"Duration: (\d{2}):(\d{2}):(\d{2}\.\d+)", result.stderr)
+        if match:
+            h, m, s = map(float, match.groups())
+            return h * 3600 + m * 60 + s
+            
         clip = VideoFileClip(str(file_path))
         duration = clip.duration
         clip.close()
