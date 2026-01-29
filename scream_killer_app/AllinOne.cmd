@@ -158,16 +158,25 @@ def check_dependencies():
     except FileNotFoundError:
         return False
 
+from functools import reduce
+
 def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivity=1.0):
     # 1. 計算參考基準 (串接所有參考片段)
     ref_segments = []
     for start, end in ref_ranges:
         s_ms, e_ms = int(start * 1000), int(end * 1000)
-        if s_ms < len(vocals_audio) and e_ms <= len(vocals_audio) and s_ms < e_ms:
+        # 邊界檢查
+        if s_ms < 0: s_ms = 0
+        if e_ms > len(vocals_audio): e_ms = len(vocals_audio)
+        
+        if s_ms < e_ms:
             ref_segments.append(vocals_audio[s_ms:e_ms])
     
-    if not ref_segments: return vocals_audio
-    reference_audio = sum(ref_segments)
+    if not ref_segments: 
+        return vocals_audio
+        
+    # FIX: 使用 reduce 避免 sum() 與 int 0 相加導致的 TypeError
+    reference_audio = reduce(lambda a, b: a + b, ref_segments)
     ref_max_db = reference_audio.max_dBFS
     threshold_db = ref_max_db - (2 * sensitivity)
 
@@ -195,7 +204,9 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
             chunks.append(chunk - attenuation)
         else:
             chunks.append(chunk)
-    return sum(chunks)
+            
+    if not chunks: return vocals_audio
+    return reduce(lambda a, b: a + b, chunks)
 
 def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, progress_bar, status_text):
     temp_dir = Path(tempfile.mkdtemp())
@@ -241,7 +252,18 @@ def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, pro
         video_clip = VideoFileClip(str(input_path))
         new_audio = AudioFileClip(str(mixed_audio_path))
         final_video = video_clip.without_audio().with_audio(new_audio)
-        final_video.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile=str(temp_dir/"temp.m4a"), remove_temp=True, logger=None)
+        
+        # 優化輸出參數
+        final_video.write_videofile(
+            str(output_path), 
+            codec="libx264", 
+            audio_codec="aac", 
+            audio_bitrate="320k",
+            preset="medium",
+            temp_audiofile=str(temp_dir/"temp.m4a"), 
+            remove_temp=True, 
+            logger=None
+        )
         
         video_clip.close()
         new_audio.close()
