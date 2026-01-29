@@ -143,7 +143,16 @@ from pydub import AudioSegment
 from moviepy import VideoFileClip, AudioFileClip
 from functools import reduce
 
-st.set_page_config(page_title="ScreamKiller", page_icon="🎤", layout="centered")
+# 設定 Favicon
+page_icon = "🎤"
+if os.path.exists("image.png"):
+    page_icon = "image.png"
+
+st.set_page_config(page_title="ScreamKiller", page_icon=page_icon, layout="centered")
+
+# 顯示幸運符
+if os.path.exists("lucky_charm.png"):
+    st.sidebar.image("lucky_charm.png", caption="🙏 乖乖保佑，調音順利")
 
 st.markdown("""
 <style>
