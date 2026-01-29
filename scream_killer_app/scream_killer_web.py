@@ -373,8 +373,9 @@ if uploaded_file:
             
             for i in range(st.session_state.ref_count):
                 cols = st.columns([0.45, 0.1, 0.45])
+                # 第一個提供建議值，後續新增的讓用戶自己填
                 default_start = "00:10" if i == 0 else "00:00"
-                default_end = "00:15" if i == 0 else "00:05"
+                default_end = "00:15" if i == 0 else "00:00"
                 
                 s_str = cols[0].text_input(
                     f"參考{i+1} 開始", 
@@ -406,11 +407,11 @@ if uploaded_file:
             
             col_add, col_remove = st.columns(2)
             with col_add:
-                if st.button("➕ 增加參考段", use_container_width=True):
+                if st.button("➕ 增加參考段", key="btn_add_ref", use_container_width=True):
                     st.session_state.ref_count += 1
                     st.rerun()
             with col_remove:
-                if st.session_state.ref_count > 1 and st.button("➖ 移除最後", use_container_width=True):
+                if st.session_state.ref_count > 1 and st.button("➖ 移除最後", key="btn_remove_ref", use_container_width=True):
                     st.session_state.ref_count -= 1
                     st.rerun()
 
@@ -426,6 +427,7 @@ if uploaded_file:
             
             for i in range(st.session_state.target_count):
                 cols = st.columns([0.45, 0.1, 0.45])
+                # 抑制區是選填，所有預設都是 00:00 讓用戶自己填
                 s_str = cols[0].text_input(
                     f"抑制{i+1} 開始", 
                     value="00:00", 
@@ -438,7 +440,7 @@ if uploaded_file:
                 )
                 e_str = cols[2].text_input(
                     f"抑制{i+1} 結束", 
-                    value="00:05", 
+                    value="00:00", 
                     key=f"te_{i}", 
                     placeholder="MM:SS"
                 )
@@ -456,11 +458,11 @@ if uploaded_file:
             
             col_add2, col_remove2 = st.columns(2)
             with col_add2:
-                if st.button("➕ 增加抑制段", use_container_width=True):
+                if st.button("➕ 增加抑制段", key="btn_add_target", use_container_width=True):
                     st.session_state.target_count += 1
                     st.rerun()
             with col_remove2:
-                if st.session_state.target_count > 0 and st.button("➖ 移除最後", use_container_width=True):
+                if st.session_state.target_count > 0 and st.button("➖ 移除最後", key="btn_remove_target", use_container_width=True):
                     st.session_state.target_count -= 1
                     st.rerun()
             
