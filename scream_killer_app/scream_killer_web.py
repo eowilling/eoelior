@@ -30,15 +30,23 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
     ref_segments = []
     for start, end in ref_ranges:
         s_ms, e_ms = int(start * 1000), int(end * 1000)
-        if s_ms < len(vocals_audio) and e_ms <= len(vocals_audio) and s_ms < e_ms:
+        # 邊界檢查
+        if s_ms < 0: s_ms = 0
+        if e_ms > len(vocals_audio): e_ms = len(vocals_audio)
+        
+        if s_ms < e_ms:
             ref_segments.append(vocals_audio[s_ms:e_ms])
     
-    if not ref_segments: return vocals_audio
-    reference_audio = sum(ref_segments)
+    if not ref_segments: 
+        # 如果沒有參考片段，回傳原音訊 (或依賴全域設定)
+        return vocals_audio
+        
+    # FIX: 使用 reduce 避免 sum() 與 int 0 相加導致的 TypeError
+    reference_audio = reduce(lambda a, b: a + b, ref_segments)
     ref_max_db = reference_audio.max_dBFS
     threshold_db = ref_max_db - (2 * sensitivity)
 
-    # 2. 準備抑制區段查詢表 (為了效能，將 target_ranges 轉為毫秒檢查)
+    # 2. 準備抑制區段查詢表
     target_zones = []
     if target_ranges:
         for start, end in target_ranges:
@@ -51,12 +59,12 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
     
     chunk_size = 50 
     chunks = []
+    
+    # 優化遍歷邏輯
     for i in range(0, len(vocals_audio), chunk_size):
         chunk = vocals_audio[i:i+chunk_size]
         
-        # 決定當前是「一般抑制」還是「強力抑制」
-        # 強力抑制區：4.0x 衰減倍率
-        # 一般抑制區：2.5x 衰減倍率
+        # 決定衰減倍率
         aggression = 4.0 if is_in_target_zone(i) else 2.5
         
         if chunk.max_dBFS > threshold_db:
@@ -65,7 +73,10 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
             chunks.append(chunk - attenuation)
         else:
             chunks.append(chunk)
-    return sum(chunks)
+            
+    # FIX: 同樣使用 reduce 合併 chunks，比 sum(chunks) 更安全且高效
+    if not chunks: return vocals_audio
+    return reduce(lambda a, b: a + b, chunks)
 
 def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, progress_bar, status_text):
     temp_dir = Path(tempfile.mkdtemp())
@@ -117,7 +128,17 @@ def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, pro
         video_clip = VideoFileClip(str(input_path))
         new_audio = AudioFileClip(str(mixed_audio_path))
         final_video = video_clip.without_audio().with_audio(new_audio)
-        final_video.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile=str(temp_dir/"temp.m4a"), remove_temp=True, logger=None)
+        # 優化輸出參數：preset='medium' 平衡速度與畫質，audio_bitrate='320k' 確保高音質
+        final_video.write_videofile(
+            str(output_path), 
+            codec="libx264", 
+            audio_codec="aac", 
+            audio_bitrate="320k",
+            preset="medium",
+            temp_audiofile=str(temp_dir/"temp.m4a"), 
+            remove_temp=True, 
+            logger=None
+        )
         
         video_clip.close()
         new_audio.close()
