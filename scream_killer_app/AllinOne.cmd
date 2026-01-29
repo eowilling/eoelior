@@ -176,7 +176,7 @@ def apply_smart_limiter(vocals_audio, ref_start, ref_end, sensitivity=1.0):
         chunk = vocals_audio[i:i+chunk_size]
         if chunk.max_dBFS > threshold_db:
             excess_db = chunk.max_dBFS - threshold_db
-            attenuation = excess_db * 1.2
+            attenuation = excess_db * 2.5
             chunks.append(chunk - attenuation)
         else:
             chunks.append(chunk)
@@ -216,7 +216,7 @@ def process_video(uploaded_file, mode, vocal_volume, ref_times, progress_bar, st
             vocals_processed = vocals + gain_db
         else:
             status_text.text(f"🤖 分析參考片段 ({ref_times[0]}s - {ref_times[1]}s)...")
-            vocals_pre = vocals - 3
+            vocals_pre = vocals - 6
             vocals_processed = apply_smart_limiter(vocals_pre, ref_times[0], ref_times[1])
 
         instrumental = drums + bass + other + 1.5
