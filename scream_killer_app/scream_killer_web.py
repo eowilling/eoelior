@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 from pydub import AudioSegment
 from moviepy import VideoFileClip, AudioFileClip
+from functools import reduce
 
 st.set_page_config(page_title="ScreamKiller", page_icon="🎤", layout="centered")
 
