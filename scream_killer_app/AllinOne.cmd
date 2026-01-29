@@ -217,8 +217,20 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
         for start, end in target_ranges:
             target_zones.append((int(start * 1000), int(end * 1000)))
 
+    # 準備參考區段查詢表 (用於保全)
+    ref_zones_lookup = []
+    for start, end in ref_ranges:
+        s_ms, e_ms = int(start * 1000), int(end * 1000)
+        if s_ms < e_ms:
+            ref_zones_lookup.append((s_ms, e_ms))
+
     def is_in_target_zone(ms):
         for s, e in target_zones:
+            if s <= ms < e: return True
+        return False
+
+    def is_in_ref_zone(ms):
+        for s, e in ref_zones_lookup:
             if s <= ms < e: return True
         return False
     
@@ -229,6 +241,12 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
     for i in range(0, len(vocals_audio), chunk_size):
         chunk = vocals_audio[i:i+chunk_size]
         
+        # 優先檢查是否在「參考保全區」
+        if is_in_ref_zone(i):
+             # 絕對保全：不管多大聲都不抑制
+             chunks.append(chunk)
+             continue
+
         # 決定衰減倍率 與 強制衰減量
         if is_in_target_zone(i):
             aggression = 5.0  # 再提升 Limiter 強度
@@ -256,13 +274,16 @@ def get_video_duration(file_path):
     except:
         return 0
 
-def process_video(input_path, mode, vocal_vol, ref_ranges, target_ranges, progress_bar, status_text):
+def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, progress_bar, status_text):
     temp_dir = Path(tempfile.mkdtemp())
-    # input_path 已經是暫存好的檔案路徑
-    
+    input_path = temp_dir / uploaded_file.name
     output_filename = f"{input_path.stem}_fixed.mp4"
     output_path = temp_dir / output_filename
     
+    status_text.text("📂 讀取檔案中...")
+    with open(input_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+        
     try:
         status_text.markdown("🧠 **AI 分離音軌中...**")
         progress_bar.progress(10)
@@ -289,35 +310,52 @@ def process_video(input_path, mode, vocal_vol, ref_ranges, target_ranges, progre
 
         instrumental = no_vocals + 1.5
         final_mix = vocals_processed.overlay(instrumental)
-        mixed_audio_path = temp_dir / "final_mix.mp3"
-        final_mix.export(mixed_audio_path, format="mp3", bitrate="320k")
+        
+        # 整體均值優化 (Normalization -1dB)
+        final_mix = final_mix.normalize(headroom=1.0)
+        
+        mixed_audio_path = temp_dir / "final_mix.m4a"
+        final_mix.export(mixed_audio_path, format="ipod", bitrate="320k")
         progress_bar.progress(75)
 
-        status_text.text("🎬 合成影片中...")
-        video_clip = VideoFileClip(str(input_path))
-        new_audio = AudioFileClip(str(mixed_audio_path))
-        final_video = video_clip.without_audio().with_audio(new_audio)
+        status_text.text("🎬 合成影片中 (Remuxing)...")
+        # 改用 FFmpeg 直接合成 (Copy Stream + Reverb)
+        cmd_ffmpeg = [
+            'ffmpeg', '-y',
+            '-i', str(input_path),
+            '-i', str(mixed_audio_path),
+            '-filter_complex', '[1:a]aecho=0.8:0.88:30:0.3[reverb]',
+            '-map', '0:v',
+            '-map', '[reverb]',
+            '-c:v', 'copy',
+            '-c:a', 'aac',
+            '-b:a', '256k',
+            '-shortest',
+            str(output_path)
+        ]
         
-        # 優化輸出參數
-        final_video.write_videofile(
-            str(output_path), 
-            codec="libx264", 
-            audio_codec="aac", 
-            audio_bitrate="320k",
-            preset="medium",
-            temp_audiofile=str(temp_dir/"temp.m4a"), 
-            remove_temp=True, 
-            logger=None
-        )
-        
-        video_clip.close()
-        new_audio.close()
+        process_ffmpeg = subprocess.run(cmd_ffmpeg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if process_ffmpeg.returncode != 0:
+             cmd_fallback = [
+                'ffmpeg', '-y',
+                '-i', str(input_path),
+                '-i', str(mixed_audio_path),
+                '-map', '0:v',
+                '-map', '1:a',
+                '-c:v', 'copy',
+                '-c:a', 'aac',
+                '-b:a', '256k',
+                '-shortest',
+                str(output_path)
+             ]
+             subprocess.run(cmd_fallback, check=True)
+
         progress_bar.progress(100)
         status_text.text("✅ 完成！")
         
         with open(output_path, "rb") as f: return f.read(), output_filename
     except Exception as e:
-        st.error(f"錯誤: {str(e)}")
+        status_text.error(f"錯誤: {str(e)}")
         return None, None
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
