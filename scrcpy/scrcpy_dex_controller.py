@@ -83,11 +83,11 @@ class DEXController:
             "scrcpy_path": r"D:\EO\KeepTool\scrcpy-win64-v3.3.4",
             "resolution": "1920x1080",
             "refresh_rate": "240",
-            "keyboard_mode": "uhid",
-            "display_mode": "dex",  # DEX 模式注音輸入最佳
+            "keyboard_mode": "uhid",  # uhid 模式搭配 DEX 注音輸入最佳
+            "display_mode": "dex",  # DEX 模式注音輸入最穩定
             "raw_key_events": False,
-            "legacy_paste": True,  # 預設啟用，改善注音輸入
-            "no_clipboard_autosync": True  # 預設啟用，減少干擾
+            "legacy_paste": True,  # 必須啟用，改善注音輸入
+            "no_clipboard_autosync": True  # 必須啟用，減少干擾
         }
         
         if os.path.exists(CONFIG_FILE):
@@ -192,111 +192,20 @@ class DEXController:
         )
         refresh_combo.grid(row=2, column=1, sticky=tk.W, padx=5, pady=5)
         
-        # 鍵盤模式
-        tk.Label(config_frame, text="鍵盤模式:", font=("Microsoft JhengHei", 10), width=10, anchor=tk.W).grid(row=3, column=0, sticky=tk.W, pady=5, padx=(0,5))
-        self.keyboard_mode_var = tk.StringVar(value=self.config["keyboard_mode"])
-        keyboard_combo = ttk.Combobox(
-            config_frame,
-            textvariable=self.keyboard_mode_var,
-            values=["uhid", "aoa", "sdk"],
-            width=20,
-            font=("Consolas", 10),
-            state="readonly"
-        )
-        keyboard_combo.grid(row=3, column=1, sticky=tk.W, padx=5, pady=5)
-        
-        # 顯示模式
-        tk.Label(config_frame, text="顯示模式:", font=("Microsoft JhengHei", 10), width=10, anchor=tk.W).grid(row=4, column=0, sticky=tk.W, pady=5, padx=(0,5))
-        self.display_mode_var = tk.StringVar(value=self.config.get("display_mode", "mirror"))
-        display_combo = ttk.Combobox(
-            config_frame,
-            textvariable=self.display_mode_var,
-            values=["mirror", "dex"],
-            width=20,
-            font=("Consolas", 10),
-            state="readonly"
-        )
-        display_combo.grid(row=4, column=1, sticky=tk.W, padx=5, pady=5)
+        # 簡化說明
+        tk.Label(
+            config_frame, 
+            text="✨ 使用 UHID 模式，完美支援實體鍵盤",
+            font=("Microsoft JhengHei", 10, "bold"),
+            fg="#4CAF50"
+        ).grid(row=3, column=0, columnspan=2, pady=(10, 5))
         
         tk.Label(
             config_frame, 
-            text="💡 mirror=鏡像手機畫面 | dex=DEX桌面(注音輸入佳)",
-            font=("Microsoft JhengHei", 8),
+            text="📌 會被 Android 識別為真實的實體鍵盤",
+            font=("Microsoft JhengHei", 9),
             fg="#2196F3"
-        ).grid(row=5, column=0, columnspan=2, pady=(2, 0))
-        
-        tk.Label(
-            config_frame, 
-            text="💡 uhid 模式支援注音輸入最佳(Android 14+)",
-            font=("Microsoft JhengHei", 8),
-            fg="gray"
-        ).grid(row=6, column=0, columnspan=2, pady=(5, 0))
-        
-        # 注音優化選項
-        tk.Label(
-            config_frame,
-            text="注音輸入優化:",
-            font=("Microsoft JhengHei", 10, "bold"),
-            fg="#FF5722"
-        ).grid(row=7, column=0, columnspan=2, sticky=tk.W, pady=(10, 5))
-        
-        # Raw Key Events
-        self.raw_key_var = tk.BooleanVar(value=self.config.get("raw_key_events", False))
-        raw_key_check = tk.Checkbutton(
-            config_frame,
-            text="☑️ Raw Key Events (原始按鍵事件)",
-            variable=self.raw_key_var,
-            font=("Microsoft JhengHei", 9),
-            onvalue=True,
-            offvalue=False
-        )
-        raw_key_check.grid(row=8, column=0, columnspan=2, sticky=tk.W, pady=2)
-        
-        # Legacy Paste
-        self.legacy_paste_var = tk.BooleanVar(value=self.config.get("legacy_paste", False))
-        legacy_paste_check = tk.Checkbutton(
-            config_frame,
-            text="📋 Legacy Paste (舊式貼上 - 建議啟用)",
-            variable=self.legacy_paste_var,
-            font=("Microsoft JhengHei", 9),
-            onvalue=True,
-            offvalue=False
-        )
-        legacy_paste_check.grid(row=9, column=0, columnspan=2, sticky=tk.W, pady=2)
-        
-        # No Clipboard Autosync
-        self.no_clipboard_var = tk.BooleanVar(value=self.config.get("no_clipboard_autosync", False))
-        no_clipboard_check = tk.Checkbutton(
-            config_frame,
-            text="🚫 關閉剪貼簿自動同步",
-            variable=self.no_clipboard_var,
-            font=("Microsoft JhengHei", 9),
-            onvalue=True,
-            offvalue=False
-        )
-        no_clipboard_check.grid(row=10, column=0, columnspan=2, sticky=tk.W, pady=2)
-        
-        tk.Label(
-            config_frame,
-            text="💡 如果注音不能用，請嘗試啟用 Legacy Paste",
-            font=("Microsoft JhengHei", 8),
-            fg="#FF5722"
-        ).grid(row=11, column=0, columnspan=2, pady=(5, 0))
-        
-        # 儲存設定按鈕
-        save_btn = tk.Button(
-            config_frame,
-            text="💾 儲存設定",
-            command=self.save_settings,
-            bg="#4CAF50",
-            fg="white",
-            font=("Microsoft JhengHei", 10, "bold"),
-            relief=tk.FLAT,
-            cursor="hand2",
-            padx=20,
-            pady=5
-        )
-        save_btn.grid(row=12, column=0, columnspan=2, pady=(15, 0))
+        ).grid(row=4, column=0, columnspan=2, pady=(2, 10))
         
         # 控制按鈕區域
         control_frame = tk.LabelFrame(
@@ -350,6 +259,17 @@ class DEXController:
             **button_style
         )
         self.restart_btn.pack(fill=tk.X, pady=5)
+        
+        # 修復鍵盤
+        self.fix_keyboard_btn = tk.Button(
+            control_frame,
+            text="⌨️ 修復鍵盤輸入",
+            command=self.fix_keyboard,
+            bg="#9C27B0",
+            fg="white",
+            **button_style
+        )
+        self.fix_keyboard_btn.pack(fill=tk.X, pady=5)
         
         # 關閉 DEX
         self.stop_btn = tk.Button(
@@ -429,11 +349,6 @@ class DEXController:
         self.config["scrcpy_path"] = self.path_entry.get()
         self.config["resolution"] = self.resolution_var.get()
         self.config["refresh_rate"] = self.refresh_rate_var.get()
-        self.config["keyboard_mode"] = self.keyboard_mode_var.get()
-        self.config["display_mode"] = self.display_mode_var.get()
-        self.config["raw_key_events"] = self.raw_key_var.get()
-        self.config["legacy_paste"] = self.legacy_paste_var.get()
-        self.config["no_clipboard_autosync"] = self.no_clipboard_var.get()
         self.save_config()
         messagebox.showinfo("成功", "設定已儲存！")
     
@@ -494,86 +409,42 @@ class DEXController:
         """啟動有線 DEX"""
         resolution = self.resolution_var.get()
         refresh_rate = self.refresh_rate_var.get()
-        keyboard_mode = self.keyboard_mode_var.get()
-        display_mode = self.config.get("display_mode", "mirror")
         
-        # 優化注音輸入的命令（使用完整路徑）
+        # 使用完整路徑
         scrcpy_exe = os.path.join(self.config["scrcpy_path"], "scrcpy.exe")
         
-        # 基本參數
-        params = []
-        
-        # 根據顯示模式決定是否使用新顯示器
-        if display_mode == "dex":
-            params.append(f"--new-display={resolution}/{refresh_rate}")
-        else:
-            # 鏡像模式
-            params.append(f"--max-size={resolution.split('x')[0]}")
-            params.append(f"--max-fps={refresh_rate}")
-        
-        params.append(f"--keyboard={keyboard_mode}")
-        
-        # 只有 sdk 模式才加 --prefer-text
-        if keyboard_mode == "sdk":
-            params.append("--prefer-text")
-        
-        # 注音優化參數
-        if self.config.get("raw_key_events", False):
-            params.append("--raw-key-events")
-        
-        if self.config.get("legacy_paste", False):
-            params.append("--legacy-paste")
-        
-        if self.config.get("no_clipboard_autosync", False):
-            params.append("--no-clipboard-autosync")
+        # UHID 模式：會被識別為真實的實體鍵盤
+        params = [
+            f"--new-display={resolution}/{refresh_rate}",
+            "-K",  # UHID 鍵盤模式
+            "-M",  # UHID 滑鼠模式
+            "--stay-awake"
+        ]
         
         command = f'"{scrcpy_exe}" {" ".join(params)}'
         print(f"[DEBUG] 啟動命令: {command}")
-        mode_name = "有線鏡像" if display_mode == "mirror" else "有線 DEX"
-        self.run_command(command, mode_name)
+        self.run_command(command, "有線 DEX")
     
     def start_wireless_dex(self):
         """啟動無線 DEX"""
         resolution = self.resolution_var.get()
         refresh_rate = self.refresh_rate_var.get()
-        keyboard_mode = self.keyboard_mode_var.get()
-        display_mode = self.config.get("display_mode", "mirror")
         
-        # 優化注音輸入的命令（使用完整路徑）
+        # 使用完整路徑
         scrcpy_exe = os.path.join(self.config["scrcpy_path"], "scrcpy.exe")
         
-        # 基本參數
-        params = []
-        
-        # 根據顯示模式決定是否使用新顯示器
-        if display_mode == "dex":
-            params.append(f"--new-display={resolution}/{refresh_rate}")
-        else:
-            # 鏡像模式
-            params.append(f"--max-size={resolution.split('x')[0]}")
-            params.append(f"--max-fps={refresh_rate}")
-        
-        params.append("--tcpip")
-        params.append(f"--keyboard={keyboard_mode}")
-        
-        # 只有 sdk 模式才加 --prefer-text
-        if keyboard_mode == "sdk":
-            params.append("--prefer-text")
-        
-        # 注音優化參數
-        if self.config.get("raw_key_events", False):
-            params.append("--raw-key-events")
-        
-        if self.config.get("legacy_paste", False):
-            params.append("--legacy-paste")
-        
-        if self.config.get("no_clipboard_autosync", False):
-            params.append("--no-clipboard-autosync")
+        # UHID 模式：會被識別為真實的實體鍵盤
+        params = [
+            f"--new-display={resolution}/{refresh_rate}",
+            "--tcpip",
+            "-K",  # UHID 鍵盤模式
+            "-M",  # UHID 滑鼠模式
+            "--stay-awake"
+        ]
         
         command = f'"{scrcpy_exe}" {" ".join(params)}'
         print(f"[DEBUG] 啟動命令: {command}")
-        mode_name = "無線鏡像" if display_mode == "mirror" else "無線 DEX"
-        self.run_command(command, mode_name)
+        self.run_command(command, "無線 DEX")
     
     def restart_adb(self):
         """重啟 ADB"""
@@ -604,6 +475,38 @@ class DEXController:
             
         except Exception as e:
             error_msg = f"重啟 ADB 失敗: {str(e)}"
+            print(f"[ERROR] {error_msg}")
+            self.update_status(f"✗ 錯誤: {str(e)}", "red")
+            messagebox.showerror("錯誤", error_msg)
+    
+    def fix_keyboard(self):
+        """修復實體鍵盤輸入（啟用實體鍵盤時顯示輸入法）"""
+        try:
+            self.update_status("正在修復鍵盤設定...", "blue")
+            scrcpy_path = self.config["scrcpy_path"]
+            adb_exe = os.path.join(scrcpy_path, "adb.exe")
+            
+            if not os.path.exists(adb_exe):
+                raise FileNotFoundError(f"找不到 adb.exe: {adb_exe}")
+            
+            print("[DEBUG] 執行: adb shell settings put secure show_ime_with_hard_keyboard 1")
+            
+            # 啟用「實體鍵盤時顯示輸入法」
+            result = subprocess.run(
+                [adb_exe, "shell", "settings", "put", "secure", "show_ime_with_hard_keyboard", "1"],
+                cwd=scrcpy_path,
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                self.update_status("✓ 鍵盤設定已修復", "green")
+                messagebox.showinfo("成功", "已啟用「實體鍵盤時顯示輸入法」\n\n現在可以使用電腦鍵盤打注音了！")
+            else:
+                raise Exception(f"設定失敗: {result.stderr}")
+            
+        except Exception as e:
+            error_msg = f"修復鍵盤失敗: {str(e)}"
             print(f"[ERROR] {error_msg}")
             self.update_status(f"✗ 錯誤: {str(e)}", "red")
             messagebox.showerror("錯誤", error_msg)
@@ -662,6 +565,7 @@ class DEXController:
             item('有線 DEX', self.start_wired_dex),
             item('無線 DEX', self.start_wireless_dex),
             item('重啟 ADB', self.restart_adb),
+            item('修復鍵盤', self.fix_keyboard),
             item('關閉DEX', self.stop_dex),
             item('退出', self.quit_app)
         )
