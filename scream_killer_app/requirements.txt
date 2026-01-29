@@ -4,3 +4,4 @@ pydub
 moviepy
 torch
 torchaudio
+pyaudioop

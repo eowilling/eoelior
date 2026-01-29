@@ -19,6 +19,7 @@ echo pydub
 echo moviepy
 echo torch
 echo torchaudio
+echo pyaudioop
 ) > requirements.txt
 
 :: --- 步驟 1: 自動產生 Python 主程式 ---
