@@ -220,8 +220,12 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
     for i in range(0, len(vocals_audio), chunk_size):
         chunk = vocals_audio[i:i+chunk_size]
         
-        # 決定衰減倍率
-        aggression = 4.0 if is_in_target_zone(i) else 2.5
+        # 決定衰減倍率 與 強制衰減量
+        if is_in_target_zone(i):
+            aggression = 5.0  # 再提升 Limiter 強度
+            chunk = chunk - 15 # 強制先砍 15dB (針對殺豬聲)
+        else:
+            aggression = 2.5
         
         if chunk.max_dBFS > threshold_db:
             excess_db = chunk.max_dBFS - threshold_db
