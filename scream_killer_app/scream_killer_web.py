@@ -80,6 +80,18 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
         for start, end in target_ranges:
             target_zones.append((int(start * 1000), int(end * 1000)))
 
+    # 準備參考區段查詢表 (用於人聲保全)
+    ref_zones_lookup = []
+    for start, end in ref_ranges:
+        s_ms, e_ms = int(start * 1000), int(end * 1000)
+        if s_ms < e_ms:
+            ref_zones_lookup.append((s_ms, e_ms))
+
+    def is_in_ref_zone(ms):
+        for s, e in ref_zones_lookup:
+            if s <= ms < e: return True
+        return False
+
     def is_in_target_zone(ms):
         for s, e in target_zones:
             if s <= ms < e: return True
@@ -92,6 +104,11 @@ def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivit
     for i in range(0, len(vocals_audio), chunk_size):
         chunk = vocals_audio[i:i+chunk_size]
         
+        # [優化] 人聲保全模式：若在參考區段內，強制跳過抑制
+        if is_in_ref_zone(i):
+             chunks.append(chunk)
+             continue
+
         # 決定衰減倍率 與 強制衰減量
         if is_in_target_zone(i):
             aggression = 5.0  # 再提升 Limiter 強度
@@ -158,28 +175,54 @@ def process_video(input_path, mode, vocal_vol, ref_ranges, target_ranges, progre
 
         instrumental = no_vocals + 1.5
         final_mix = vocals_processed.overlay(instrumental)
-        mixed_audio_path = temp_dir / "final_mix.mp3"
-        final_mix.export(mixed_audio_path, format="mp3", bitrate="320k")
+        
+        # [優化] 整體均值標準化: 提升整體響度至 -1dB，確保音量飽滿一致
+        final_mix = final_mix.normalize(headroom=1.0)
+        
+        mixed_audio_path = temp_dir / "final_mix.m4a"
+        # 使用最高音質輸出中間檔 (ipod format = m4a/aac)
+        final_mix.export(mixed_audio_path, format="ipod", bitrate="320k")
         progress_bar.progress(75)
 
-        status_text.text("🎬 合成影片中...")
-        video_clip = VideoFileClip(str(input_path))
-        new_audio = AudioFileClip(str(mixed_audio_path))
-        final_video = video_clip.without_audio().with_audio(new_audio)
-        # 優化輸出參數：preset='medium' 平衡速度與畫質，audio_bitrate='320k' 確保高音質
-        final_video.write_videofile(
-            str(output_path), 
-            codec="libx264", 
-            audio_codec="aac", 
-            audio_bitrate="320k",
-            preset="medium",
-            temp_audiofile=str(temp_dir/"temp.m4a"), 
-            remove_temp=True, 
-            logger=None
-        )
+        status_text.text("🎬 合成影片中 (Remuxing)...")
         
-        video_clip.close()
-        new_audio.close()
+        # [優化] 使用 FFmpeg 極速合成指令
+        # 1. -c:v copy: 影像不轉檔直接複製 (速度快10倍，畫質無損)
+        # 2. aecho: 加入微量混響 (0.8:0.88:30:0.3) 讓 AI 音色更自然
+        cmd_ffmpeg = [
+            'ffmpeg', '-y',
+            '-i', str(input_path),
+            '-i', str(mixed_audio_path),
+            '-filter_complex', '[1:a]aecho=0.8:0.88:30:0.3[reverb]',
+            '-map', '0:v',
+            '-map', '[reverb]',
+            '-c:v', 'copy',      
+            '-c:a', 'aac',
+            '-b:a', '256k',
+            '-shortest',
+            str(output_path)
+        ]
+        
+        # 執行 FFmpeg
+        process_ffmpeg = subprocess.run(cmd_ffmpeg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # 如果 Filter 失敗 (極少見)，Fallback 到簡單合成
+        if process_ffmpeg.returncode != 0:
+             print(f"FFmpeg Reverb Warning: {process_ffmpeg.stderr.decode()}")
+             cmd_fallback = [
+                'ffmpeg', '-y',
+                '-i', str(input_path),
+                '-i', str(mixed_audio_path),
+                '-map', '0:v',
+                '-map', '1:a',
+                '-c:v', 'copy', 
+                '-c:a', 'aac',
+                '-b:a', '256k',
+                '-shortest',
+                str(output_path)
+             ]
+             subprocess.run(cmd_fallback, check=True)
+
         progress_bar.progress(100)
         status_text.text("✅ 完成！")
         
