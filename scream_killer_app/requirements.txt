@@ -5,3 +5,4 @@ moviepy
 torch
 torchaudio
 audioop-lts
+torchcodec
