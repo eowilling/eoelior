@@ -2211,7 +2211,7 @@
             }
 
             // 儲存圖片到本地資料夾 (會儲存完整的帶文字版本)
-            async function saveImageToDirectory(dateKey, imageBase64) {
+            async function saveImageToDirectory(dateKey, imageBase64, isBackground = false) {
                 if (!storageDirHandle || !imageBase64) return;
 
                 try {
@@ -2221,7 +2221,7 @@
                         return;
                     }
 
-                    const fileName = `quote_${dateKey}.png`;
+                    const fileName = isBackground ? `quote_${dateKey}_bg.png` : `quote_${dateKey}.png`;
                     const fileHandle = await storageDirHandle.getFileHandle(fileName, { create: true });
                     const writable = await fileHandle.createWritable();
 
@@ -2252,8 +2252,16 @@
                         return null;
                     }
 
-                    const fileName = `quote_${dateKey}.png`;
-                    const fileHandle = await storageDirHandle.getFileHandle(fileName);
+                    // 優先嘗試載入純背景圖 (避免文字重疊)
+                    let fileName = `quote_${dateKey}_bg.png`;
+                    let fileHandle;
+                    try {
+                        fileHandle = await storageDirHandle.getFileHandle(fileName);
+                    } catch (e) {
+                        // 如果沒有背景圖，才嘗試載入一般圖 (可能是舊版產生的)
+                        fileName = `quote_${dateKey}.png`;
+                        fileHandle = await storageDirHandle.getFileHandle(fileName);
+                    }
                     const file = await fileHandle.getFile();
 
                     return new Promise((resolve) => {
@@ -2710,14 +2718,17 @@
                                     hasImage: true
                                 };
 
-                                // 同步保存到本地資料夾 (如果已連結，則生成含文字的完整版本)
+                                // 同步保存到本地資料夾 (同時保存背景圖與含文字的完整版本)
                                 if (storageDirHandle) {
                                     try {
+                                        // 1. 保存純背景圖 (供 App 載入使用，避免重疊)
+                                        await saveImageToDirectory(dateKey, imageToSave, true);
+
+                                        // 2. 生成並保存含文字的完整版本 (供用戶自行查看/分享)
                                         const fullImage = await generateFullQuoteImage(dateKey, quote.quote, imageToSave);
-                                        await saveImageToDirectory(dateKey, fullImage);
+                                        await saveImageToDirectory(dateKey, fullImage, false);
                                     } catch (e) {
-                                        console.warn('生成完整語錄圖片失敗，改為保存背景圖:', e);
-                                        await saveImageToDirectory(dateKey, imageToSave);
+                                        console.warn('保存到本地資料夾失敗:', e);
                                     }
                                 }
                             } catch (error) {
@@ -3100,7 +3111,7 @@
 
                 try {
                     // 等待渲染並捕捉
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await new Promise(resolve => setTimeout(resolve, 300));
                     const canvas = await html2canvas(temp, {
                         width: 1200,
                         height: 840,
@@ -3571,19 +3582,20 @@
                 document.body.appendChild(tempCard);
 
                 try {
-                    // 確保元素已添加到 DOM（等待一小段時間讓瀏覽器渲染）
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    // 確保元素已添加到 DOM
+                    // 調高等待時間，確保渲染完全 (特別是在開發者模式下切換日期時)
+                    await new Promise(resolve => setTimeout(resolve, 300));
 
-                    // 使用 html2canvas 轉換為圖片（提高 scale 以提升品質）
+                    // 使用 html2canvas 轉換為圖片
                     const canvas = await html2canvas(tempCard, {
                         width: 1200,
                         height: 840,
-                        scale: 2.5, // 提高 scale 從 1.5 到 2.5，增加圖片清晰度
+                        scale: 2.0, // 使用適中的 2.0 倍率
                         backgroundColor: null,
                         useCORS: true,
-                        logging: false,
+                        logging: true, // 開啟日誌以利追蹤錯誤
                         allowTaint: false,
-                        removeContainer: true // 自動移除臨時容器
+                        removeContainer: false // 手動移除以確保安全
                     });
 
                     // 轉換為 base64
@@ -3876,6 +3888,30 @@
             async function init() {
                 try {
                     console.log('🚀 開始初始化應用...');
+
+                    // 數據遷移與清理舊版「污染」圖片
+                    const APP_VERSION = '1.1.0';
+                    const currentVersion = localStorage.getItem('eveday_data_version');
+                    if (currentVersion !== APP_VERSION) {
+                        console.log('🔄 檢測到新版本或數據遷移需求，執行清理...');
+                        // 清理已解鎖日期的圖片快取，強制重新從本地或 IndexedDB 獲取/生成
+                        // 注意：這裡只清理 IndexedDB 的 images store
+                        try {
+                            const db = await new Promise((resolve, reject) => {
+                                const request = indexedDB.open('EvedayImageDB', 1);
+                                request.onerror = () => reject(request.error);
+                                request.onsuccess = () => resolve(request.result);
+                            });
+                            const transaction = db.transaction(['images'], 'readwrite');
+                            const store = transaction.objectStore('images');
+                            store.clear();
+                            console.log('✨ IndexedDB 圖片快取已清理 (版本更新)');
+                        } catch (e) {
+                            console.warn('清理 IndexedDB 失敗:', e);
+                        }
+                        localStorage.setItem('eveday_data_version', APP_VERSION);
+                    }
+
 
                     // 嘗試從 IndexedDB 恢復 Folder Handle
                     try {
