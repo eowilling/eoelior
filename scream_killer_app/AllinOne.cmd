@@ -228,7 +228,7 @@ def process_video(uploaded_file, mode, vocal_volume, ref_times, progress_bar, st
         status_text.text("🎬 合成影片中...")
         video_clip = VideoFileClip(str(input_path))
         new_audio = AudioFileClip(str(mixed_audio_path))
-        final_video = video_clip.with_audio(new_audio)
+        final_video = video_clip.without_audio().with_audio(new_audio)
         final_video.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile=str(temp_dir/"temp.m4a"), remove_temp=True, logger=None)
         
         video_clip.close()
