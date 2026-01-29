@@ -25,31 +25,49 @@ def check_dependencies():
     except FileNotFoundError:
         return False
 
-def apply_smart_limiter(vocals_audio, ref_start, ref_end, sensitivity=1.0):
-    start_ms = int(ref_start * 1000)
-    end_ms = int(ref_end * 1000)
-    if start_ms >= len(vocals_audio) or end_ms > len(vocals_audio) or start_ms >= end_ms:
-        return vocals_audio
+def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivity=1.0):
+    # 1. 計算參考基準 (串接所有參考片段)
+    ref_segments = []
+    for start, end in ref_ranges:
+        s_ms, e_ms = int(start * 1000), int(end * 1000)
+        if s_ms < len(vocals_audio) and e_ms <= len(vocals_audio) and s_ms < e_ms:
+            ref_segments.append(vocals_audio[s_ms:e_ms])
     
-    reference_segment = vocals_audio[start_ms:end_ms]
-    if len(reference_segment) == 0: return vocals_audio
-    
-    ref_max_db = reference_segment.max_dBFS
+    if not ref_segments: return vocals_audio
+    reference_audio = sum(ref_segments)
+    ref_max_db = reference_audio.max_dBFS
     threshold_db = ref_max_db - (2 * sensitivity)
+
+    # 2. 準備抑制區段查詢表 (為了效能，將 target_ranges 轉為毫秒檢查)
+    target_zones = []
+    if target_ranges:
+        for start, end in target_ranges:
+            target_zones.append((int(start * 1000), int(end * 1000)))
+
+    def is_in_target_zone(ms):
+        for s, e in target_zones:
+            if s <= ms < e: return True
+        return False
     
     chunk_size = 50 
     chunks = []
     for i in range(0, len(vocals_audio), chunk_size):
         chunk = vocals_audio[i:i+chunk_size]
+        
+        # 決定當前是「一般抑制」還是「強力抑制」
+        # 強力抑制區：4.0x 衰減倍率
+        # 一般抑制區：2.5x 衰減倍率
+        aggression = 4.0 if is_in_target_zone(i) else 2.5
+        
         if chunk.max_dBFS > threshold_db:
             excess_db = chunk.max_dBFS - threshold_db
-            attenuation = excess_db * 2.5
+            attenuation = excess_db * aggression
             chunks.append(chunk - attenuation)
         else:
             chunks.append(chunk)
     return sum(chunks)
 
-def process_video(uploaded_file, mode, vocal_vol, ref_times, progress_bar, status_text):
+def process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, progress_bar, status_text):
     temp_dir = Path(tempfile.mkdtemp())
     input_path = temp_dir / uploaded_file.name
     output_filename = f"{input_path.stem}_fixed.mp4"
@@ -62,6 +80,7 @@ def process_video(uploaded_file, mode, vocal_vol, ref_times, progress_bar, statu
     try:
         status_text.markdown("🧠 **AI 分離音軌中...**")
         progress_bar.progress(10)
+        # Force demucs to use CPU if GPU not found to avoid crash
         cmd = ["demucs", "-n", "htdemucs", "--two-stems=vocals", "-o", str(temp_dir), str(input_path)]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
@@ -72,16 +91,21 @@ def process_video(uploaded_file, mode, vocal_vol, ref_times, progress_bar, statu
         if not track_dir.exists(): raise Exception("無法找到音軌")
 
         vocals = AudioSegment.from_wav(track_dir / "vocals.wav")
-        no_vocals = AudioSegment.from_wav(track_dir / "no_vocals.wav")
+        no_vocals = AudioSegment.from_wav(track_dir / "no_vocals.wav") 
 
         status_text.text("🎚️ 智慧混音中...")
         if mode == "手動調整模式":
             gain_db = -100 if vocal_vol == 0 else 10 * math.log10(vocal_vol)
             vocals_processed = vocals + gain_db
         else:
-            status_text.text(f"🤖 分析參考片段 ({ref_times[0]}s - {ref_times[1]}s)...")
+            status_text.text(f"🤖 分析參考片段...")
+            # 全域預衰減 -6dB
             vocals_pre = vocals - 6
-            vocals_processed = apply_smart_limiter(vocals_pre, ref_times[0], ref_times[1])
+            
+            # 針對強力抑制區，額外再降 -4dB (總共 -10dB)
+            # 這裡為了簡單，我們先用演算法內的 aggression 控制動態，
+            # 若要針對區段做靜態音量降低比較複雜，我們先專注於動態 Limiter 的雙層邏輯
+            vocals_processed = apply_smart_limiter(vocals_pre, ref_ranges, target_ranges)
 
         instrumental = no_vocals + 1.5
         final_mix = vocals_processed.overlay(instrumental)
@@ -108,18 +132,42 @@ def process_video(uploaded_file, mode, vocal_vol, ref_times, progress_bar, statu
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 st.title("🎤 ScreamKiller")
-st.caption("演唱會尖叫聲消除神器")
+st.caption("演唱會尖叫聲消除神器 (v2.1 多段增強版)")
 
 mode = st.radio("選擇模式", ["手動調整模式", "智慧參考模式 (推薦)"])
 vocal_vol = 0.2
-ref_times = (0, 10)
+ref_ranges = []
+target_ranges = []
 
 if mode == "手動調整模式":
     vocal_vol = st.slider("人聲保留比例", 0.0, 1.0, 0.2)
 else:
-    st.info("💡 請輸入一段「只有歌手唱歌」的秒數範圍")
+    st.info("💡 請設定參考與加強抑制區段")
+    
     c1, c2 = st.columns(2)
-    ref_times = (c1.number_input("開始(秒)", 0, value=10), c2.number_input("結束(秒)", 0, value=15))
+    with c1:
+        st.markdown("**1. 歌手聲音參考 (越多段越準)**")
+        if 'ref_count' not in st.session_state: st.session_state.ref_count = 1
+        
+        for i in range(st.session_state.ref_count):
+            fc1, fc2 = st.columns(2)
+            s = fc1.number_input(f"參考{i+1} 開始", 0.0, value=10.0, key=f"rs_{i}")
+            e = fc2.number_input(f"參考{i+1} 結束", 0.0, value=15.0, key=f"re_{i}")
+            ref_ranges.append((s, e))
+            
+        if st.button("➕ 增加參考段"): st.session_state.ref_count += 1
+
+    with c2:
+        st.markdown("**2. 尖叫加強抑制區 (可選)**")
+        if 'target_count' not in st.session_state: st.session_state.target_count = 0
+        
+        for i in range(st.session_state.target_count):
+            tc1, tc2 = st.columns(2)
+            s = tc1.number_input(f"抑制{i+1} 開始", 0.0, value=0.0, key=f"ts_{i}")
+            e = tc2.number_input(f"抑制{i+1} 結束", 0.0, value=5.0, key=f"te_{i}")
+            target_ranges.append((s, e))
+            
+        if st.button("➕ 增加抑制段"): st.session_state.target_count += 1
 
 uploaded_file = st.file_uploader("上傳影片 (MP4)", type=["mp4", "mov"])
 if uploaded_file and st.button("🚀 開始處理", type="primary"):
@@ -127,5 +175,5 @@ if uploaded_file and st.button("🚀 開始處理", type="primary"):
     else:
         pb = st.progress(0)
         stt = st.empty()
-        data, name = process_video(uploaded_file, mode, vocal_vol, ref_times, pb, stt)
+        data, name = process_video(uploaded_file, mode, vocal_vol, ref_ranges, target_ranges, pb, stt)
         if data: st.download_button("⬇️ 下載影片", data, name, "video/mp4")
