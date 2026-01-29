@@ -141,6 +141,7 @@ import math
 from pathlib import Path
 from pydub import AudioSegment
 from moviepy import VideoFileClip, AudioFileClip
+from functools import reduce
 
 st.set_page_config(page_title="ScreamKiller", page_icon="🎤", layout="centered")
 
@@ -158,7 +159,6 @@ def check_dependencies():
     except FileNotFoundError:
         return False
 
-from functools import reduce
 
 def apply_smart_limiter(vocals_audio, ref_ranges, target_ranges=None, sensitivity=1.0):
     # 1. 計算參考基準 (串接所有參考片段)
