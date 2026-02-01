@@ -173,12 +173,15 @@ def run_analysis(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
             result = app_instance.analyze_single_stock(stock_code)
             
             if result['success']:
+                # 安全獲取報價資訊 (即使 quote 為 None)
+                quote_data = result.get('quote') or {}
+                
                 analysis_status['results'].append({
                     'code': result['code'],
                     'name': result['name'],
-                    'price': result['quote'].get('price'),
-                    'change_pct': result['quote'].get('change_pct'),
-                    'volume': result['quote'].get('volume'),
+                    'price': quote_data.get('price'),
+                    'change_pct': quote_data.get('change_pct'),
+                    'volume': quote_data.get('volume'),
                     'ma_status': result['ma_status'],
                     'technical': result['technical'],
                     'analysis': result['analysis']
