@@ -279,17 +279,47 @@ def run_analysis_worker(stock_list, use_auto_pick, auto_pick_method, auto_pick_c
         analysis_status['progress'] = 100
         analysis_status['running'] = False
         
-        # 發送成交通知
+        # 發送成交通知 (包含詳細結果)
         try:
             from src.notifier import NotificationManager
             notifier = NotificationManager()
             if analysis_status['results']:
+                report_content = f"✅ 分析完成！共 {len(analysis_status['results'])} 支股票\n\n"
+                
+                for r in analysis_status['results']:
+                    # 判斷漲跌符號
+                    change = r.get('change_pct', 0)
+                    arrow = "▲" if change > 0 else "▼" if change < 0 else "—"
+                    
+                    # 擷取分析結論 (如果是 Markdown 格式)
+                    analysis_text = r.get('analysis', '')
+                    summary = "無分析建議"
+                    if "句話結論" in analysis_text:
+                        # 嘗試找出「一句話結論」後面的內容
+                        lines = analysis_text.split('\n')
+                        for idx, line in enumerate(lines):
+                            if "句話結論" in line and idx + 1 < len(lines):
+                                # 找下一個非空行
+                                for k in range(idx + 1, min(idx + 5, len(lines))):
+                                    if lines[k].strip():
+                                        summary = lines[k].strip().replace('*', '') # 去掉 Markdown 星號
+                                        break
+                                break
+                    
+                    report_content += f"📊 {r['name']} ({r['code']})\n"
+                    report_content += f"   現價: {r['price']} | 漲跌: {arrow} {abs(change):.2f}%\n"
+                    report_content += f"   💡 結論: {summary}\n"
+                    report_content += "--------------------------------\n"
+                
+                report_content += "\n⚠️ 本報告僅供參考，不構成投資建議。"
+                
                 notifier.send_analysis_report(
-                    title="台股智能分析報告",
-                    content=f"✅ 分析完成！共 {len(analysis_status['results'])} 支股票"
+                    title="Gu4tw 智能分析報告",
+                    content=report_content
                 )
-        except Exception:
-            pass
+                logger.info("✅ 詳細通知已發送")
+        except Exception as e:
+            logger.warning(f"通知發送失敗: {e}")
             
     except Exception as e:
         logger.error(f"分析失敗: {e}")
