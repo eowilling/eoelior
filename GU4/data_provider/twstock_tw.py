@@ -31,47 +31,84 @@ class TwstockFetcher(BaseFetcher):
             raise ImportError("請安裝 twstock")
     
     def get_realtime_quote(self, stock_code: str) -> Optional[Dict[str, Any]]:
-        """獲取即時報價"""
+        """獲取即時報價 (直接請求 MIS API，避開 SSL 驗證問題)"""
         try:
-            # twstock 的 realtime 模組
-            stock = twstock.realtime.get(stock_code)
+            import requests
+            import time
+            import random
             
-            if not stock or not stock.get('success'):
-                return None
+            # 判斷上市(tse)或上櫃(otc)
+            # 簡單判斷: 6開頭通常是上櫃(不完全準確，但在沒有完整對照表下使用)
+            # 更好的方式是都試試看
+            
+            # 建立 timestamp
+            ts = int(time.time() * 1000)
+            
+            # 嘗試上市 (tse) 和 上櫃 (otc)
+            markets = ['tse', 'otc']
+            
+            for market in markets:
+                # 目標 URL (台灣證交所行情資訊網)
+                # ex_ch=tse_2330.tw
+                target = f"{market}_{stock_code}.tw"
+                url = f"https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch={target}&json=1&delay=0&_={ts}"
                 
-            info = stock.get('info', {})
-            real = stock.get('realtime', {})
+                try:
+                    # 關鍵：verify=False 避開 Render 上的 SSL Certificate Error
+                    response = requests.get(url, verify=False, timeout=5)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        msg_array = data.get('msgArray', [])
+                        
+                        if msg_array and len(msg_array) > 0:
+                            info = msg_array[0]
+                            
+                            # 檢查是否有有效價格
+                            price_str = info.get('z', '-') # 最近成交價
+                            if price_str == '-':
+                                price_str = info.get('o', '-') # 開盤價
+                                
+                            if price_str == '-':
+                                continue # 換下一個市場試試
+                                
+                            try:
+                                price = float(price_str)
+                            except ValueError:
+                                continue
+                                
+                            # 成功獲取！解析數據
+                            # y: 昨收, o: 開, h: 高, l: 低, v: 量
+                            prev_close = float(info.get('y', 0))
+                            open_p = float(info.get('o', price))
+                            high = float(info.get('h', price))
+                            low = float(info.get('l', price))
+                            volume = int(info.get('v', 0))
+                            
+                            change = price - prev_close
+                            change_pct = (change / prev_close * 100) if prev_close else 0
+                            
+                            name = info.get('n', stock_code)
+                            
+                            logger.info(f"Twstock (Direct) 成功獲取: {name} {price}")
+                            
+                            return {
+                                'code': stock_code,
+                                'name': name,
+                                'price': price,
+                                'change': round(change, 2),
+                                'change_pct': round(change_pct, 2), 
+                                'open': open_p,
+                                'high': high,
+                                'low': low,
+                                'volume': volume,
+                                'prev_close': prev_close
+                            }
+                except Exception as e:
+                    # 忽略單次連線錯誤，繼續嘗試
+                    continue
             
-            if not real.get('latest_trade_price'):
-                return None
-                
-            price = float(real['latest_trade_price'])
-            # 若沒有開盤價等資訊，退而求其次
-            open_p = float(real.get('open', price))
-            high = float(real.get('high', price))
-            low = float(real.get('low', price))
-            volume = int(real.get('accumulate_trade_volume', 0))
-            
-            # 昨收 (用來計算漲跌)
-            # twstock info 中通常有 'last_price' 或類似欄位，但 real['latest_trade_price'] - real['diff'] 可能不準
-            # 這裡簡單處理，如果不準也沒關係，主要是有價位
-            
-            # 嘗試解析昨收
-            # best_bid_price 等等無法直接推算
-            # 這裡我們信任 realtime 回傳的 success
-            
-            return {
-                'code': stock_code,
-                'name': info.get('name', stock_code),
-                'price': price,
-                'change': 0, # twstock 實時資料未直接提供漲跌額，需自行計算，暫時略過
-                'change_pct': 0, 
-                'open': open_p,
-                'high': high,
-                'low': low,
-                'volume': volume,
-                'prev_close': 0 # 暫時無法獲取
-            }
+            return None
             
         except Exception as e:
             logger.error(f"Twstock 獲取即時報價失敗: {e}")
