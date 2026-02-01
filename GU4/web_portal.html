@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GU4 台股智能分析系統 - 線上入口</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 40px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 { font-size: 48px; margin-bottom: 16px; font-weight: 700; }
+        .header p { font-size: 20px; opacity: 0.9; }
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .content { padding: 40px; }
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .feature-icon { font-size: 32px; }
+        .feature-text h3 { font-size: 18px; margin-bottom: 8px; color: #333; }
+        .feature-text p { color: #666; line-height: 1.6; }
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 40px;
+        }
+        .btn {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.6);
+        }
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .btn-secondary:hover { background: #f0f1ff; }
+        .status-message {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .footer {
+            padding: 30px 40px;
+            background: #f8f9fa;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 32px; }
+            .content { padding: 24px; }
+            .action-buttons { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 GU4</h1>
+            <p>台股智能分析系統</p>
+            <div class="badges">
+                <span class="badge">🤖 AI 投資建議</span>
+                <span class="badge">📈 技術指標</span>
+                <span class="badge">📰 新聞整合</span>
+                <span class="badge">🎯 智能選股</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-text">
+                        <h3>AI 深度分析</h3>
+                        <p>使用 Google Gemini 2.0 提供專業的投資建議、操作策略和風險提示</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-text">
+                        <h3>完整技術指標</h3>
+                        <p>MA、RSI、MACD、布林帶等專業指標，多空趨勢一目了然</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-text">
+                        <h3>智能選股</h3>
+                        <p>法人買超、漲幅排行、成交量排行、綜合評分四種方法</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="startLocalServer()">
+                    🚀 啟動本地版本
+                </button>
+                <a href="https://github.com/eowilling/eoelior/tree/main/GU4" target="_blank" class="btn btn-secondary">
+                    📥 下載源碼
+                </a>
+            </div>
+
+            <div id="statusMessage" class="status-message"></div>
+        </div>
+
+        <div class="footer">
+            <p>⚠️ 本系統僅供學習研究，不構成投資建議</p>
+            <p style="margin-top: 8px;">股市有風險，投資需謹慎</p>
+        </div>
+    </div>
+
+    <script>
+        function showMessage(message, type) {
+            const el = document.getElementById('statusMessage');
+            el.textContent = message;
+            el.className = 'status-message status-' + type;
+            el.style.display = 'block';
+        }
+
+        async function startLocalServer() {
+            showMessage('正在檢測本地伺服器...', 'info');
+            try {
+                const response = await fetch('http://localhost:5000/health', { method: 'GET', mode: 'cors' });
+                if (response.ok) {
+                    showMessage('✅ 伺服器已運行！正在跳轉...', 'success');
+                    setTimeout(() => { window.open('http://localhost:5000', '_blank'); }, 1000);
+                } else {
+                    throw new Error('伺服器未回應');
+                }
+            } catch (error) {
+                showMessage('❌ 本地伺服器未啟動', 'error');
+                setTimeout(() => {
+                    showMessage('💡 請先執行「啟動Web介面.bat」啟動伺服器', 'info');
+                }, 2000);
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch('http://localhost:5000/health', { method: 'GET', mode: 'cors' });
+                if (response.ok) { showMessage('✅ 偵測到本地伺服器正在運行！', 'success'); }
+            } catch (error) { }
+        });
+    </script>
+</body>
+</html>

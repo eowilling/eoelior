@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台股智能分析系統</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- 頭部 -->
+        <header class="header">
+            <h1>📊 台股智能分析系統</h1>
+            <div class="header-info">
+                <span id="current-time"></span>
+                <span class="status-badge" id="system-status">系統就緒</span>
+            </div>
+        </header>
+
+        <!-- 主要內容 -->
+        <div class="main-content">
+            <!-- 左側控制面板 -->
+            <aside class="sidebar">
+                <div class="card">
+                    <h2>⚙️ 分析設定</h2>
+                    
+                    <!-- 選股模式 -->
+                    <div class="form-group">
+                        <label>選股模式</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="stock_mode" value="manual" checked>
+                                手動指定
+                            </label>
+                            <label>
+                                <input type="radio" name="stock_mode" value="auto">
+                                智能選股
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 手動選股 -->
+                    <div id="manual-stock-panel" class="form-group">
+                        <label for="stock-list">股票代碼（逗號分隔）</label>
+                        <textarea id="stock-list" rows="3" placeholder="例如: 2330,2454,0050"></textarea>
+                        <small>輸入台股代碼，用逗號分隔</small>
+                    </div>
+
+                    <!-- 智能選股 -->
+                    <div id="auto-stock-panel" class="form-group" style="display: none;">
+                        <label for="auto-pick-method">選股方法</label>
+                        <select id="auto-pick-method">
+                            <option value="institutional">三大法人買超</option>
+                            <option value="gainers">漲幅排行</option>
+                            <option value="volume">成交量排行</option>
+                            <option value="mixed">綜合評分</option>
+                        </select>
+
+                        <label for="auto-pick-count" style="margin-top: 10px;">選股數量</label>
+                        <input type="number" id="auto-pick-count" min="1" max="20" value="5">
+
+                        <button class="btn btn-secondary" id="preview-stocks" style="margin-top: 10px;">
+                            預覽選股結果
+                        </button>
+                        <div id="preview-result" style="margin-top: 10px; display: none;"></div>
+                    </div>
+
+                    <!-- 進階設定 -->
+                    <details class="form-group" style="margin-top: 20px;">
+                        <summary>進階設定</summary>
+                        <div style="margin-top: 10px;">
+                            <label for="analysis-delay">分析延遲（秒）</label>
+                            <input type="number" id="analysis-delay" min="1" max="10" value="3">
+                            <small>避免 API 限流</small>
+                        </div>
+                    </details>
+
+                    <!-- 執行按鈕 -->
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="start-analysis">
+                            🚀 開始分析
+                        </button>
+                        <button class="btn btn-secondary" id="load-config">
+                            載入設定
+                        </button>
+                        <button class="btn btn-secondary" id="save-config">
+                            儲存設定
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 系統資訊 -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3>📌 系統資訊</h3>
+                    <div class="info-item">
+                        <span>通知渠道:</span>
+                        <span id="notification-status">載入中...</span>
+                    </div>
+                    <div class="info-item">
+                        <span>新聞來源:</span>
+                        <span>經濟日報 RSS</span>
+                    </div>
+                    <div class="info-item">
+                        <span>AI 模型:</span>
+                        <span>Gemini 2.0 Flash</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 右側結果顯示 -->
+            <main class="content">
+                <!-- 進度條 -->
+                <div id="progress-panel" style="display: none;" class="card">
+                    <h3>⏳ 分析進度</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span id="progress-text">準備中...</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                </div>
+
+                <!-- 分析結果 -->
+                <div id="results-panel">
+                    <div class="welcome-message">
+                        <h2>👋 歡迎使用台股智能分析系統</h2>
+                        <p>請在左側設定分析參數，然後點擊「開始分析」</p>
+                        <div class="features">
+                            <div class="feature-item">
+                                <span class="feature-icon">📈</span>
+                                <span>技術指標分析</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🤖</span>
+                                <span>AI 投資建議</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">📰</span>
+                                <span>即時新聞整合</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🎯</span>
+                                <span>智能選股</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
