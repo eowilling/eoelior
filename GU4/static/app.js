@@ -429,9 +429,8 @@ function renderResults(results) {
             .replace(/\n/g, '<br>');
 
         return `
-        return `
-            < div class="glass-panel rounded-2xl p-6 animate-fade-in" style = "animation-delay: ${idx * 0.1}s" >
-                < !--Header: Name, Price, and Changes-- >
+            <div class="glass-panel rounded-2xl p-6 animate-fade-in" style="animation-delay: ${idx * 0.1}s">
+                <!-- Header: Name, Price, and Changes -->
                 <div class="flex flex-col gap-4 mb-6 border-b border-slate-700/50 pb-4">
                     <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
                         <div class="flex items-baseline gap-3 flex-wrap">
@@ -468,14 +467,14 @@ function renderResults(results) {
                 <div class="analysis-content text-sm text-slate-300 leading-relaxed max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                     ${analysisHtml}
                 </div>
-            </div >
-            `;
+            </div>
+        `;
     }).join('');
 }
 
 function resetUIstate() {
     el.btnStartAnalysis.disabled = false;
-    el.btnStartAnalysis.innerHTML = `< i class="fa-solid fa-bolt" ></i > 開始 AI 分析`;
+    el.btnStartAnalysis.innerHTML = `<i class="fa-solid fa-bolt"></i> 開始 AI 分析`;
     el.progressText.textContent = '完成';
     setTimeout(() => el.progressContainer.classList.add('hidden'), 2000);
 }
@@ -507,10 +506,10 @@ function showToast(message, type = 'info') {
         colorClass = 'bg-red-900/80 border-red-700 text-red-100 shadow-glow-red';
     }
 
-    toast.className = `flex items - center gap - 3 px - 4 py - 3 rounded - lg border shadow - xl backdrop - blur - md transform transition - all duration - 300 translate - y - 10 opacity - 0 ${ colorClass } `;
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl backdrop-blur-md transform transition-all duration-300 translate-y-10 opacity-0 ${colorClass}`;
     toast.innerHTML = `
-            < i class="fa-solid ${icon}" ></i >
-                <span class="text-sm font-medium">${message}</span>
+            <i class="fa-solid ${icon}"></i>
+            <span class="text-sm font-medium">${message}</span>
         `;
 
     container.appendChild(toast);
@@ -566,10 +565,7 @@ function updateDot(id, active, colorClass = 'bg-green-500', shadowClass = 'shado
     }
 }
 
-function updateDate() {
-    const d = new Date();
-    el.todayDate.textContent = `${ d.getFullYear() } /${(d.getMonth() + 1).toString().padStart(2, '0')}/${ d.getDate().toString().padStart(2, '0') } `;
-}
+// function updateDate() removed - handled by checkSystemStatus
 
 function formatVolume(num) {
     if (!num) return '0';
