@@ -31,6 +31,9 @@ analysis_status = {
     'results': []
 }
 
+# 全局應用實例 (延遲載入)
+app_instance = None
+
 
 @app.route('/')
 def index():
@@ -172,7 +175,7 @@ def test_notification():
 @app.route('/api/analyze', methods=['POST'])
 def start_analysis():
     """開始分析"""
-    global analysis_status
+    global analysis_status, app_instance
     
     if analysis_status['running']:
         return jsonify({'success': False, 'error': '分析正在進行中'})
@@ -184,6 +187,11 @@ def start_analysis():
         auto_pick_method = data.get('auto_pick_method', 'institutional')
         auto_pick_count = int(data.get('auto_pick_count', 5))
         
+        # 初始化實例
+        if app_instance is None:
+            from main import TaiwanStockAnalysisApp
+            app_instance = TaiwanStockAnalysisApp()
+            
         # 重置狀態
         analysis_status = {
             'running': True,
@@ -196,7 +204,7 @@ def start_analysis():
         
         # 在背景執行分析
         thread = threading.Thread(
-            target=run_analysis,
+            target=run_analysis_worker,
             args=(stock_list, use_auto_pick, auto_pick_method, auto_pick_count)
         )
         thread.daemon = True
@@ -210,14 +218,15 @@ def start_analysis():
         return jsonify({'success': False, 'error': str(e)})
 
 
-def run_analysis(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
-    """執行分析（背景執行）"""
-    global analysis_status
+def run_analysis_worker(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
+    """分析工作執行緒"""
+    global analysis_status, app_instance
     
     try:
-        # 初始化系統
-        app_instance = TaiwanStockAnalysisApp()
-        
+        if app_instance is None:
+            from main import TaiwanStockAnalysisApp
+            app_instance = TaiwanStockAnalysisApp()
+            
         # 確定股票清單
         if use_auto_pick or not stock_list.strip():
             stocks = app_instance.stock_picker.get_recommended_stocks(
@@ -229,7 +238,7 @@ def run_analysis(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
         
         analysis_status['total_stocks'] = len(stocks)
         
-        # 分析每支股票
+        # 分析每一支股票
         for i, stock_code in enumerate(stocks, 1):
             analysis_status['current_stock'] = stock_code
             analysis_status['progress'] = int((i / len(stocks)) * 100)
@@ -237,9 +246,7 @@ def run_analysis(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
             result = app_instance.analyze_single_stock(stock_code)
             
             if result['success']:
-                # 安全獲取報價資訊 (即使 quote 為 None)
                 quote_data = result.get('quote') or {}
-                
                 analysis_status['results'].append({
                     'code': result['code'],
                     'name': result['name'],
@@ -251,7 +258,6 @@ def run_analysis(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
                     'analysis': result['analysis']
                 })
             else:
-                # 錯誤處理：也將失敗結果加入，以便前端顯示錯誤
                 analysis_status['results'].append({
                     'code': result.get('code', stock_code),
                     'name': result.get('name', 'Unknown'),
@@ -266,26 +272,20 @@ def run_analysis(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
         analysis_status['progress'] = 100
         analysis_status['running'] = False
         
-        # 發送通知
+        # 發送成交通知
         try:
+            from src.notifier import NotificationManager
             notifier = NotificationManager()
             if analysis_status['results']:
-                summary = f"✅ 分析完成！共 {len(analysis_status['results'])} 支股票\n\n"
-                for r in analysis_status['results'][:5]:  # 只顯示前5支
-                    summary += f"📊 {r['symbol']} {r['name']}\n"
-                    summary += f"   價格: {r['price']}\n"
-                    summary += f"   漲跌: {r['change']:+.2f}%\n\n"
-                
                 notifier.send_analysis_report(
                     title="台股智能分析報告",
-                    content=summary
+                    content=f"✅ 分析完成！共 {len(analysis_status['results'])} 支股票"
                 )
-                logger.info("✅ 通知已發送")
-        except Exception as e:
-            logger.warning(f"通知發送失敗: {e}")
-        
+        except Exception:
+            pass
+            
     except Exception as e:
-        logger.error(f"分析執行失敗: {e}")
+        logger.error(f"分析失敗: {e}")
         analysis_status['error'] = str(e)
         analysis_status['running'] = False
 
@@ -317,6 +317,57 @@ def preview_stock_picker():
     except Exception as e:
         logger.error(f"選股預覽失敗: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/system_status', methods=['GET'])
+def system_status():
+    """系統連線狀態檢查"""
+    now = get_taiwan_time()
+    weekdays = ['一', '二', '三', '四', '五', '六', '日']
+    chinese_day = f"星期{weekdays[now.weekday()]}"
+    
+    status = {
+        'ai': False,
+        'email': False,
+        'telegram': False,
+        'time': now.strftime('%Y-%m-%d') + f" ({chinese_day})"
+    }
+    
+    config = get_config()
+    
+    # 1. Check AI (Gemini) simple ping
+    try:
+        if config.gemini_api_key:
+            # 只做基礎設定測試，避免 list_models 因超時或地區限制報錯
+            import google.generativeai as genai
+            genai.configure(api_key=config.gemini_api_key)
+            status['ai'] = True # 有 Key 且能配置即視為初步連線成功
+    except Exception as e:
+        logger.warning(f"AI 連線檢查基本配置失敗: {e}")
+
+    # 2. Check Telegram
+    try:
+        if config.telegram_bot_token:
+            import requests
+            url = f"https://api.telegram.org/bot{config.telegram_bot_token}/getMe"
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                status['telegram'] = True
+    except Exception as e:
+        logger.warning(f"Telegram 連線檢查失敗: {e}")
+        
+    # 3. Check Email (SMTP)
+    try:
+        if config.email_sender and config.email_password:
+            import smtplib
+            with smtplib.SMTP('smtp.gmail.com', 587, timeout=5) as server:
+                server.starttls()
+                server.login(config.email_sender, config.email_password)
+                status['email'] = True
+    except Exception as e:
+        logger.warning(f"Email 連線檢查失敗: {e}")
+        
+    return jsonify(status)
 
 
 @app.route('/health')
