@@ -2,6 +2,7 @@ services:
   - type: web
     name: gu4-taiwan-stock-analysis
     env: python
+    runtime: python
     region: singapore
     plan: free
     buildCommand: pip install -r requirements.txt
