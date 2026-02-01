@@ -89,6 +89,15 @@ def update_config_api():
                 elif key == 'ANALYSIS_DELAY' and 'analysis_delay' in data:
                     new_lines.append(f"ANALYSIS_DELAY={data['analysis_delay']}\n")
                     updated.add('analysis_delay')
+                elif key == 'GEMINI_API_KEY' and 'gemini_api_key' in data:
+                    new_lines.append(f"GEMINI_API_KEY={data['gemini_api_key']}\n")
+                    updated.add('gemini_api_key')
+                elif key == 'TELEGRAM_BOT_TOKEN' and 'telegram_bot_token' in data:
+                    new_lines.append(f"TELEGRAM_BOT_TOKEN={data['telegram_bot_token']}\n")
+                    updated.add('telegram_bot_token')
+                elif key == 'TELEGRAM_CHAT_ID' and 'telegram_chat_id' in data:
+                    new_lines.append(f"TELEGRAM_CHAT_ID={data['telegram_chat_id']}\n")
+                    updated.add('telegram_chat_id')
                 else:
                     new_lines.append(line)
             else:
@@ -102,6 +111,37 @@ def update_config_api():
     
     except Exception as e:
         logger.error(f"更新配置失敗: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/search_stock', methods=['POST'])
+def search_stock():
+    """搜尋單檔股票"""
+    try:
+        data = request.json
+        stock_code = data.get('code')
+        
+        if not stock_code:
+            return jsonify({'success': False, 'error': '未提供股票代碼'})
+            
+        logger.info(f"搜尋股票: {stock_code}")
+        
+        # 使用 app_instance 的 fetcher_manager
+        # 注意：這裡假設 app_instance 已經在 run_analysis 以外被初始化
+        # 為了安全起見，我們在這裡檢查並初始化
+        global app_instance
+        if app_instance is None:
+            from main import TaiwanStockAnalysisApp
+            app_instance = TaiwanStockAnalysisApp()
+            
+        quote = app_instance.fetcher_manager.get_realtime_quote(stock_code)
+        
+        if quote:
+            return jsonify({'success': True, 'data': quote})
+        else:
+            return jsonify({'success': False, 'error': '找不到此股票或無法獲取數據'})
+            
+    except Exception as e:
+        logger.error(f"搜尋股票失敗: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 

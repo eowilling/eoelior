@@ -1,155 +1,277 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>台股智能分析系統</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>GU4 | 台股 AI 智能分析</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="container">
-        <!-- 頭部 -->
-        <header class="header">
-            <h1>📊 台股智能分析系統</h1>
-            <div class="header-info">
-                <span id="current-time"></span>
-                <span class="status-badge" id="system-status">系統就緒</span>
+
+<body class="p-4 md:p-8 min-h-screen">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header & Nav -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 bg-cyan-500/20 text-cyan-400 rounded-xl flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold brand-title tracking-wider">GU4 AI ANALYZER</h1>
+                    <div class="flex items-center gap-2 text-sm text-slate-400">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span id="systemStatus">系統正常運作中</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <!-- Search Bar -->
+                <div class="relative flex-grow md:w-64">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <input type="text" id="navbarSearch"
+                        class="w-full bg-slate-800/50 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                        placeholder="快速查詢 (e.g. 2330)">
+                </div>
+
+                <!-- Settings Button -->
+                <button id="btnSettings"
+                    class="p-2.5 rounded-lg bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-slate-700">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
         </header>
 
-        <!-- 主要內容 -->
-        <div class="main-content">
-            <!-- 左側控制面板 -->
-            <aside class="sidebar">
-                <div class="card">
-                    <h2>⚙️ 分析設定</h2>
-                    
-                    <!-- 選股模式 -->
-                    <div class="form-group">
-                        <label>選股模式</label>
-                        <div class="radio-group">
-                            <label>
-                                <input type="radio" name="stock_mode" value="manual" checked>
-                                手動指定
-                            </label>
-                            <label>
-                                <input type="radio" name="stock_mode" value="auto">
-                                智能選股
-                            </label>
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Sidebar: Controls -->
+            <div class="lg:col-span-4 space-y-6">
+
+                <!-- Analysis Control Card -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-cyan-400"></i> 分析設定
+                    </h2>
+
+                    <!-- Stock List Input (Interactive) -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">自選股票清單</label>
+                        <div class="flex gap-2 mb-2">
+                            <input type="text" id="addStockInput" placeholder="輸入代碼"
+                                class="flex-grow glass-input rounded-lg px-3 py-2 text-sm">
+                            <button id="btnAddStock"
+                                class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <!-- Stock Chips Container -->
+                        <div id="stockChips" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
+                            <!-- Chips injected by JS -->
                         </div>
                     </div>
 
-                    <!-- 手動選股 -->
-                    <div id="manual-stock-panel" class="form-group">
-                        <label for="stock-list">股票代碼（逗號分隔）</label>
-                        <textarea id="stock-list" rows="3" placeholder="例如: 2330,2454,0050"></textarea>
-                        <small>輸入台股代碼，用逗號分隔</small>
-                    </div>
+                    <!-- Auto Pick Toggle -->
+                    <div class="mb-5 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                        <label class="flex items-center justify-between cursor-pointer mb-3">
+                            <span class="text-slate-200 font-medium">✨ 智能選股</span>
+                            <div
+                                class="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" id="autoPickToggle"
+                                    class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-slate-500 border-4 appearance-none cursor-pointer" />
+                                <label for="autoPickToggle"
+                                    class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-900 cursor-pointer border border-slate-700"></label>
+                            </div>
+                        </label>
 
-                    <!-- 智能選股 -->
-                    <div id="auto-stock-panel" class="form-group" style="display: none;">
-                        <label for="auto-pick-method">選股方法</label>
-                        <select id="auto-pick-method">
-                            <option value="institutional">三大法人買超</option>
-                            <option value="gainers">漲幅排行</option>
-                            <option value="volume">成交量排行</option>
-                            <option value="mixed">綜合評分</option>
-                        </select>
-
-                        <label for="auto-pick-count" style="margin-top: 10px;">選股數量</label>
-                        <input type="number" id="auto-pick-count" min="1" max="20" value="5">
-
-                        <button class="btn btn-secondary" id="preview-stocks" style="margin-top: 10px;">
-                            預覽選股結果
-                        </button>
-                        <div id="preview-result" style="margin-top: 10px; display: none;"></div>
-                    </div>
-
-                    <!-- 進階設定 -->
-                    <details class="form-group" style="margin-top: 20px;">
-                        <summary>進階設定</summary>
-                        <div style="margin-top: 10px;">
-                            <label for="analysis-delay">分析延遲（秒）</label>
-                            <input type="number" id="analysis-delay" min="1" max="10" value="3">
-                            <small>避免 API 限流</small>
+                        <div id="autoPickConfig"
+                            class="hidden space-y-3 mt-3 pt-3 border-t border-slate-700/50 text-sm">
+                            <div>
+                                <label class="text-slate-400 block mb-1">選股策略</label>
+                                <select id="autoPickMethod" class="w-full glass-input rounded-lg px-3 py-2">
+                                    <option value="institutional">法人買超 (外資/投信)</option>
+                                    <option value="volume_surge">爆量長紅 (量增價漲)</option>
+                                    <option value="rebound">跌深反彈 (RSI低檔)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">選出數量: <span id="pickCountVal"
+                                        class="text-cyan-400">5</span></label>
+                                <input type="range" id="autoPickCount" min="1" max="10" value="5"
+                                    class="w-full accent-cyan-500">
+                            </div>
                         </div>
-                    </details>
+                    </div>
 
-                    <!-- 執行按鈕 -->
-                    <div class="button-group">
-                        <button class="btn btn-primary" id="start-analysis">
-                            🚀 開始分析
-                        </button>
-                        <button class="btn btn-secondary" id="load-config">
-                            載入設定
-                        </button>
-                        <button class="btn btn-secondary" id="save-config">
-                            儲存設定
-                        </button>
-                    </div>
-                </div>
+                    <!-- Action Button -->
+                    <button id="btnStartAnalysis"
+                        class="w-full py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl font-bold tracking-wide shadow-lg shadow-cyan-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> 開始 AI 分析
+                    </button>
 
-                <!-- 系統資訊 -->
-                <div class="card" style="margin-top: 20px;">
-                    <h3>📌 系統資訊</h3>
-                    <div class="info-item">
-                        <span>通知渠道:</span>
-                        <span id="notification-status">載入中...</span>
-                    </div>
-                    <div class="info-item">
-                        <span>新聞來源:</span>
-                        <span>經濟日報 RSS</span>
-                    </div>
-                    <div class="info-item">
-                        <span>AI 模型:</span>
-                        <span>Gemini 2.0 Flash</span>
-                    </div>
-                </div>
-            </aside>
-
-            <!-- 右側結果顯示 -->
-            <main class="content">
-                <!-- 進度條 -->
-                <div id="progress-panel" style="display: none;" class="card">
-                    <h3>⏳ 分析進度</h3>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill"></div>
-                    </div>
-                    <div class="progress-info">
-                        <span id="progress-text">準備中...</span>
-                        <span id="progress-percent">0%</span>
-                    </div>
-                </div>
-
-                <!-- 分析結果 -->
-                <div id="results-panel">
-                    <div class="welcome-message">
-                        <h2>👋 歡迎使用台股智能分析系統</h2>
-                        <p>請在左側設定分析參數，然後點擊「開始分析」</p>
-                        <div class="features">
-                            <div class="feature-item">
-                                <span class="feature-icon">📈</span>
-                                <span>技術指標分析</span>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-icon">🤖</span>
-                                <span>AI 投資建議</span>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-icon">📰</span>
-                                <span>即時新聞整合</span>
-                            </div>
-                            <div class="feature-item">
-                                <span class="feature-icon">🎯</span>
-                                <span>智能選股</span>
+                    <div id="progressContainer" class="hidden mt-4">
+                        <div class="flex justify-between text-xs text-slate-400 mb-1">
+                            <span id="progressText">準備中...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                            <div id="progressBar"
+                                class="bg-cyan-500 h-2 rounded-full transition-all duration-300 w-0 relative overflow-hidden">
+                                <div
+                                    class="absolute inset-0 bg-white/20 w-full animate-[shimmer_1s_infinite] -translate-x-full">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+
+                <!-- Market Info Card -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">系統資訊</h3>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">今日日期</span>
+                            <span class="text-slate-200 font-mono" id="todayDate">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">API 來源</span>
+                            <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-xs">Yahoo /
+                                FinMind</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">AI 模型</span>
+                            <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs">Gemini 2.0
+                                Flash</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content: Results -->
+            <div class="lg:col-span-8">
+                <!-- Welcome / Empty State -->
+                <div id="welcomeState"
+                    class="glass-panel rounded-2xl p-8 md:p-12 text-center h-full flex flex-col justify-center items-center min-h-[400px]">
+                    <div
+                        class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6 animate-pulse-glow">
+                        <i class="fa-solid fa-chart-line text-4xl text-cyan-400"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-white mb-3">準備好開始分析了嗎？</h2>
+                    <p class="text-slate-400 max-w-md mx-auto leading-relaxed">
+                        選擇您的自選股，或使用 AI 智能選股功能。<br>
+                        GU4 將協助您從技術面、籌碼面與新聞面進行全方位分析。
+                    </p>
+                </div>
+
+                <!-- Results Grid (Hidden by default) -->
+                <div id="resultsGrid" class="hidden space-y-6">
+                    <!-- Inserted by JS -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <!-- Modals -->
+
+    <!-- 1. Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="closeSettingsBackdrop"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6">
+            <div class="glass-panel rounded-2xl p-6 border border-slate-600 shadow-2xl bg-[#0f172a]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-white"><i class="fa-solid fa-key text-cyan-400 mr-2"></i> 系統設定
+                    </h3>
+                    <button id="closeSettingsBtn" class="text-slate-400 hover:text-white"><i
+                            class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Gemini API Key</label>
+                        <input type="password" id="inputGeminiKey"
+                            class="w-full glass-input rounded-lg px-3 py-2.5 text-sm font-mono placeholder-slate-600"
+                            placeholder="AIza...">
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-700/50">
+                        <p class="text-xs text-slate-500 mb-3 uppercase tracking-wider font-bold">Telegram 通知 (選填)</p>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Bot Token</label>
+                                <input type="password" id="inputTgToken"
+                                    class="w-full glass-input rounded-lg px-3 py-2 text-sm font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Chat ID</label>
+                                <input type="text" id="inputTgChatId"
+                                    class="w-full glass-input rounded-lg px-3 py-2 text-sm font-mono">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex gap-3">
+                    <button id="btnSaveConfig"
+                        class="flex-grow py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-medium transition-colors">儲存設定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Search Result Modal -->
+    <div id="searchModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="closeSearchBackdrop"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-4">
+            <div class="glass-panel rounded-2xl p-0 overflow-hidden border border-slate-600 shadow-2xl bg-[#0f172a]">
+                <div class="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass text-cyan-400"></i> 快搜結果
+                    </h3>
+                    <button id="closeSearchBtn" class="text-slate-400 hover:text-white"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div id="searchResultContent" class="p-6 text-center">
+                    <div
+                        class="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Error Toast -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script type="module" src="static/app.js"></script>
+    <style>
+        /* Toggle Switch Custom CSS */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #06b6d4;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #06b6d4;
+        }
+
+        .toggle-checkbox {
+            right: 0;
+            transition: all 0.2s ease-in-out;
+            right: 50%;
+        }
+
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+    </style>
 </body>
+
 </html>
