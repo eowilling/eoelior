@@ -19,6 +19,7 @@ from src.config import get_config
 from src.utils import setup_logger, get_taiwan_time, format_percentage
 from data_provider import DataFetcherManager, YFinanceTaiwanFetcher
 from data_provider.finmind_tw import FinMindTaiwanFetcher
+from data_provider.twstock_tw import TwstockFetcher
 from src.analyzer import StockAnalyzer
 from src.news_fetcher import NewsFetcher
 from src.stock_picker import StockPicker
@@ -57,6 +58,9 @@ class TaiwanStockAnalysisApp:
         if self.config.finmind_token:
             self.fetcher_manager.add_fetcher(FinMindTaiwanFetcher(token=self.config.finmind_token))
             logger.info("已啟用 FinMind 數據源")
+            
+        # 添加 Twstock 作為最後備援
+        self.fetcher_manager.add_fetcher(TwstockFetcher())
         
         logger.info(f"可用數據源: {', '.join(self.fetcher_manager.available_fetchers)}")
         
@@ -103,16 +107,29 @@ class TaiwanStockAnalysisApp:
             
             logger.info(f"[{stock_code}] 獲取 {len(df)} 天數據 (來源: {source})")
             
-            # 2. 獲取即時報價
+            # 2. 獲取即時報價 (嘗試多種來源)
             logger.info(f"[{stock_code}] 獲取即時報價...")
             quote = self.fetcher_manager.get_realtime_quote(stock_code)
-            
-            if not quote:
-                logger.warning(f"[{stock_code}] 無法獲取即時報價，使用最新收盤價")
             
             # 3. 準備技術數據
             latest_row = df.iloc[-1]
             latest_data = latest_row.to_dict()
+
+            if not quote:
+                logger.warning(f"[{stock_code}] 無法獲取即時報價，切換為使用最新收盤價 (Fallback)")
+                # 使用歷史數據最後一筆作為 fallback
+                quote = {
+                    'code': stock_code,
+                    'name': stock_code, # 暫時用代碼代替
+                    'price': latest_data.get('close'),
+                    'change': 0,
+                    'change_pct': latest_data.get('pct_chg', 0),
+                    'open': latest_data.get('open'),
+                    'high': latest_data.get('high'),
+                    'low': latest_data.get('low'),
+                    'volume': latest_data.get('volume'),
+                    'prev_close': latest_data.get('close') # 假設
+                }
             
             # 檢查均線狀態
             ma_status = self._analyze_ma_status(latest_data)
