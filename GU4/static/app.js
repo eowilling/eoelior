@@ -284,6 +284,14 @@ async function loadConfig() {
                 el.pickCountVal.textContent = cfg.auto_pick_count;
             }
         }
+
+        // Load Telegram config from LocalStorage (Client-side persistence)
+        const localToken = localStorage.getItem('gu4_tg_token');
+        const localChatId = localStorage.getItem('gu4_tg_chat_id');
+
+        if (localToken) el.inputTgToken.value = localToken;
+        if (localChatId) el.inputTgChatId.value = localChatId;
+
     } catch (e) {
         console.error("Config load failed", e);
     }
@@ -298,6 +306,10 @@ async function saveConfig() {
         telegram_bot_token: el.inputTgToken.value.trim(),
         telegram_chat_id: el.inputTgChatId.value.trim()
     };
+
+    // Save to LocalStorage
+    localStorage.setItem('gu4_tg_token', payload.telegram_bot_token);
+    localStorage.setItem('gu4_tg_chat_id', payload.telegram_chat_id);
 
     if (!payload.gemini_api_key) delete payload.gemini_api_key;
     if (!payload.telegram_bot_token) delete payload.telegram_bot_token;
