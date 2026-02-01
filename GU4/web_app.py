@@ -291,24 +291,12 @@ def run_analysis_worker(stock_list, use_auto_pick, auto_pick_method, auto_pick_c
                     change = r.get('change_pct', 0)
                     arrow = "▲" if change > 0 else "▼" if change < 0 else "—"
                     
-                    # 擷取分析結論 (如果是 Markdown 格式)
-                    analysis_text = r.get('analysis', '')
-                    summary = "無分析建議"
-                    if "句話結論" in analysis_text:
-                        # 嘗試找出「一句話結論」後面的內容
-                        lines = analysis_text.split('\n')
-                        for idx, line in enumerate(lines):
-                            if "句話結論" in line and idx + 1 < len(lines):
-                                # 找下一個非空行
-                                for k in range(idx + 1, min(idx + 5, len(lines))):
-                                    if lines[k].strip():
-                                        summary = lines[k].strip().replace('*', '') # 去掉 Markdown 星號
-                                        break
-                                break
+                    # 完整的分析建議
+                    analysis_text = r.get('analysis', '暫無結果').strip()
                     
-                    report_content += f"📊 {r['name']} ({r['code']})\n"
-                    report_content += f"   現價: {r['price']} | 漲跌: {arrow} {abs(change):.2f}%\n"
-                    report_content += f"   💡 結論: {summary}\n"
+                    report_content += f"📊 *{r['name']} ({r['code']})*\n"
+                    report_content += f"現價: {r['price']} | 漲跌: {arrow} {abs(change):.2f}%\n"
+                    report_content += f"📝 *分析建議*:\n{analysis_text}\n"
                     report_content += "--------------------------------\n"
                 
                 report_content += "\n⚠️ 本報告僅供參考，不構成投資建議。"
@@ -317,7 +305,7 @@ def run_analysis_worker(stock_list, use_auto_pick, auto_pick_method, auto_pick_c
                     title="Gu4tw 智能分析報告",
                     content=report_content
                 )
-                logger.info("✅ 詳細通知已發送")
+                logger.info("✅ 詳細分析報告已發送")
         except Exception as e:
             logger.warning(f"通知發送失敗: {e}")
             

@@ -24,7 +24,7 @@ class TwstockFetcher(BaseFetcher):
     優先級: 3 (備用)
     """
     name = "Twstock"
-    priority = 3
+    priority = 1
     
     def __init__(self):
         if twstock is None:
