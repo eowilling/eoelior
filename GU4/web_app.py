@@ -397,12 +397,20 @@ def system_status():
     try:
         if config.email_sender and config.email_password:
             import smtplib
-            with smtplib.SMTP('smtp.gmail.com', 587, timeout=5) as server:
-                server.starttls()
-                server.login(config.email_sender, config.email_password)
-                status['email'] = True
-    except Exception as e:
-        logger.warning(f"Email 連線檢查失敗: {e}")
+            # 先嘗試 587 (TLS)，如果失敗 (Render 常用環境可能封鎖) 則嘗試 465 (SSL)
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587, timeout=3) as server:
+                    server.starttls()
+                    server.login(config.email_sender, config.email_password)
+                    status['email'] = True
+            except Exception:
+                # Fallback to 465
+                try:
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=3) as server:
+                        server.login(config.email_sender, config.email_password)
+                        status['email'] = True
+                except Exception as e2:
+                    logger.warning(f"Email 連線檢查(587/465)皆失敗: {e2}")
         
     return jsonify(status)
 
