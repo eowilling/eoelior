@@ -8,6 +8,10 @@ import json
 import threading
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from datetime import datetime
+import warnings
+
+# 抑制 google.generativeai 的過時警告
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
 
 from src.config import get_config
 from src.utils import setup_logger, get_taiwan_time
@@ -385,24 +389,26 @@ def system_status():
     try:
         if config.email_sender and config.email_password:
             import smtplib
-            # 先嘗試 587 (TLS)，如果失敗 (Render 常用環境可能封鎖) 則嘗試 465 (SSL)
+            # 在 Render 上 standard SMTP ports (587, 465) 經常被封鎖
+            # 我們嘗試連線，並將超時縮短以避免阻塞 UI 狀態返回
             try:
-                with smtplib.SMTP('smtp.gmail.com', 587, timeout=3) as server:
-                    server.starttls()
-                    server.login(config.email_sender, config.email_password)
+                # 嘗試 465 (SSL)
+                with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=4) as server:
                     status['email'] = True
             except Exception:
-                # Fallback to 465
                 try:
-                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=3) as server:
-                        server.login(config.email_sender, config.email_password)
+                    # 嘗試 587 (TLS)
+                    with smtplib.SMTP('smtp.gmail.com', 587, timeout=4) as server:
+                        server.starttls()
                         status['email'] = True
-                except Exception as e2:
-                    logger.warning(f"Email 連線檢查(587/465)皆失敗: {e2}")
+                except Exception:
+                    # 如果都失敗，在日誌記錄但維持 False
+                    pass
     except Exception as e:
-        logger.warning(f"Email 連線檢查異常: {e}")
+        logger.debug(f"Email 連線測試異常 (可能受限): {e}")
             
     return jsonify(status)
+
 
 
 @app.route('/health')

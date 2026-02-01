@@ -8,6 +8,10 @@ import time
 
 from src.config import get_config
 from src.utils import format_number, format_percentage
+import warnings
+
+# 抑制 google.generativeai 的過時警告
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.generativeai")
 
 try:
     import google.generativeai as genai
