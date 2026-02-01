@@ -347,6 +347,8 @@ async function startAnalysis() {
             body: JSON.stringify({
                 stock_list: currentList,
                 use_auto_pick: useAutoPick,
+                telegram_bot_token: el.inputTgToken.value,
+                telegram_chat_id: el.inputTgChatId.value,
                 auto_pick_method: el.autoPickMethod.value,
                 auto_pick_count: parseInt(el.autoPickCount.value)
             })
@@ -511,12 +513,11 @@ async function checkSystemStatus() {
         if (dateEl) dateEl.textContent = data.time || '-';
         updateDot('statusAI', data.ai, 'bg-green-500', 'shadow-glow-green');
         updateDot('statusTG', data.telegram, 'bg-green-500', 'shadow-glow-green');
-        updateDot('statusMail', data.email, 'bg-green-500', 'shadow-glow-green');
+        // Email removed as per user request
     } catch (e) {
         console.error('Status check failed', e);
         updateDot('statusAI', false);
         updateDot('statusTG', false);
-        updateDot('statusMail', false);
     }
 }
 

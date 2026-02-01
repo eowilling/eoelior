@@ -195,6 +195,10 @@ def start_analysis():
         data = request.json
         stock_list = data.get('stock_list', '')
         use_auto_pick = data.get('use_auto_pick', False)
+        # 用戶提供的動態 Telegram 設定
+        user_tg_token = data.get('telegram_bot_token')
+        user_tg_chat_id = data.get('telegram_chat_id')
+        
         auto_pick_method = data.get('auto_pick_method', 'institutional')
         auto_pick_count = int(data.get('auto_pick_count', 5))
         
@@ -286,7 +290,11 @@ def run_analysis_worker(stock_list, use_auto_pick, auto_pick_method, auto_pick_c
         # 發送成交通知 (包含詳細結果)
         try:
             from src.notifier import NotificationManager
-            notifier = NotificationManager()
+            # 優先使用用戶提供的設定，若無則使用系統設定
+            notifier = NotificationManager(
+                token=user_tg_token, 
+                chat_id=user_tg_chat_id
+            )
             if analysis_status['results']:
                 report_content = f"✅ 分析完成！共 {len(analysis_status['results'])} 支股票\n\n"
                 
@@ -357,7 +365,6 @@ def system_status():
     
     status = {
         'ai': False,
-        'email': False,
         'telegram': False,
         'time': now.strftime('%Y-%m-%d') + f" ({chinese_day})"
     }
@@ -370,6 +377,7 @@ def system_status():
             # 只做基礎設定測試，避免 list_models 因超時或地區限制報錯
             import google.generativeai as genai
             genai.configure(api_key=config.gemini_api_key)
+            status['ai'] = True # 有 Key 且能配置即視為初步連線成功
             status['ai'] = True # 有 Key 且能配置即視為初步連線成功
     except Exception as e:
         logger.warning(f"AI 連線檢查基本配置失敗: {e}")
@@ -385,28 +393,10 @@ def system_status():
     except Exception as e:
         logger.warning(f"Telegram 連線檢查失敗: {e}")
         
-    # 3. Check Email (SMTP)
-    try:
-        if config.email_sender and config.email_password:
-            import smtplib
-            # 在 Render 上 standard SMTP ports (587, 465) 經常被封鎖
-            # 我們嘗試連線，並將超時縮短以避免阻塞 UI 狀態返回
-            try:
-                # 嘗試 465 (SSL)
-                with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=4) as server:
-                    status['email'] = True
-            except Exception:
-                try:
-                    # 嘗試 587 (TLS)
-                    with smtplib.SMTP('smtp.gmail.com', 587, timeout=4) as server:
-                        server.starttls()
-                        status['email'] = True
-                except Exception:
-                    # 如果都失敗，在日誌記錄但維持 False
-                    pass
-    except Exception as e:
-        logger.debug(f"Email 連線測試異常 (可能受限): {e}")
             
+    except Exception as e:
+        logger.warning(f"Telegram 連線檢查失敗: {e}")
+        
     return jsonify(status)
 
 
