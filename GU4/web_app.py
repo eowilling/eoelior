@@ -183,6 +183,18 @@ def run_analysis(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
                     'technical': result['technical'],
                     'analysis': result['analysis']
                 })
+            else:
+                # 錯誤處理：也將失敗結果加入，以便前端顯示錯誤
+                analysis_status['results'].append({
+                    'code': result.get('code', stock_code),
+                    'name': result.get('name', 'Unknown'),
+                    'price': 0,
+                    'change_pct': 0,
+                    'volume': 0,
+                    'ma_status': {},
+                    'technical': {},
+                    'analysis': f"❌ 分析失敗: {result.get('error', '未知錯誤')}"
+                })
         
         analysis_status['progress'] = 100
         analysis_status['running'] = False
