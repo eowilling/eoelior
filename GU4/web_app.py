@@ -144,6 +144,30 @@ def search_stock():
         logger.error(f"搜尋股票失敗: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/api/test_notification', methods=['POST'])
+def test_notification():
+    """測試通知"""
+    try:
+        from src.notifier import NotificationManager
+        notifier = NotificationManager()
+        
+        # 簡單消息
+        msg = "🔔 這是一則 GU4 系統測試通知。\n如果您收到此訊息，代表您的 Telegram 設定正確！"
+        
+        results = notifier.send_simple_message(msg)
+        
+        # 檢查結果
+        success = results.get('telegram', False) or results.get('email', False)
+        
+        if success:
+            return jsonify({'success': True, 'message': '測試訊息發送成功'})
+        else:
+            return jsonify({'success': False, 'error': '發送失敗，請檢查 Token 與 Chat ID'})
+            
+    except Exception as e:
+        logger.error(f"測試通知失敗: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
 
 @app.route('/api/analyze', methods=['POST'])
 def start_analysis():
