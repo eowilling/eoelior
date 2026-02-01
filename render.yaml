@@ -5,6 +5,7 @@ services:
     runtime: python
     region: singapore
     plan: free
+    rootDir: GU4
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 web_app:app
     envVars:
