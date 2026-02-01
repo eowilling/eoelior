@@ -18,6 +18,7 @@ if sys.platform == 'win32':
 from src.config import get_config
 from src.utils import setup_logger, get_taiwan_time, format_percentage
 from data_provider import DataFetcherManager, YFinanceTaiwanFetcher
+from data_provider.finmind_tw import FinMindTaiwanFetcher
 from src.analyzer import StockAnalyzer
 from src.news_fetcher import NewsFetcher
 from src.stock_picker import StockPicker
@@ -51,6 +52,12 @@ class TaiwanStockAnalysisApp:
         logger.info("初始化數據源...")
         self.fetcher_manager = DataFetcherManager()
         self.fetcher_manager.add_fetcher(YFinanceTaiwanFetcher())
+        
+        # 添加 FinMind 作為備用數據源 (如果有 Token)
+        if self.config.finmind_token:
+            self.fetcher_manager.add_fetcher(FinMindTaiwanFetcher(token=self.config.finmind_token))
+            logger.info("已啟用 FinMind 數據源")
+        
         logger.info(f"可用數據源: {', '.join(self.fetcher_manager.available_fetchers)}")
         
         # 初始化 AI 分析器
