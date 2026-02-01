@@ -8,7 +8,10 @@ from typing import List, Optional
 from dotenv import load_dotenv
 
 # 載入環境變量
-load_dotenv()
+# 載入環境變量
+# 確保能從正確位置讀取 .env (解決在不同目錄執行 runtime 路徑問題)
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 
 class Config:
