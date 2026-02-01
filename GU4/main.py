@@ -97,6 +97,15 @@ class TaiwanStockAnalysisApp:
             logger.info(f"[{stock_code}] 獲取歷史數據...")
             df, source = self.fetcher_manager.get_daily_data(stock_code, days=60)
             
+            # 優先獲取繁體中文名稱 (不論數據源返回什麼)
+            stock_name = stock_code
+            try:
+                import twstock
+                if stock_code in twstock.codes:
+                    stock_name = twstock.codes[stock_code].name
+            except:
+                pass
+            
             if df is None or df.empty:
                 logger.error(f"[{stock_code}] 無法獲取數據")
                 return {
