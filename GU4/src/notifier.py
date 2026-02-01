@@ -18,9 +18,19 @@ logger = logging.getLogger(__name__)
 class NotificationManager:
     """統一通知管理器"""
     
-    def __init__(self):
+    def __init__(self, token: Optional[str] = None, chat_id: Optional[str] = None):
         self.config = get_config()
         self.channels = self.config.get_notification_channels()
+        
+        # 允許動態覆蓋 (優先使用傳入的 token/id)
+        self.dynamic_token = token
+        self.dynamic_chat_id = chat_id
+        
+        # 如果使用者提供了 token/id，即使系統配置沒開 Telegram，也強制啟用
+        if self.dynamic_token and self.dynamic_chat_id:
+            if 'Telegram' not in self.channels:
+                self.channels.append('Telegram')
+                
         logger.info(f"通知渠道: {', '.join(self.channels) if self.channels else '無'}")
     
     def send_analysis_report(
