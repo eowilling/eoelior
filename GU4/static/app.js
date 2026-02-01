@@ -78,6 +78,25 @@ function initEventListeners() {
     el.closeSettingsBackdrop.addEventListener('click', () => toggleModal(el.settingsModal, false));
     el.btnSaveConfig.addEventListener('click', saveConfig);
 
+    // Test Notification
+    const btnTestNotify = document.getElementById('btnTestNotify');
+    if (btnTestNotify) {
+        btnTestNotify.addEventListener('click', async () => {
+            btnTestNotify.disabled = true;
+            btnTestNotify.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            try {
+                const res = await fetch('/api/test_notification', { method: 'POST' });
+                const json = await res.json();
+                if (json.success) showToast('測試訊息已發送', 'success');
+                else showToast(json.error || '發送失敗', 'error');
+            } catch (e) { showToast('連線錯誤', 'error'); }
+            finally {
+                btnTestNotify.disabled = false;
+                btnTestNotify.innerHTML = '<i class="fa-regular fa-bell"></i> 測試';
+            }
+        });
+    }
+
     // Search Result Modal
     el.closeSearchBtn.addEventListener('click', () => toggleModal(el.searchModal, false));
     el.closeSearchBackdrop.addEventListener('click', () => toggleModal(el.searchModal, false));
