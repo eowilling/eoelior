@@ -120,11 +120,16 @@ class FinMindTaiwanFetcher(BaseFetcher):
         Note: FinMind 免費版即時報價延遲較大，建議用於補充
         """
         try:
+        try:
+            # 修正：遇到假日抓不到當天資料，改為抓取最近 5 天資料，取最後一筆
+            start_date = (datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d')
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            
             params = {
                 'dataset': 'TaiwanStockPrice',
                 'data_id': stock_code,
-                'start_date': datetime.now().strftime('%Y-%m-%d'),
-                'end_date': datetime.now().strftime('%Y-%m-%d'),
+                'start_date': start_date,
+                'end_date': end_date,
             }
             
             if self.token:
@@ -141,6 +146,7 @@ class FinMindTaiwanFetcher(BaseFetcher):
             if not records:
                 return None
             
+            # 取最後一筆 (也就是最新的)
             latest = records[-1]
             
             # 標準化報價格式
