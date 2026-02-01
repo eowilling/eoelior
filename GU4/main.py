@@ -117,18 +117,39 @@ class TaiwanStockAnalysisApp:
 
             if not quote:
                 logger.warning(f"[{stock_code}] 無法獲取即時報價，切換為使用最新收盤價 (Fallback)")
+                
+                # 嘗試獲取名稱 (如果 twstock 有安裝)
+                stock_name = stock_code
+                try:
+                    import twstock
+                    if stock_code in twstock.codes:
+                        stock_name = twstock.codes[stock_code].name
+                except:
+                    pass
+
+                # 計算漲跌幅 (如果有至少兩天數據)
+                change = 0
+                change_pct = 0
+                if len(df) >= 2:
+                    prev_close = df.iloc[-2]['close']
+                    curr_close = df.iloc[-1]['close']
+                    change = curr_close - prev_close
+                    change_pct = (change / prev_close) * 100
+                elif len(df) == 1:
+                    change_pct = df.iloc[-1].get('pct_chg', 0)
+
                 # 使用歷史數據最後一筆作為 fallback
                 quote = {
                     'code': stock_code,
-                    'name': stock_code, # 暫時用代碼代替
+                    'name': stock_name,
                     'price': latest_data.get('close'),
-                    'change': 0,
-                    'change_pct': latest_data.get('pct_chg', 0),
+                    'change': round(change, 2),
+                    'change_pct': round(change_pct, 2),
                     'open': latest_data.get('open'),
                     'high': latest_data.get('high'),
                     'low': latest_data.get('low'),
                     'volume': latest_data.get('volume'),
-                    'prev_close': latest_data.get('close') # 假設
+                    'prev_close': latest_data.get('close') - change  # 回推昨收
                 }
             
             # 檢查均線狀態

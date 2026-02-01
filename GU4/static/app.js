@@ -10,6 +10,7 @@ let analysisInterval = null;
 const el = {
     // Nav & Search
     navbarSearch: document.getElementById('navbarSearch'),
+    btnNavbarSearch: document.getElementById('btnNavbarSearch'),
     btnSettings: document.getElementById('btnSettings'),
 
     // Settings Modal
@@ -51,7 +52,7 @@ const el = {
     resultsGrid: document.getElementById('resultsGrid'),
 
     // System Info
-    todayDate: document.getElementById('todayDate'),
+    // todayDate: document.getElementById('todayDate'), // Removed
     systemStatus: document.getElementById('systemStatus'),
     toastContainer: document.getElementById('toastContainer')
 };
@@ -61,15 +62,25 @@ const el = {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
-    updateDate();
+    // updateDate(); // Removed: Handled by checkSystemStatus
     renderStockChips();
     loadConfig();
+    checkSystemStatus();
+
+    // Polling Analysis Status (Every 3s)
+    setInterval(pollAnalysisStatus, 3000);
+    // Polling System Status (Every 60s)
+    setInterval(checkSystemStatus, 60000);
 });
 
 function initEventListeners() {
     // Search
     el.navbarSearch.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleSearch(e.target.value);
+    });
+
+    el.btnNavbarSearch.addEventListener('click', () => {
+        handleSearch(el.navbarSearch.value);
     });
 
     // Settings Modal
@@ -195,8 +206,7 @@ async function handleSearch(query) {
                 <div class="text-left w-full">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h4 class="text-2xl font-bold text-white">${data.name}</h4>
-                            <span class="text-slate-400 font-mono">${data.code}</span>
+                            <h4 class="text-2xl font-bold text-white">${data.name} <span class="text-lg text-slate-400 font-mono ml-1">${data.code}</span></h4>
                         </div>
                         <div class="text-right">
                             <div class="text-3xl font-bold ${colorClass}">${data.price}</div>
@@ -206,18 +216,22 @@ async function handleSearch(query) {
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-3 gap-2 text-center text-sm mb-4">
-                        <div class="bg-slate-800 p-2 rounded">
-                            <div class="text-xs text-slate-500">開盤</div>
-                            <div class="text-white">${data.open}</div>
+                    <div class="grid grid-cols-2 gap-3 text-center text-sm mb-4">
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                            <div class="text-xs text-slate-500 mb-1">開盤</div>
+                            <div class="text-white font-mono">${data.open}</div>
                         </div>
-                        <div class="bg-slate-800 p-2 rounded">
-                            <div class="text-xs text-slate-500">最高</div>
-                            <div class="text-white">${data.high}</div>
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                            <div class="text-xs text-slate-500 mb-1">成交量</div>
+                            <div class="text-white font-mono">${formatVolume(data.volume)}</div>
                         </div>
-                        <div class="bg-slate-800 p-2 rounded">
-                            <div class="text-xs text-slate-500">最低</div>
-                            <div class="text-white">${data.low}</div>
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                            <div class="text-xs text-slate-500 mb-1">最高</div>
+                            <div class="text-white font-mono text-red-400">${data.high}</div>
+                        </div>
+                        <div class="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+                            <div class="text-xs text-slate-500 mb-1">最低</div>
+                            <div class="text-white font-mono text-green-400">${data.low}</div>
                         </div>
                     </div>
                     
@@ -435,7 +449,7 @@ function renderResults(results) {
                                 ${r.change_pct ? `${arrow} ${Math.abs(r.change_pct).toFixed(2)}%` : 'N/A'}
                             </div>
                         </div>
-                        <div class="text-center hidden md:block">
+                        <div class="text-center">
                             <div class="text-xs text-slate-500 mb-1">成交量</div>
                             <div class="text-lg font-mono text-slate-300">${formatVolume(r.volume)}</div>
                         </div>
@@ -469,26 +483,78 @@ function toggleModal(modal, show) {
     }
 }
 
-function showToast(msg, type = 'info') {
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
-    const colors = {
-        success: 'bg-green-500/20 text-green-300 border-green-500/50',
-        error: 'bg-red-500/20 text-red-300 border-red-500/50',
-        warning: 'bg-amber-500/20 text-amber-300 border-amber-500/50',
-        info: 'bg-blue-500/20 text-blue-300 border-blue-500/50'
-    };
 
-    toast.className = `px-4 py-3 rounded-lg border backdrop-blur-md shadow-lg flex items-center gap-3 animate-fade-in ${colors[type] || colors.info}`;
+    let icon = 'fa-circle-info';
+    let colorClass = 'bg-slate-800 border-slate-700 text-slate-300';
+
+    if (type === 'success') {
+        icon = 'fa-circle-check';
+        colorClass = 'bg-green-900/80 border-green-700 text-green-100 shadow-glow-green';
+    } else if (type === 'error') {
+        icon = 'fa-circle-xmark';
+        colorClass = 'bg-red-900/80 border-red-700 text-red-100 shadow-glow-red';
+    }
+
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl backdrop-blur-md transform transition-all duration-300 translate-y-10 opacity-0 ${colorClass}`;
     toast.innerHTML = `
-        <i class="fa-solid fa-circle-info"></i>
-        <span class="font-medium text-sm">${msg}</span>
+        <i class="fa-solid ${icon}"></i>
+        <span class="text-sm font-medium">${message}</span>
     `;
 
-    el.toastContainer.appendChild(toast);
+    container.appendChild(toast);
+
+    // Animate In
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-10', 'opacity-0');
+    });
+
+    // Remove after 3s
     setTimeout(() => {
-        toast.style.opacity = '0';
+        toast.classList.add('translate-y-10', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// System Status Logic
+async function checkSystemStatus() {
+    try {
+        const res = await fetch('/api/system_status');
+        const data = await res.json();
+
+        // Date
+        const dateEl = document.getElementById('systemDate');
+        if (dateEl) dateEl.textContent = data.time || '-';
+
+        // Update Dots (All green when active, updateDot handles red for inactive)
+        updateDot('statusAI', data.ai, 'bg-green-500', 'shadow-glow-green');
+        updateDot('statusTG', data.telegram, 'bg-green-500', 'shadow-glow-green');
+        updateDot('statusMail', data.email, 'bg-green-500', 'shadow-glow-green');
+
+    } catch (e) {
+        console.error('Status check failed', e);
+        // Set all to red on catch
+        updateDot('statusAI', false);
+        updateDot('statusTG', false);
+        updateDot('statusMail', false);
+    }
+}
+
+function updateDot(id, active, colorClass = 'bg-green-500', shadowClass = 'shadow-glow-green') {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Reset
+    el.className = 'w-2.5 h-2.5 rounded-full transition-all duration-500';
+
+    if (active) {
+        el.classList.add(colorClass, shadowClass);
+    } else {
+        // Red for problem/inactive
+        el.classList.add('bg-red-500', 'shadow-glow-red');
+    }
 }
 
 function updateDate() {

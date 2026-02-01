@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GU4 | 台股 AI 智能分析</title>
+    <title>Gu4 盤子</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,7 +22,7 @@
                     <i class="fa-solid fa-robot"></i>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold brand-title tracking-wider">GU4 AI ANALYZER</h1>
+                    <h1 class="text-3xl font-bold brand-title tracking-wider">Gu4tw</h1>
                     <div class="flex items-center gap-2 text-sm text-slate-400">
                         <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                         <span id="systemStatus">系統正常運作中</span>
@@ -33,9 +33,12 @@
             <div class="flex items-center gap-3 w-full md:w-auto">
                 <!-- Search Bar -->
                 <div class="relative flex-grow md:w-64">
-                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                    <button id="btnNavbarSearch"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-400 transition-colors">
+                        <i class="fa-solid fa-search"></i>
+                    </button>
                     <input type="text" id="navbarSearch"
-                        class="w-full bg-slate-800/50 border border-slate-700 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                        class="w-full bg-slate-800/50 border border-slate-700 rounded-lg py-2 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-cyan-500 transition-colors"
                         placeholder="快速查詢 (e.g. 2330)">
                 </div>
 
@@ -130,24 +133,36 @@
                     </div>
                 </div>
 
-                <!-- Market Info Card -->
-                <div class="glass-panel rounded-2xl p-6">
-                    <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">系統資訊</h3>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">今日日期</span>
-                            <span class="text-slate-200 font-mono" id="todayDate">--</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">API 來源</span>
-                            <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-xs">Auto
-                                (Yahoo/TWSE/FinMind)</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500">AI 模型</span>
-                            <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs">Gemini 2.0
-                                Flash</span>
-                        </div>
+                <!-- System Info -->
+                <div class="glass-card rounded-xl p-4 space-y-3">
+                    <h3 class="text-slate-400 text-sm font-medium mb-3">系統監控</h3>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 text-xs">日期</span>
+                        <span id="systemDate" class="text-slate-300 text-xs font-mono">-</span>
+                    </div>
+
+                    <div class="h-px bg-slate-700/50 my-2"></div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 text-xs">AI 連線</span>
+                        <div id="statusAI"
+                            class="w-2.5 h-2.5 rounded-full bg-slate-600 shadow-glow-slate transition-colors"
+                            title="AI Status"></div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 text-xs">Telegram</span>
+                        <div id="statusTG"
+                            class="w-2.5 h-2.5 rounded-full bg-slate-600 shadow-glow-slate transition-colors"
+                            title="Telegram Status"></div>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-500 text-xs">Email</span>
+                        <div id="statusMail"
+                            class="w-2.5 h-2.5 rounded-full bg-slate-600 shadow-glow-slate transition-colors"
+                            title="Email Status"></div>
                     </div>
                 </div>
             </div>
