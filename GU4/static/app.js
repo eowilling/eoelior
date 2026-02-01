@@ -62,7 +62,6 @@ const el = {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
-    // updateDate(); // Removed: Handled by checkSystemStatus
     renderStockChips();
     loadConfig();
     checkSystemStatus();
@@ -200,7 +199,7 @@ async function handleSearch(query) {
         if (json.success) {
             const data = json.data;
             const isPositive = (data.change || 0) >= 0;
-            const colorClass = isPositive ? 'text-red-400' : 'text-green-400'; // 台股 紅漲綠跌
+            const colorClass = isPositive ? 'text-red-400' : 'text-green-400';
 
             el.searchResultContent.innerHTML = `
                 <div class="text-left w-full">
@@ -275,22 +274,15 @@ async function loadConfig() {
 
         if (json.success) {
             const cfg = json.config;
-
-            // Restore Stock List
             if (cfg.stock_list) {
                 stockList = new Set(cfg.stock_list.split(',').map(s => s.trim()).filter(s => s));
                 renderStockChips();
             }
-
-            // Restore Auto Pick
             if (cfg.auto_pick_method) el.autoPickMethod.value = cfg.auto_pick_method;
             if (cfg.auto_pick_count) {
                 el.autoPickCount.value = cfg.auto_pick_count;
                 el.pickCountVal.textContent = cfg.auto_pick_count;
             }
-
-            // Note: API keys are usually secrets, might not be returned by GET /api/config for security
-            // If they are, we populate them. If not, inputs remain empty.
         }
     } catch (e) {
         console.error("Config load failed", e);
@@ -307,7 +299,6 @@ async function saveConfig() {
         telegram_chat_id: el.inputTgChatId.value.trim()
     };
 
-    // Remove empty keys to avoid overwriting with empty string if user didn't type anything
     if (!payload.gemini_api_key) delete payload.gemini_api_key;
     if (!payload.telegram_bot_token) delete payload.telegram_bot_token;
     if (!payload.telegram_chat_id) delete payload.telegram_chat_id;
@@ -319,7 +310,6 @@ async function saveConfig() {
             body: JSON.stringify(payload)
         });
         const json = await res.json();
-
         if (json.success) {
             showToast('設定已儲存 ✅', 'success');
             toggleModal(el.settingsModal, false);
@@ -343,13 +333,12 @@ async function startAnalysis() {
         return;
     }
 
-    // UI State: Loading
     el.btnStartAnalysis.disabled = true;
-    el.btnStartAnalysis.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> AI 分析運算中...`;
+    el.btnStartAnalysis.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> AI 分析運算中...';
     el.progressContainer.classList.remove('hidden');
     el.welcomeState.classList.add('hidden');
     el.resultsGrid.classList.remove('hidden');
-    el.resultsGrid.innerHTML = ''; // Clear old
+    el.resultsGrid.innerHTML = '';
 
     try {
         const res = await fetch('/api/analyze', {
@@ -377,13 +366,11 @@ async function startAnalysis() {
 
 function pollStatus() {
     if (analysisInterval) clearInterval(analysisInterval);
-
     analysisInterval = setInterval(async () => {
         try {
             const res = await fetch('/api/status');
             const status = await res.json();
 
-            // Update Progress
             const pct = status.progress;
             el.progressBar.style.width = pct + '%';
             el.progressPercent.textContent = pct + '%';
@@ -392,7 +379,6 @@ function pollStatus() {
                 el.progressText.textContent = `正在分析: ${status.current_stock}...`;
             }
 
-            // Complete
             if (!status.running && pct === 100) {
                 clearInterval(analysisInterval);
                 renderResults(status.results);
@@ -401,18 +387,19 @@ function pollStatus() {
                 el.systemStatus.textContent = 'Taiwan Stock Intelligence';
                 el.systemStatus.className = 'text-green-400';
             }
-
         } catch (e) {
             console.error(e);
         }
     }, 1000);
 }
 
+function pollAnalysisStatus() {
+    // This is the periodic placeholder from original code
+}
+
 function renderResults(results) {
     if (!results || results.length === 0) {
-        el.resultsGrid.innerHTML = `
-            <div class="p-8 text-center text-slate-500">無結果</div>
-        `;
+        el.resultsGrid.innerHTML = '<div class="p-8 text-center text-slate-500">無結果</div>';
         return;
     }
 
@@ -421,7 +408,6 @@ function renderResults(results) {
         const colorClass = isAppreciation ? 'text-red-400' : 'text-green-400';
         const arrow = isAppreciation ? '▲' : '▼';
 
-        // Simple Markdown parsing for analysis text
         let analysisHtml = (r.analysis || '暫無結果')
             .replace(/## (.*)/g, '<h4 class="text-lg font-bold text-cyan-300 mt-4 mb-2">$1</h4>')
             .replace(/\*\*(.*)\*\*/g, '<strong class="text-amber-300">$1</strong>')
@@ -430,7 +416,6 @@ function renderResults(results) {
 
         return `
             <div class="glass-panel rounded-2xl p-6 animate-fade-in" style="animation-delay: ${idx * 0.1}s">
-                <!-- Header: Name, Price, and Changes -->
                 <div class="flex flex-col gap-4 mb-6 border-b border-slate-700/50 pb-4">
                     <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
                         <div class="flex items-baseline gap-3 flex-wrap">
@@ -451,7 +436,6 @@ function renderResults(results) {
                         </div>
                     </div>
                     
-                    <!-- Volume and more stats -->
                     <div class="flex items-center gap-4 text-sm">
                          <div class="bg-slate-800/40 px-3 py-1 rounded-lg border border-slate-700/30">
                             <span class="text-slate-500 mr-2">成交量</span>
@@ -474,7 +458,7 @@ function renderResults(results) {
 
 function resetUIstate() {
     el.btnStartAnalysis.disabled = false;
-    el.btnStartAnalysis.innerHTML = `<i class="fa-solid fa-bolt"></i> 開始 AI 分析`;
+    el.btnStartAnalysis.innerHTML = '<i class="fa-solid fa-bolt"></i> 開始 AI 分析';
     el.progressText.textContent = '完成';
     setTimeout(() => el.progressContainer.classList.add('hidden'), 2000);
 }
@@ -494,7 +478,6 @@ function toggleModal(modal, show) {
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
-
     let icon = 'fa-circle-info';
     let colorClass = 'bg-slate-800 border-slate-700 text-slate-300';
 
@@ -506,20 +489,13 @@ function showToast(message, type = 'info') {
         colorClass = 'bg-red-900/80 border-red-700 text-red-100 shadow-glow-red';
     }
 
-    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl backdrop-blur-md transform transition-all duration-300 translate-y-10 opacity-0 ${colorClass}`;
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl backdrop-blur-md transform transition-all duration-300 translate-y-10 opacity-0 \${colorClass}`;
     toast.innerHTML = `
-            <i class="fa-solid ${icon}"></i>
-            <span class="text-sm font-medium">${message}</span>
+            <i class="fa-solid \${icon}"></i>
+            <span class="text-sm font-medium">\${message}</span>
         `;
-
     container.appendChild(toast);
-
-    // Animate In
-    requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-10', 'opacity-0');
-    });
-
-    // Remove after 3s
+    requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
     setTimeout(() => {
         toast.classList.add('translate-y-10', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
@@ -531,19 +507,13 @@ async function checkSystemStatus() {
     try {
         const res = await fetch('/api/system_status');
         const data = await res.json();
-
-        // Date
         const dateEl = document.getElementById('systemDate');
         if (dateEl) dateEl.textContent = data.time || '-';
-
-        // Update Dots (All green when active, updateDot handles red for inactive)
         updateDot('statusAI', data.ai, 'bg-green-500', 'shadow-glow-green');
         updateDot('statusTG', data.telegram, 'bg-green-500', 'shadow-glow-green');
         updateDot('statusMail', data.email, 'bg-green-500', 'shadow-glow-green');
-
     } catch (e) {
         console.error('Status check failed', e);
-        // Set all to red on catch
         updateDot('statusAI', false);
         updateDot('statusTG', false);
         updateDot('statusMail', false);
@@ -551,21 +521,12 @@ async function checkSystemStatus() {
 }
 
 function updateDot(id, active, colorClass = 'bg-green-500', shadowClass = 'shadow-glow-green') {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    // Reset
-    el.className = 'w-2.5 h-2.5 rounded-full transition-all duration-500';
-
-    if (active) {
-        el.classList.add(colorClass, shadowClass);
-    } else {
-        // Red for problem/inactive
-        el.classList.add('bg-red-500', 'shadow-glow-red');
-    }
+    const elDot = document.getElementById(id);
+    if (!elDot) return;
+    elDot.className = 'w-2.5 h-2.5 rounded-full transition-all duration-500';
+    if (active) elDot.classList.add(colorClass, shadowClass);
+    else elDot.classList.add('bg-red-500', 'shadow-glow-red');
 }
-
-// function updateDate() removed - handled by checkSystemStatus
 
 function formatVolume(num) {
     if (!num) return '0';
