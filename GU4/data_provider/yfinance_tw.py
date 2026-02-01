@@ -31,7 +31,7 @@ class YFinanceTaiwanFetcher(BaseFetcher):
     """
     
     name = "YFinanceTaiwan"
-    priority = 1
+    priority = 2
     
     def __init__(self):
         if yf is None:
