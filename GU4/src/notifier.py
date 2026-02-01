@@ -124,13 +124,23 @@ class NotificationManager:
                 """
                 message.attach(MIMEText(html_body, 'html', 'utf-8'))
             
-            # 發送
-            with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
-                server.starttls()
-                server.login(sender, password)
-                server.sendmail(sender, receivers.split(','), message.as_string())
-            
-            logger.info("✅ Email 發送成功")
+            # 發送 (優先 587，失敗則嘗試 465)
+            try:
+                with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as server:
+                    server.starttls()
+                    server.login(sender, password)
+                    server.sendmail(sender, receivers.split(','), message.as_string())
+                logger.info("✅ Email 發送成功 (Port 587)")
+            except Exception as e1:
+                logger.warning(f"Port 587 發送失敗，嘗試 Port 465: {e1}")
+                try:
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10) as server:
+                        server.login(sender, password)
+                        server.sendmail(sender, receivers.split(','), message.as_string())
+                    logger.info("✅ Email 發送成功 (Port 465)")
+                except Exception as e2:
+                    logger.error(f"❌ Email 發送皆失敗: {e2}")
+                    return False
             return True
             
         except Exception as e:
