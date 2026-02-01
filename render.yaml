@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: gu4-taiwan-stock-analysis
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd GU4 && gunicorn --bind 0.0.0.0:$PORT --timeout 120 web_app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: EMAIL_SENDER
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+      - key: EMAIL_RECEIVERS
+        sync: false
+      - key: STOCK_LIST
+        sync: false
+      - key: AUTO_PICK_METHOD
+        sync: false
+      - key: AUTO_PICK_COUNT
+        sync: false
