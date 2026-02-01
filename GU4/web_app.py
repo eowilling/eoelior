@@ -139,6 +139,13 @@ def search_stock():
         quote = app_instance.fetcher_manager.get_realtime_quote(stock_code)
         
         if quote:
+            # 強制將名稱轉為繁體中文 (如果有 twstock)
+            try:
+                import twstock
+                if stock_code in twstock.codes:
+                    quote['name'] = twstock.codes[stock_code].name
+            except:
+                pass
             return jsonify({'success': True, 'data': quote})
         else:
             return jsonify({'success': False, 'error': '找不到此股票或無法獲取數據'})
