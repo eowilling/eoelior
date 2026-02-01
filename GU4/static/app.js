@@ -398,7 +398,7 @@ function pollStatus() {
                 renderResults(status.results);
                 resetUIstate();
                 showToast('分析完成！', 'success');
-                el.systemStatus.textContent = '分析完成';
+                el.systemStatus.textContent = 'Taiwan Stock Intelligence';
                 el.systemStatus.className = 'text-green-400';
             }
 
@@ -429,29 +429,38 @@ function renderResults(results) {
             .replace(/\n/g, '<br>');
 
         return `
-            <div class="glass-panel rounded-2xl p-6 animate-fade-in" style="animation-delay: ${idx * 0.1}s">
-                <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 border-b border-slate-700/50 pb-4">
-                    <div class="mb-4 md:mb-0">
-                        <div class="flex items-baseline gap-3">
+        return `
+            < div class="glass-panel rounded-2xl p-6 animate-fade-in" style = "animation-delay: ${idx * 0.1}s" >
+                < !--Header: Name, Price, and Changes-- >
+                <div class="flex flex-col gap-4 mb-6 border-b border-slate-700/50 pb-4">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
+                        <div class="flex items-baseline gap-3 flex-wrap">
                             <h3 class="text-2xl font-bold text-white">${r.name}</h3>
-                            <span class="text-slate-400 font-mono text-lg">${r.code}</span>
+                            <span class="text-slate-500 font-mono text-lg">${r.code}</span>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="text-center">
+                                <div class="text-xs text-slate-500 mb-1">現價</div>
+                                <div class="text-2xl font-bold text-white">${r.price ?? 'N/A'}</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-xs text-slate-500 mb-1">漲跌幅</div>
+                                <div class="text-lg font-bold ${colorClass}">
+                                    ${r.change_pct ? `${arrow} ${Math.abs(r.change_pct).toFixed(2)}%` : 'N/A'}
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="flex items-center gap-6">
-                        <div class="text-center">
-                            <div class="text-xs text-slate-500 mb-1">現價</div>
-                            <div class="text-2xl font-bold text-white">${r.price ?? 'N/A'}</div>
+                    <!-- Volume and more stats -->
+                    <div class="flex items-center gap-4 text-sm">
+                         <div class="bg-slate-800/40 px-3 py-1 rounded-lg border border-slate-700/30">
+                            <span class="text-slate-500 mr-2">成交量</span>
+                            <span class="text-slate-300 font-mono">${formatVolume(r.volume)}</span>
                         </div>
-                        <div class="text-center">
-                            <div class="text-xs text-slate-500 mb-1">漲跌幅</div>
-                            <div class="text-lg font-bold ${colorClass}">
-                                ${r.change_pct ? `${arrow} ${Math.abs(r.change_pct).toFixed(2)}%` : 'N/A'}
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-xs text-slate-500 mb-1">成交量</div>
-                            <div class="text-lg font-mono text-slate-300">${formatVolume(r.volume)}</div>
+                        <div class="bg-slate-800/40 px-3 py-1 rounded-lg border border-slate-700/30 ${r.ma_status?.trend === 'UP' ? 'border-red-900/50 text-red-300' : 'text-slate-400'}">
+                            <span class="text-slate-500 mr-2">趨勢</span>
+                            <span>${r.ma_status?.display_trend || '持平'}</span>
                         </div>
                     </div>
                 </div>
@@ -459,14 +468,14 @@ function renderResults(results) {
                 <div class="analysis-content text-sm text-slate-300 leading-relaxed max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                     ${analysisHtml}
                 </div>
-            </div>
-        `;
+            </div >
+            `;
     }).join('');
 }
 
 function resetUIstate() {
     el.btnStartAnalysis.disabled = false;
-    el.btnStartAnalysis.innerHTML = `<i class="fa-solid fa-bolt"></i> 開始 AI 分析`;
+    el.btnStartAnalysis.innerHTML = `< i class="fa-solid fa-bolt" ></i > 開始 AI 分析`;
     el.progressText.textContent = '完成';
     setTimeout(() => el.progressContainer.classList.add('hidden'), 2000);
 }
@@ -498,11 +507,11 @@ function showToast(message, type = 'info') {
         colorClass = 'bg-red-900/80 border-red-700 text-red-100 shadow-glow-red';
     }
 
-    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl backdrop-blur-md transform transition-all duration-300 translate-y-10 opacity-0 ${colorClass}`;
+    toast.className = `flex items - center gap - 3 px - 4 py - 3 rounded - lg border shadow - xl backdrop - blur - md transform transition - all duration - 300 translate - y - 10 opacity - 0 ${ colorClass } `;
     toast.innerHTML = `
-        <i class="fa-solid ${icon}"></i>
-        <span class="text-sm font-medium">${message}</span>
-    `;
+            < i class="fa-solid ${icon}" ></i >
+                <span class="text-sm font-medium">${message}</span>
+        `;
 
     container.appendChild(toast);
 
@@ -559,7 +568,7 @@ function updateDot(id, active, colorClass = 'bg-green-500', shadowClass = 'shado
 
 function updateDate() {
     const d = new Date();
-    el.todayDate.textContent = `${d.getFullYear()}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
+    el.todayDate.textContent = `${ d.getFullYear() } /${(d.getMonth() + 1).toString().padStart(2, '0')}/${ d.getDate().toString().padStart(2, '0') } `;
 }
 
 function formatVolume(num) {
