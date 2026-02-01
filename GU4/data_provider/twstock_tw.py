@@ -28,7 +28,9 @@ class TwstockFetcher(BaseFetcher):
     
     def __init__(self):
         if twstock is None:
-            raise ImportError("請安裝 twstock")
+            # raise ImportError("請安裝 twstock")
+            # 改為不強制報錯，因為我們已經改用 direct requests 抓取
+            pass
     
     def get_realtime_quote(self, stock_code: str) -> Optional[Dict[str, Any]]:
         """獲取即時報價 (直接請求 MIS API，避開 SSL 驗證問題)"""
