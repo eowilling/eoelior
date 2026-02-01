@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eoElior | 玩具盒子</title>
+    <link rel="icon" type="image/png" href="assets/raccoon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.4);
+            --card-border: rgba(255, 255, 255, 0.05);
+            --accent-primary: #6366f1;
+            --accent-secondary: #a855f7;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            background-image:
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 35%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Card Base */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        /* Search Input */
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 23, 42, 0.8);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            pointer-events: none;
+        }
+
+        /* Tabs */
+        .category-tab {
+            cursor: pointer;
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #94a3b8;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .category-tab:hover {
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        /* eoElior 特殊字體樣式 */
+        .brand-title {
+            font-family: 'Orbitron', 'Inter', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+            position: relative;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% {
+                filter: brightness(1);
+            }
+            50% {
+                filter: brightness(1.2);
+            }
+        }
+
+        .brand-title::before {
+            content: 'eoElior';
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 50%, rgba(217, 70, 239, 0.3) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: blur(10px);
+            z-index: -1;
+        }
+
+        /* LOGO 科技感效果 - 優化版 */
+        .tech-logo-container {
+            position: relative;
+        }
+
+        .tech-logo-container::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #d946ef, #6366f1);
+            border-radius: 50%;
+            animation: logoRotate 4s linear infinite;
+            opacity: 0.2;
+            filter: blur(12px);
+            z-index: 0;
+        }
+
+        @keyframes logoRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tech-logo-container::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            background: conic-gradient(from 180deg, transparent 0%, #6366f1 50%, transparent 100%);
+            border-radius: 50%;
+            animation: logoPulse 2s ease-in-out infinite;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.05); }
+        }
+
+        .tech-logo {
+            position: relative;
+            z-index: 10;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .tech-logo-container:hover .tech-logo {
+            transform: scale(1.08);
+            filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));
+        }
+
+        /* 座右銘樣式 */
+        .motto {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 0.95rem;
+            color: #94a3b8;
+            font-weight: 400;
+            letter-spacing: 0.05em;
+            margin-top: 0.75rem;
+            padding-left: 0.5rem;
+            border-left: 3px solid;
+            border-image: linear-gradient(135deg, #6366f1, #8b5cf6) 1;
+            animation: mottoFadeIn 1s ease-out 0.5s both;
+        }
+
+        @keyframes mottoFadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8 lg:p-12">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div class="animate-fade-in" style="animation-delay: 0.05s;">
+                <div class="flex items-center gap-5 mb-5 select-none">
+                    <!-- Logo Image -->
+                    <div class="tech-logo-container relative w-16 h-16 md:w-20 md:h-20 shrink-0">
+                        <img src="assets/logo.png" alt="eoElior Logo"
+                            class="tech-logo w-full h-full object-contain drop-shadow-xl">
+                    </div>
+
+                    <!-- Title Text -->
+                    <div>
+                        <h1
+                            class="text-4xl md:text-5xl font-bold tracking-tight text-white flex flex-col md:flex-row md:items-baseline gap-2 md:gap-3">
+                            <span class="brand-title">
+                                eoElior
+                            </span>
+                            <span
+                                class="text-xl text-slate-500 font-medium tracking-widest hidden md:inline-block opacity-50">|</span>
+                            <span class="text-3xl md:text-4xl text-slate-200 font-light tracking-wide">玩具盒子</span>
+                        </h1>
+                        <p class="motto">人生就是跌倒了 躺一會也沒關係</p>
+                        <p class="text-slate-400 text-lg leading-relaxed mt-4 pl-3">
+                            這裡是我的遊樂場<br>
+                            也能決定今天吃什麼
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full md:w-auto flex flex-col gap-4 animate-fade-in" style="animation-delay: 0.1s;">
+                <!-- Search -->
+                <div class="search-container w-full md:w-80">
+                    <i class="fa-solid fa-search search-icon"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜尋工具...">
+                </div>
+            </div>
+        </header>
+
+        <!-- Category Tabs -->
+        <div class="mb-8 flex flex-wrap gap-2 animate-fade-in" style="animation-delay: 0.15s;" id="categoryContainer">
+            <button class="category-tab active" data-category="all">全部</button>
+            <button class="category-tab" data-category="entertainment">娛樂 & 遊戲</button>
+            <button class="category-tab" data-category="productivity">生產力 & 管理</button>
+            <button class="category-tab" data-category="image">圖像處理</button>
+            <button class="category-tab" data-category="system">系統工具</button>
+        </div>
+
+        <!-- Tools Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16" id="toolsGrid">
+            <!-- Grid items will be injected here -->
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-24 pt-8 border-t border-slate-800/50 text-center animate-fade-in"
+            style="animation-delay: 0.3s;">
+            <p class="text-slate-500 text-sm">
+                eoElior © 2026 | Designed for efficiency and fun
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // ==========================================
+        // 工具清單配置
+        // ==========================================
+        const TOOLS = [
+            {
+                name: 'ReBox',
+                desc: '歐皇還是非酋？一轉定生死！',
+                category: 'entertainment',
+                href: 'rebox/index.html',
+                badge: 'HOT',
+                icon: 'fa-rocket',
+                color: 'cyan'
+            },
+            {
+                name: '流程圖工具',
+                desc: '畫個流程圖，假裝很專業',
+                category: 'productivity',
+                href: 'FlowChart/FlowChat.html',
+                badge: '推薦',
+                icon: 'fa-diagram-project',
+                color: 'blue'
+            },
+            {
+                name: 'Sudo GAME',
+                desc: '腦細胞燃燒中...',
+                category: 'entertainment',
+                href: 'sudo/index.html',
+                icon: 'fa-puzzle-piece',
+                color: 'emerald'
+            },
+            {
+                name: '決定輪盤',
+                desc: '選擇障礙患者的救星',
+                category: 'entertainment',
+                href: 'buytonobuy/index.html',
+                icon: 'fa-circle-notch',
+                color: 'purple'
+            },
+            {
+                name: 'QR Code 產生器',
+                desc: '掃我啊！不掃你會後悔',
+                category: 'image',
+                href: 'QRcode/qr-generate-standalone.html',
+                icon: 'fa-qrcode',
+                color: 'pink'
+            },
+            {
+                name: 'HEIC 轉 PNG/JPG',
+                desc: '把 iPhone 照片變成人話',
+                category: 'image',
+                href: 'HeicPngJpg/H2PJ.html',
+                icon: 'fa-images',
+                color: 'amber'
+            },
+            {
+                name: '形式曆',
+                desc: '治癒我自己',
+                category: 'productivity',
+                href: 'eveday/index.html',
+                icon: 'fa-calendar-check',
+                color: 'indigo'
+            },
+            {
+                name: 'LUSH 文件索引',
+                desc: '我的文件都在這（大概）',
+                category: 'productivity',
+                href: 'LUSH/index.html',
+                icon: 'fa-folder-tree',
+                color: 'teal'
+            },
+            {
+                name: 'ISMS 資安宣導',
+                desc: '資安很重要（說得好像很懂）',
+                category: 'productivity',
+                href: 'ISMS/isms.html',
+                icon: 'fa-shield-halved',
+                color: 'rose'
+            },
+            {
+                name: '藍牙診斷工具',
+                desc: '藍牙又斷了？重開機吧',
+                category: 'system',
+                href: 'bluetooth/index.html',
+                badge: 'NEW',
+                icon: 'fa-bluetooth',
+                color: 'sky'
+            },
+            {
+                name: 'QRcode SCAN',
+                desc: '破爛 QR Code 也能掃',
+                category: 'image',
+                href: 'qrscan/index.html',
+                badge: 'NEW',
+                icon: 'fa-wand-magic-sparkles',
+                color: 'fuchsia'
+            },
+            {
+                name: 'Files偵錯修復',
+                desc: '讓 Windows 檔案總管不再卡到爆',
+                category: 'system',
+                href: 'filestook/files-repair-plan.html',
+                badge: 'NEW',
+                icon: 'fa-screwdriver-wrench',
+                color: 'violet'
+            }
+        ];
+
+        // ==========================================
+        // 應用程式邏輯
+        // ==========================================
+        const elGrid = document.getElementById('toolsGrid');
+        const elSearch = document.getElementById('searchInput');
+        const elTabs = document.querySelectorAll('.category-tab');
+
+        let currentCategory = 'all';
+        let searchQuery = '';
+
+        // 渲染徽章 HTML
+        function badgeHtml(text) {
+            if (!text) return '';
+            const isHot = text === 'HOT' || text === 'NEW';
+            const bgClass = isHot ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
+            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${bgClass}">${escHtml(text)}</span>`;
+        }
+
+        // HTML 轉義防止 XSS
+        function escHtml(str) {
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        // 處理由顏色名稱轉為 Tailwind class
+        function iconClass(color) {
+            // 預設顏色 fallback
+            const c = color || 'slate';
+            return {
+                bg: `bg-${c}-500/20`,
+                text: `text-${c}-400`
+            };
+        }
+
+        // 核心渲染函式
+        function renderGrid() {
+            // 篩選邏輯
+            const filtered = TOOLS.filter(t => {
+                const matchCat = currentCategory === 'all' || t.category === currentCategory;
+                const searchLower = searchQuery.toLowerCase();
+                const matchSearch = t.name.toLowerCase().includes(searchLower) ||
+                    t.desc.toLowerCase().includes(searchLower);
+                return matchCat && matchSearch;
+            });
+
+            // 處理無結果狀態
+            if (filtered.length === 0) {
+                elGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-500">
+                        <i class="fa-regular fa-face-frown-open text-4xl mb-3 opacity-50"></i>
+                        <p>沒有找到符合的工具</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 產生卡片 HTML
+            elGrid.innerHTML = filtered.map((t, index) => {
+                const { bg, text } = iconClass(t.color);
+                // 每個卡片稍微延遲出現，製造階梯式動畫效果
+                const delay = index * 0.05;
+
+                return `
+                    <div class="glass-card rounded-2xl p-6 flex flex-col group relative overflow-hidden animate-fade-in" style="animation-delay: ${delay}s">
+                        <!-- 背景裝飾光暈 -->
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-${t.color || 'slate'}-500/10 rounded-full blur-2xl group-hover:bg-${t.color || 'slate'}-500/20 transition-all duration-500"></div>
+
+                        <div class="flex justify-between items-start mb-5 relative z-10">
+                            <div class="w-12 h-12 rounded-xl ${bg} flex items-center justify-center ${text} text-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-inner">
+                                <i class="fa-solid ${escHtml(t.icon || 'fa-toolbox')}"></i>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${badgeHtml(t.badge)}
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-bold mb-2 text-slate-100 group-hover:text-white transition-colors">
+                            ${escHtml(t.name)}
+                        </h3>
+                        
+                        <p class="text-slate-400 text-sm mb-6 flex-grow leading-relaxed">
+                            ${escHtml(t.desc || '')}
+                        </p>
+
+                        <a href="${escHtml(t.href)}" target="_blank" class="mt-auto px-4 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/80 text-slate-300 hover:text-white text-sm font-medium transition-all flex items-center justify-center gap-2 group-hover:ring-1 ring-white/10">
+                            <span>開啟工具</span>
+                            <i class="fa-solid fa-arrow-right text-xs opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all"></i>
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 事件監聽事件
+        // 1. 搜尋
+        elSearch.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim();
+            renderGrid();
+        });
+
+        // 2. 分類頁籤
+        elTabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除所有 active
+                elTabs.forEach(b => b.classList.remove('active'));
+                // 設定當前 active
+                btn.classList.add('active');
+
+                currentCategory = btn.dataset.category;
+                renderGrid();
+            });
+        });
+
+        // 初始化
+        renderGrid();
+    </script>
+</body>
+
+</html>
