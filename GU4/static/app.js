@@ -489,10 +489,10 @@ function showToast(message, type = 'info') {
         colorClass = 'bg-red-900/80 border-red-700 text-red-100 shadow-glow-red';
     }
 
-    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl backdrop-blur-md transform transition-all duration-300 translate-y-10 opacity-0 \${colorClass}`;
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-xl backdrop-blur-md transform transition-all duration-300 translate-y-10 opacity-0 ${colorClass}`;
     toast.innerHTML = `
-            <i class="fa-solid \${icon}"></i>
-            <span class="text-sm font-medium">\${message}</span>
+            <i class="fa-solid ${icon}"></i>
+            <span class="text-sm font-medium">${message}</span>
         `;
     container.appendChild(toast);
     requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
