@@ -399,7 +399,9 @@ def system_status():
                         status['email'] = True
                 except Exception as e2:
                     logger.warning(f"Email 連線檢查(587/465)皆失敗: {e2}")
-        
+    except Exception as e:
+        logger.warning(f"Email 連線檢查異常: {e}")
+            
     return jsonify(status)
 
 
