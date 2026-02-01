@@ -65,8 +65,9 @@ class NotificationManager:
     def _send_telegram(self, title: str, content: str) -> bool:
         """發送 Telegram 訊息"""
         try:
-            bot_token = self.config.telegram_bot_token
-            chat_id = self.config.telegram_chat_id
+            # 優先使用動態設定，否則使用系統配置
+            bot_token = self.dynamic_token or self.config.telegram_bot_token
+            chat_id = self.dynamic_chat_id or self.config.telegram_chat_id
             
             # Telegram 訊息長度限制 4096
             message = f"📊 {title}\n\n{content}"
