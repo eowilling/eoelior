@@ -92,6 +92,15 @@ class TwstockFetcher(BaseFetcher):
                             
                             name = info.get('n', stock_code)
                             
+                            # 雙重確認名稱：如果 API 返回的是代碼或是英文，嘗試用 twstock 庫的對照表修正
+                            if name == stock_code or name.isascii():
+                                try:
+                                    import twstock
+                                    if stock_code in twstock.codes:
+                                        name = twstock.codes[stock_code].name
+                                except:
+                                    pass
+                            
                             logger.info(f"Twstock (Direct) 成功獲取: {name} {price}")
                             
                             return {

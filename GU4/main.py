@@ -181,8 +181,11 @@ class TaiwanStockAnalysisApp:
             }
             
             # 4. 搜索相關新聞
-            stock_name = quote.get('name', stock_code) if quote else stock_code
-            logger.info(f"[{stock_code}] 搜索相關新聞...")
+            # 如果 quote 中有名稱且不是代碼，就用它；否則保持原有的 stock_name (可能來自 twstock.codes)
+            if quote and quote.get('name') and quote['name'] != stock_code:
+                stock_name = quote['name']
+                
+            logger.info(f"[{stock_code}] 搜索相關新聞 (關鍵字: {stock_name})...")
             try:
                 news = self.news_fetcher.search_stock_news(
                     stock_code=stock_code,
