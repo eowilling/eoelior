@@ -178,15 +178,17 @@ class CryptoSentinel:
         cond_macd = bool(latest['macd'] > latest['macd_signal'])
         
         # 5. 成交量: > 20日均量 * 1.5
-        vol_ma20 = df['volume'].rolling(window=20).mean().iloc[-1]
-        cond_vol = bool(latest['volume'] > (vol_ma20 * 1.5))
+        vol_ma20 = float(df['volume'].rolling(window=20).mean().iloc[-1])
+        # Ensure volume is treated as float/int for comparison, convert to native float
+        current_volume = float(latest['volume'])
+        cond_vol = bool(current_volume > (vol_ma20 * 1.5))
 
         factors = [cond_trend, cond_ema, cond_rsi, cond_macd]
-        score = sum(factors)
+        score = int(sum(factors))
         
-        atr = latest['atr']
-        stop_loss = latest['close'] - (2 * atr)
-        take_profit = latest['close'] + (3 * atr)
+        atr = float(latest['atr'])
+        stop_loss = float(latest['close'] - (2 * atr))
+        take_profit = float(latest['close'] + (3 * atr))
         
         sentiment = "WAIT"
         if score >= 3:
@@ -194,15 +196,15 @@ class CryptoSentinel:
             
         result = {
             "symbol": symbol,
-            "price": latest['close'],
+            "price": float(latest['close']),
             "score": score,
             "sentiment": sentiment,
             "indicators": {
-                "trend": {"passed": cond_trend, "value": latest['sma50']},
-                "ema": {"passed": cond_ema, "ema7": latest['ema7'], "ema21": latest['ema21']},
-                "rsi": {"passed": cond_rsi, "value": latest['rsi']},
-                "macd": {"passed": cond_macd, "value": latest['macd'], "signal": latest['macd_signal']},
-                "volume": {"passed": cond_vol, "value": latest['volume'], "ma20": vol_ma20}
+                "trend": {"passed": cond_trend, "value": float(latest['sma50'])},
+                "ema": {"passed": cond_ema, "ema7": float(latest['ema7']), "ema21": float(latest['ema21'])},
+                "rsi": {"passed": cond_rsi, "value": float(latest['rsi'])},
+                "macd": {"passed": cond_macd, "value": float(latest['macd']), "signal": float(latest['macd_signal'])},
+                "volume": {"passed": cond_vol, "value": current_volume, "ma20": vol_ma20}
             },
             "risk": {
                 "atr": atr,
