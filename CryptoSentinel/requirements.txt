@@ -7,3 +7,6 @@ google-generativeai
 yfinance
 gunicorn
 requests
+lxml
+beautifulsoup4
+# Force Rebuild 2026-02-02
