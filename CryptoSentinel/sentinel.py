@@ -251,12 +251,4 @@ class CryptoSentinel:
             
         print("========================================\n")
 
-    print("CryptoSentinel - 加密貨幣投資輔助系統")
-    target = input("請輸入幣種代碼 (預設 BTC/USDT): ").strip() or "BTC/USDT"
-    
-    # 自動轉大寫
-    target = target.upper() 
-    if '/' not in target: # 簡單防呆
-        target += '/USDT'
-        
-    sentinel.run(target)
+
