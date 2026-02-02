@@ -13,6 +13,31 @@ sentinel = CryptoSentinel()
 def index():
     return render_template('index.html')
 
+# --- Start Monitor ---
+from database import init_db, add_alert, get_alerts, delete_alert
+from monitor import monitor
+init_db()
+monitor.start()
+
+# --- Alert API ---
+@app.route('/api/alerts', methods=['GET'])
+def list_alerts():
+    return jsonify({'success': True, 'data': get_alerts()})
+
+@app.route('/api/alerts', methods=['POST'])
+def create_alert():
+    data = request.json
+    try:
+        aid = add_alert(data['symbol'], data['condition'], float(data['target_price']))
+        return jsonify({'success': True, 'id': aid})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/alerts/<int:alert_id>', methods=['DELETE'])
+def remove_alert(alert_id):
+    delete_alert(alert_id)
+    return jsonify({'success': True})
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     data = request.json
