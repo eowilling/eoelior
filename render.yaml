@@ -1,31 +1,11 @@
 services:
   - type: web
-    name: gu4-taiwan-stock-analysis
+    name: crypto-sentinel
     env: python
-    runtime: python
     region: singapore
-    plan: free
-    rootDir: GU4
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 web_app:app
+    buildCommand: pip install -r CryptoSentinel/requirements.txt
+    startCommand: gunicorn --chdir CryptoSentinel app:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: GEMINI_API_KEY
         sync: false
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: TELEGRAM_CHAT_ID
-        sync: false
-      - key: EMAIL_SENDER
-        sync: false
-      - key: EMAIL_PASSWORD
-        sync: false
-      - key: EMAIL_RECEIVERS
-        sync: false
-      - key: STOCK_LIST
-        sync: false
-      - key: AUTO_PICK_METHOD
-        sync: false
-      - key: AUTO_PICK_COUNT
-        sync: false
+    autoDeploy: true

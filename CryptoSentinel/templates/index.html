@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoSentinel | 加密哨兵</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glow-green {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .glow-red {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .checkmark {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+        }
+
+        /* Markdown Styles */
+        .prose h1,
+        .prose h2,
+        .prose h3 {
+            color: #fff;
+            font-weight: bold;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            font-size: 1.1em;
+        }
+
+        .prose p {
+            margin-bottom: 0.8em;
+            line-height: 1.6;
+            color: #cbd5e1;
+        }
+
+        .prose ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        .prose strong {
+            color: #fcd34d;
+            font-weight: 700;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Container -->
+    <div class="w-full max-w-6xl">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <img src="/static/logo.png" alt="Sentinel Logo"
+                class="w-32 h-32 mx-auto mb-4 rounded-full shadow-2xl shadow-cyan-500/20 border-2 border-cyan-500/50 animate-pulse-slow">
+            <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                CryptoSentinel</h1>
+            <p class="text-slate-500 mt-2">智能加密貨幣投資評估系統 (AI Powered)</p>
+        </div>
+
+        <!-- Search Box -->
+        <div class="glass rounded-2xl p-6 shadow-xl mb-8 max-w-lg mx-auto">
+            <div class="relative">
+                <input type="text" id="symbolInput" placeholder="輸入幣種"
+                    class="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-5 py-4 text-xl outline-none focus:border-cyan-500 transition-colors placeholder-slate-600 uppercase text-center tracking-widest font-mono">
+                <button onclick="analyze()"
+                    class="absolute right-2 top-2 bottom-2 bg-cyan-600 hover:bg-cyan-500 text-white px-6 rounded-lg transition-all font-medium">
+                    <i class="fa-solid fa-bolt"></i> 分析
+                </button>
+            </div>
+
+            <!-- Hot Coins -->
+            <div class="mt-5 text-center">
+                <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-fire text-orange-500 mr-1"></i> 熱門快搜</p>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="quickAnalyze('BTC')"
+                        class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono transition-all hover:border-cyan-500 text-cyan-400">BTC</button>
+                    <button onclick="quickAnalyze('ETH')"
+                        class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono transition-all hover:border-cyan-500 text-purple-400">ETH</button>
+                    <button onclick="quickAnalyze('SOL')"
+                        class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono transition-all hover:border-cyan-500 text-emerald-400">SOL</button>
+                    <button onclick="quickAnalyze('BNB')"
+                        class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono transition-all hover:border-cyan-500 text-yellow-400">BNB</button>
+                    <button onclick="quickAnalyze('DOGE')"
+                        class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono transition-all hover:border-cyan-500 text-orange-300">DOGE</button>
+                </div>
+            </div>
+
+            <p class="text-xs text-center text-slate-500 mt-4">預設為 USDT 交易對</p>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="hidden text-center py-10">
+            <div
+                class="animate-spin inline-block w-10 h-10 border-4 border-slate-700 border-t-cyan-500 rounded-full mb-3">
+            </div>
+            <p class="text-slate-400 animate-pulse">正在調用 Gemini AI 進行深度分析...</p>
+        </div>
+
+        <!-- Result Grid (2 Columns) -->
+        <div id="resultCard"
+            class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in relative transition-all duration-500">
+
+            <!-- Left: Technical Data -->
+            <div id="techPanel" class="glass rounded-2xl overflow-hidden shadow-2xl relative border border-slate-700">
+                <!-- Header Status -->
+                <div id="statusHeader" class="p-6 text-center border-b border-white/5 bg-slate-800/50">
+                    <h2 id="resultSymbol" class="text-2xl font-bold mb-1">BTC/USDT</h2>
+                    <div class="text-3xl font-mono text-white mb-2" id="resultPrice">$0.00</div>
+                    <div class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold tracking-wide"
+                        id="sentimentBadge">
+                        WAIT
+                    </div>
+                </div>
+
+                <!-- Indicators -->
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/40" id="ind_trend">
+                        <span class="text-slate-400"><i class="fa-solid fa-arrow-trend-up w-6"></i> 趨勢 (SMA50)</span>
+                        <span class="val font-mono">Check</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/40" id="ind_ema">
+                        <span class="text-slate-400"><i class="fa-solid fa-layer-group w-6"></i> 均線 (EMA7&gt;21)</span>
+                        <span class="val font-mono">Check</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/40" id="ind_rsi">
+                        <span class="text-slate-400"><i class="fa-solid fa-gauge-high w-6"></i> 超賣 (RSI&lt;40)</span>
+                        <span class="val font-mono">Check</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/40" id="ind_macd">
+                        <span class="text-slate-400"><i class="fa-solid fa-bolt w-6"></i> 動能 (MACD)</span>
+                        <span class="val font-mono">Check</span>
+                    </div>
+                </div>
+
+                <!-- Risk Management -->
+                <div class="bg-slate-900/80 p-6 border-t border-slate-700/50" id="riskSection">
+                    <h3 class="text-slate-400 text-xs uppercase tracking-wider mb-4 font-bold">Risk Management
+                        (ATR-Based)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-red-900/20 border border-red-900/30 p-3 rounded-xl text-center">
+                            <div class="text-red-400 text-xs mb-1">Stop Loss (-2 ATR)</div>
+                            <div class="text-red-300 font-mono font-bold" id="val_sl">0.00</div>
+                        </div>
+                        <div class="bg-green-900/20 border border-green-900/30 p-3 rounded-xl text-center">
+                            <div class="text-green-400 text-xs mb-1">Take Profit (+3 ATR)</div>
+                            <div class="text-green-300 font-mono font-bold" id="val_tp">0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: AI Analysis -->
+            <div
+                class="glass rounded-2xl p-6 shadow-xl border border-slate-700/50 flex flex-col min-h-[500px] bg-slate-800/30">
+                <div class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-700/50">
+                    <div
+                        class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                        <i class="fa-solid fa-robot text-white text-sm"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-white">Gemini AI 智能戰情室</h3>
+                </div>
+
+                <div id="aiContent"
+                    class="prose prose-invert max-w-none text-sm leading-relaxed overflow-y-auto custom-scrollbar flex-1 pr-2">
+                    <!-- AI content will be rendered here -->
+                    <div class="flex flex-col items-center justify-center h-full text-slate-500 opacity-50">
+                        <i class="fa-regular fa-comment-dots text-4xl mb-3"></i>
+                        <p>AI 分析報告將顯示於此</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function quickAnalyze(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            analyze();
+        }
+
+        async function analyze() {
+            const symbol = document.getElementById('symbolInput').value.trim();
+            if (!symbol) return;
+
+            // UI State
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('resultCard').classList.add('hidden');
+            document.getElementById('aiContent').innerHTML = '<div class="space-y-3"><div class="h-4 bg-slate-700 rounded animate-pulse w-3/4"></div><div class="h-4 bg-slate-700 rounded animate-pulse"></div><div class="h-4 bg-slate-700 rounded animate-pulse w-5/6"></div></div>';
+
+            try {
+                const res = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symbol: symbol })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    renderResult(json.data);
+                } else {
+                    alert('分析失敗: ' + json.error);
+                }
+            } catch (e) {
+                alert('連線錯誤');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function renderResult(data) {
+            const card = document.getElementById('resultCard');
+            card.classList.remove('hidden');
+
+            // Basic Info
+            document.getElementById('resultSymbol').textContent = data.symbol;
+            document.getElementById('resultPrice').textContent = '$' + parseFloat(data.price).toFixed(data.price > 1 ? 2 : 6);
+
+            // Sentiment
+            const badge = document.getElementById('sentimentBadge');
+            const techPanel = document.getElementById('techPanel');
+
+            if (data.sentiment === 'BUY') {
+                badge.textContent = 'STRONG BUY';
+                badge.className = 'inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold tracking-wide bg-green-500 text-white shadow-glow-green';
+                techPanel.className = 'glass rounded-2xl overflow-hidden shadow-2xl relative border border-green-500/30';
+                document.getElementById('riskSection').classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                badge.textContent = 'WAIT / WATCH';
+                badge.className = 'inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold tracking-wide bg-slate-600 text-slate-200';
+                techPanel.className = 'glass rounded-2xl overflow-hidden shadow-2xl relative border border-slate-700';
+                document.getElementById('riskSection').classList.add('opacity-50', 'pointer-events-none');
+            }
+
+            // Indicators
+            updateIndicator('ind_trend', data.indicators.trend.passed, `SMA50: ${data.indicators.trend.value.toFixed(2)}`);
+            updateIndicator('ind_ema', data.indicators.ema.passed, `EMA7 > EMA21`);
+            updateIndicator('ind_rsi', data.indicators.rsi.passed, `RSI: ${data.indicators.rsi.value.toFixed(2)}`);
+            updateIndicator('ind_macd', data.indicators.macd.passed, `MACD > Signal`);
+
+            // Risk
+            document.getElementById('val_sl').textContent = data.risk.stop_loss.toFixed(data.price > 1 ? 2 : 6);
+            document.getElementById('val_tp').textContent = data.risk.take_profit.toFixed(data.price > 1 ? 2 : 6);
+
+            // AI Content
+            const aiContent = document.getElementById('aiContent');
+            if (data.ai_analysis) {
+                aiContent.innerHTML = marked.parse(data.ai_analysis);
+            } else {
+                aiContent.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-red-400/50"><i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i><p>AI 服務暫時無法連線</p></div>';
+            }
+        }
+
+        function updateIndicator(id, passed, text) {
+            const el = document.getElementById(id);
+            const icon = passed ? '<i class="fa-solid fa-check text-green-400"></i>' : '<i class="fa-solid fa-xmark text-slate-600"></i>';
+            const color = passed ? 'text-green-300' : 'text-slate-500';
+
+            el.querySelector('.val').innerHTML = `${icon} <span class="ml-2 ${color} text-sm">${text}</span>`;
+            el.className = `flex items-center justify-between p-3 rounded-lg border transition-colors ${passed ? 'bg-green-900/10 border-green-900/30' : 'bg-slate-800/40 border-transparent'}`;
+        }
+    </script>
+</body>
+
+</html>
