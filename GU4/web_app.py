@@ -220,7 +220,7 @@ def start_analysis():
         # 在背景執行分析
         thread = threading.Thread(
             target=run_analysis_worker,
-            args=(stock_list, use_auto_pick, auto_pick_method, auto_pick_count)
+            args=(stock_list, use_auto_pick, auto_pick_method, auto_pick_count, user_tg_token, user_tg_chat_id)
         )
         thread.daemon = True
         thread.start()
@@ -233,7 +233,7 @@ def start_analysis():
         return jsonify({'success': False, 'error': str(e)})
 
 
-def run_analysis_worker(stock_list, use_auto_pick, auto_pick_method, auto_pick_count):
+def run_analysis_worker(stock_list, use_auto_pick, auto_pick_method, auto_pick_count, user_tg_token, user_tg_chat_id):
     """分析工作執行緒"""
     global analysis_status, app_instance
     
