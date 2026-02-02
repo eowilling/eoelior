@@ -40,16 +40,52 @@ class CryptoSentinel:
             self.model = None
 
     def fetch_data(self, symbol='BTC/USDT', timeframe='1d', limit=200):
-        """從交易所獲取 K 線數據"""
+        """從交易所獲取 K 線數據 (fallback to yfinance)"""
+        # 1. Try CCXT (Exchange)
         try:
-            logger.info(f"正在從 {self.exchange_id} 獲取 {symbol} ({timeframe}) 數據...")
+            # logger.info(f"正在從 {self.exchange_id} 獲取 {symbol} 數據...")
+            # 注意: Binance US IP Block 經常導致此處 TimeOut 或 HTTP 451
             ohlcv = self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
             df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
             df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
             return df
-        except Exception as e:
-            logger.error(f"獲取數據失敗: {e}")
-            return None
+        except Exception as e_ccxt:
+            logger.warning(f"CCXT {self.exchange_id} 獲取失敗 (可能因 IP 地區限制): {e_ccxt}")
+            
+            # 2. Try YFinance (Yahoo Finance)
+            try:
+                import yfinance as yf
+                # Convert 'BTC/USDT' -> 'BTC-USD'
+                yf_symbol = symbol.replace('/USDT', '-USD').replace('/', '-')
+                logger.info(f"嘗試使用 YFinance 獲取數據: {yf_symbol}")
+                
+                ticker = yf.Ticker(yf_symbol)
+                # period='1y' (approx 365 days > 200 limit)
+                history = ticker.history(period="1y", interval="1d")
+                
+                if len(history) == 0:
+                    logger.error("YFinance 返回空數據")
+                    return None
+                    
+                # Format DataFrame to match CCXT structure
+                # YF index is Datetime, cols: Open, High, Low, Close, Volume
+                df = history.reset_index()
+                df = df[['Date', 'Open', 'High', 'Low', 'Close', 'Volume']]
+                df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+                
+                # Ensure timestamp is datetime (YF usually returns tz-aware, CCXT uses UTC naive usually, but pandas handles comparison ok)
+                # Remove timezone if needed or standardise
+                df['timestamp'] = df['timestamp'].dt.tz_localize(None) 
+                
+                # Filter last N rows
+                if len(df) > limit:
+                    df = df.iloc[-limit:].reset_index(drop=True)
+                    
+                return df
+                
+            except Exception as e_yf:
+                logger.error(f"YFinance 獲取失敗: {e_yf}")
+                return None
 
     def calculate_indicators(self, df):
         """計算技術指標 (使用 Pandas 實現，無需 TA-Lib 二進位依賴)"""
@@ -215,10 +251,6 @@ class CryptoSentinel:
             
         print("========================================\n")
 
-if __name__ == "__main__":
-    sentinel = CryptoSentinel()
-    
-    # 簡單的 CLI 互動
     print("CryptoSentinel - 加密貨幣投資輔助系統")
     target = input("請輸入幣種代碼 (預設 BTC/USDT): ").strip() or "BTC/USDT"
     
