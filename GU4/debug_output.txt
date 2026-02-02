@@ -1,0 +1,39 @@
+C:\xampp\htdocs\eoelior\GU4\src\analyzer.py:17: FutureWarning: 
+
+All support for the `google.generativeai` package has ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+
+  import google.generativeai as genai
+INFO:src.notifier:通知渠道: Telegram, Email
+INFO:src.notifier:嘗試發送 Telegram. Token: 8318...nVGE, ChatID: 973067130
+INFO:src.notifier:\u2705 Telegram 發送成功
+INFO:src.notifier:\u2705 Email 發送成功 (Port 587)
+Loading .env from: C:\xampp\htdocs\eoelior\GU4\.env
+Token Loaded: Yes
+Token Prefix: 83187...
+Chat ID Loaded: Yes
+Chat ID: 973067130
+
+Attempting to initialize NotificationManager...
+DEBUG: Notifier Channels: ['Telegram', 'Email']
+DEBUG: Config Token Present: True
+DEBUG: Config Token Prefix: 83187...
+Sending Test Message...
+
+發送結果: {'telegram': True, 'email': True}
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\eoelior\GU4\test_tg_debug.py", line 54, in <module>
+    print("\n\u274c 發送失敗！請檢查上方的錯誤日誌。")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u274c' in position 2: illegal multibyte sequence
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\eoelior\GU4\test_tg_debug.py", line 57, in <module>
+    print(f"\n\u274c發生錯誤: {e}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u274c' in position 2: illegal multibyte sequence
