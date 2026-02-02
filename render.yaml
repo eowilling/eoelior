@@ -2,6 +2,7 @@ services:
   - type: web
     name: crypto-sentinel
     env: python
+    plan: free
     region: singapore
     buildCommand: pip install -r CryptoSentinel/requirements.txt
     startCommand: gunicorn --chdir CryptoSentinel app:app
