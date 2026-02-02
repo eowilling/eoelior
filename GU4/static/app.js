@@ -433,7 +433,7 @@ function renderResults(results) {
                 <div class="flex flex-col gap-4 mb-6 border-b border-slate-700/50 pb-4">
                     <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
                         <div class="flex items-baseline gap-3 flex-wrap">
-                            <h3 class="text-2xl font-bold text-white">${r.name}</h3>
+                            <h3 class="text-2xl font-bold text-white">${r.name || r.code}</h3>
                             <span class="text-slate-500 font-mono text-lg">${r.code}</span>
                         </div>
                         <div class="flex items-center gap-6">
@@ -444,7 +444,7 @@ function renderResults(results) {
                             <div class="text-center">
                                 <div class="text-xs text-slate-500 mb-1">漲跌幅</div>
                                 <div class="text-lg font-bold ${colorClass}">
-                                    ${r.change_pct ? `${arrow} ${Math.abs(r.change_pct).toFixed(2)}%` : 'N/A'}
+                                    ${(r.change_pct !== null && r.change_pct !== undefined) ? `${arrow} ${Math.abs(r.change_pct).toFixed(2)}%` : 'N/A'}
                                 </div>
                             </div>
                         </div>
