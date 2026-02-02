@@ -5,7 +5,7 @@ services:
     plan: free
     region: singapore
     buildCommand: pip install -r CryptoSentinel/requirements.txt
-    startCommand: gunicorn --chdir CryptoSentinel app:app
+    startCommand: gunicorn --chdir CryptoSentinel --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: GEMINI_API_KEY
         sync: false
