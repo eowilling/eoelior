@@ -149,7 +149,14 @@
                 <!-- Header Status -->
                 <div id="statusHeader" class="p-6 text-center border-b border-white/5 bg-slate-800/50">
                     <h2 id="resultSymbol" class="text-2xl font-bold mb-1">BTC/USDT</h2>
-                    <div class="text-3xl font-mono text-white mb-2" id="resultPrice">$0.00</div>
+                    <div class="flex items-center justify-center gap-3 mb-2">
+                        <div class="text-3xl font-mono text-white" id="resultPrice">$0.00</div>
+                        <button onclick="openModal()"
+                            class="w-8 h-8 rounded-full bg-slate-700 hover:bg-yellow-600/50 text-yellow-400 transition-colors flex items-center justify-center"
+                            title="設定警報">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
+                    </div>
                     <div class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold tracking-wide"
                         id="sentimentBadge">
                         WAIT
@@ -215,6 +222,65 @@
             </div>
 
         </div>
+
+        <!-- Active Alerts Section -->
+        <div class="mt-8 glass rounded-2xl p-6 shadow-xl w-full">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-bell text-yellow-400"></i> 監控中警報 (Active Alerts)
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-slate-400 border-b border-slate-700 text-sm">
+                            <th class="p-3">幣種</th>
+                            <th class="p-3">條件</th>
+                            <th class="p-3">目標價</th>
+                            <th class="p-3 text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertList" class="text-sm">
+                        <!-- Alert items will be here -->
+                        <tr>
+                            <td colspan="4" class="p-4 text-center text-slate-500">暫無警報</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div
+            class="glass p-6 rounded-2xl w-full max-w-sm border border-slate-600 shadow-2xl transform scale-100 transition-all">
+            <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fa-regular fa-bell"></i> 新增價格警報
+            </h3>
+            <p class="text-slate-400 text-sm mb-4">當 <span id="modalSymbol"
+                    class="font-mono text-cyan-400 font-bold">BTC/USDT</span> 到達...</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">觸發條件</label>
+                    <select id="alertCondition"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 outline-none focus:border-cyan-500">
+                        <option value="above">高於 (漲破) ></option>
+                        <option value="below">低於 (跌破) << /option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">目標價格 (USDT)</label>
+                    <input type="number" id="alertPrice" step="any"
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 outline-none focus:border-cyan-500 font-mono">
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeModal()"
+                        class="flex-1 py-2 rounded-lg border border-slate-600 hover:bg-slate-700 transition-colors">取消</button>
+                    <button onclick="setAlert()"
+                        class="flex-1 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition-colors">設定警報</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -260,6 +326,10 @@
             document.getElementById('resultSymbol').textContent = data.symbol;
             document.getElementById('resultPrice').textContent = '$' + parseFloat(data.price).toFixed(data.price > 1 ? 2 : 6);
 
+            // Store for Alert Modal
+            currentSymbol = data.symbol;
+            currentPrice = parseFloat(data.price);
+
             // Sentiment
             const badge = document.getElementById('sentimentBadge');
             const techPanel = document.getElementById('techPanel');
@@ -303,6 +373,90 @@
             el.querySelector('.val').innerHTML = `${icon} <span class="ml-2 ${color} text-sm">${text}</span>`;
             el.className = `flex items-center justify-between p-3 rounded-lg border transition-colors ${passed ? 'bg-green-900/10 border-green-900/30' : 'bg-slate-800/40 border-transparent'}`;
         }
+        }
+
+        /* --- Alert System --- */
+        let currentSymbol = '';
+        let currentPrice = 0;
+
+        function openModal() {
+            if (!currentSymbol) return;
+            document.getElementById('modalSymbol').textContent = currentSymbol;
+            document.getElementById('alertPrice').value = currentPrice;
+            document.getElementById('alertModal').classList.remove('hidden');
+            document.getElementById('alertModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('alertModal').classList.add('hidden');
+            document.getElementById('alertModal').classList.remove('flex');
+        }
+
+        async function setAlert() {
+            const condition = document.getElementById('alertCondition').value;
+            const price = document.getElementById('alertPrice').value;
+
+            if (!price) return alert('請輸入價格');
+
+            try {
+                const res = await fetch('/api/alerts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        symbol: currentSymbol,
+                        condition: condition,
+                        target_price: price
+                    })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    closeModal();
+                    loadAlerts();
+                    // Optional toast
+                    alert('警報設定成功！');
+                } else {
+                    alert('設定失敗: ' + json.error);
+                }
+            } catch (e) { console.error(e); alert('Error setting alert'); }
+        }
+
+        async function loadAlerts() {
+            try {
+                const res = await fetch('/api/alerts');
+                const json = await res.json();
+                const list = document.getElementById('alertList');
+
+                if (!json.success || json.data.length === 0) {
+                    list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">暫無警報</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = json.data.map(alert => {
+                    const cond = alert.condition === 'above' ? '<span class="text-green-400">大於 ></span>' : '<span class="text-red-400">小於 <</span>';
+                    return `
+                        <tr class="border-b border-slate-700/50 hover:bg-slate-800/30">
+                            <td class="p-3 font-mono font-bold">${alert.symbol}</td>
+                            <td class="p-3">${cond}</td>
+                            <td class="p-3 font-mono">$${alert.target_price}</td>
+                            <td class="p-3 text-right">
+                                <button onclick="deleteAlert(${alert.id})" class="text-slate-500 hover:text-red-400 transition-colors">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function deleteAlert(id) {
+            if (!confirm('確定刪除此警報？')) return;
+            await fetch(`/api/alerts/${id}`, { method: 'DELETE' });
+            loadAlerts();
+        }
+
+        // Init
+        loadAlerts();
     </script>
 </body>
 
