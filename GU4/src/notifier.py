@@ -69,6 +69,10 @@ class NotificationManager:
             bot_token = self.dynamic_token or self.config.telegram_bot_token
             chat_id = self.dynamic_chat_id or self.config.telegram_chat_id
             
+            # Debug log to trace what's happening
+            masked_token = f"{bot_token[:4]}...{bot_token[-4:]}" if bot_token else "None"
+            logger.info(f"嘗試發送 Telegram. Token: {masked_token}, ChatID: {chat_id}")
+            
             # Telegram 訊息長度限制 4096
             message = f"📊 {title}\n\n{content}"
             if len(message) > 4096:
