@@ -483,7 +483,7 @@
                         <div id="addTodoButton" class="hidden">
                             <button onclick="toggleAddTodoForm()"
                                 class="w-full py-3 rounded-lg transition font-semibold flex items-center justify-center gap-2"
-                                style="background: rgba(0, 242, 255, 0.1); border: 2px dashed rgba(0, 242, 255, 0.3); color: var(--primary); hover:background: rgba(0, 242, 255, 0.2);">
+                                style="background: rgba(0, 242, 255, 0.1); border: 2px dashed rgba(0, 242, 255, 0.3); color: var(--primary);">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 4v16m8-8H4" />
@@ -506,7 +506,7 @@
                                 </div>
                                 <input type="text" id="newTodoInput" placeholder="輸入待辦事項..."
                                     class="w-full px-4 py-2 rounded-lg focus:ring-2 focus:border-blue-500 mb-2"
-                                    style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color: #ffffff; focus:ring-color: var(--primary);">
+                                    style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color: #ffffff;">
                                 <div class="mb-2">
                                     <label class="block text-xs mb-1"
                                         style="color: rgba(0, 242, 255, 0.7);">提醒時間（選填）</label>
@@ -515,7 +515,7 @@
                                         style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color: #ffffff; color-scheme: dark;">
                                 </div>
                                 <button onclick="addTodo()" class="w-full py-2 rounded-lg transition font-semibold"
-                                    style="background: linear-gradient(135deg, #00f2ff 0%, #0080ff 100%); color: #0a0e27; hover:opacity: 0.9;">
+                                    style="background: linear-gradient(135deg, #00f2ff 0%, #0080ff 100%); color: #0a0e27;">
                                     ➕ 新增
                                 </button>
                             </div>
@@ -4841,7 +4841,7 @@
                 try {
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
-                    db = getFirestore(app, 'eveday');  // 使用 eveday 資料庫
+                    db = getFirestore(app);  // 使用預設資料庫 (default)
 
                     // 自動匿名登入
                     signInAnonymously(auth).then(() => {
