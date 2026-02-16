@@ -1,0 +1,37 @@
+# Uploaded images directory
+# 如果您想要將圖片上傳到 GitHub 作為圖床，請註釋掉下面這些行
+# uploads/*.png
+# uploads/*.jpg
+# uploads/*.jpeg
+# uploads/*.gif
+# uploads/*.webp
+
+# Keep the uploads directory but ignore its contents
+!uploads/.gitkeep
+
+# PHP error logs
+*.log
+php_error_log
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment files (if you add any)
+.env
+.env.local
+
+# Test file (optional, you can remove this line if you want to include it)
+test.php
