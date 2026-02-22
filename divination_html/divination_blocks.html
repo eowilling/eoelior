@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>祈願擲筊 | 線上求神問卜</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 載入台灣常用且具傳統韻味的字體思維 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background-color: #FDF9EC; /* 宣紙般的溫潤底色 */
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23dca854' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        /* 隱藏原生捲軸，讓畫面更乾淨 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #dca854;
+            border-radius: 4px;
+        }
+        /* 筊杯拋擲動畫 */
+        @keyframes toss-left {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-120px) translateX(-30px) rotate(360deg) scale(1.2); }
+            80% { transform: translateY(20px) translateX(-10px) rotate(700deg) scale(1); }
+            100% { transform: translateY(0) rotate(720deg) scale(1); }
+        }
+        @keyframes toss-right {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-120px) translateX(30px) rotate(-360deg) scale(1.2); }
+            80% { transform: translateY(20px) translateX(10px) rotate(-700deg) scale(1); }
+            100% { transform: translateY(0) rotate(-720deg) scale(1); }
+        }
+        .anim-toss-left { animation: toss-left 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        .anim-toss-right { animation: toss-right 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        /* 卡片選取狀態 */
+        .deity-card.selected {
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+            transform: translateY(-4px);
+        }
+        /* 筊杯 SVG 樣式 */
+        .jiaobei-flat { fill: #dc2626; } /* 陽面（平面）紅色 */
+        .jiaobei-curved { fill: #7f1d1d; } /* 陰面（凸面）深紅 */
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 text-slate-800">
+    <!-- 全域提示訊息 (Toast) -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <span id="toast-message">提示訊息</span>
+    </div>
+
+    <!-- 第一階段：設定與請神畫面 -->
+    <main id="setup-screen" class="w-full max-w-2xl bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6 sm:p-10 transition-all duration-500">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl font-black text-red-700 mb-3 tracking-widest">祈願擲筊</h1>
+            <p class="text-slate-600 font-medium">心誠則靈，請選擇或上傳您欲求問的主神</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <!-- 內建 Q 版神明：媽祖 -->
+            <button class="deity-card border-2 border-transparent bg-amber-50 rounded-2xl p-4 flex flex-col items-center gap-3 transition-all hover:bg-amber-100" onclick="selectDeity('mazu', this)">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-300 to-amber-500 flex items-center justify-center shadow-inner">
+                    <span class="text-3xl">👸</span>
+                </div>
+                <span class="font-bold text-amber-900">天上聖母</span>
+            </button>
+            <!-- 內建 Q 版神明：關公 -->
+            <button class="deity-card border-2 border-transparent bg-amber-50 rounded-2xl p-4 flex flex-col items-center gap-3 transition-all hover:bg-amber-100" onclick="selectDeity('guangong', this)">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center shadow-inner">
+                    <span class="text-3xl">🧔🏾‍♂️</span>
+                </div>
+                <span class="font-bold text-amber-900">關聖帝君</span>
+            </button>
+            <!-- 內建 Q 版神明：土地公 -->
+            <button class="deity-card border-2 border-transparent bg-amber-50 rounded-2xl p-4 flex flex-col items-center gap-3 transition-all hover:bg-amber-100" onclick="selectDeity('tudigong', this)">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-orange-200 to-yellow-500 flex items-center justify-center shadow-inner">
+                    <span class="text-3xl">👴🏼</span>
+                </div>
+                <span class="font-bold text-amber-900">福德正神</span>
+            </button>
+            <!-- 自行上傳 -->
+            <div class="deity-card relative border-2 border-dashed border-slate-300 bg-slate-50 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all hover:bg-slate-100 cursor-pointer overflow-hidden" id="upload-card">
+                <input type="file" id="image-upload" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
+                <div id="upload-icon" class="flex flex-col items-center gap-2">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span class="font-bold text-slate-500 text-sm">自訂上傳</span>
+                </div>
+                <img id="upload-preview" class="absolute inset-0 w-full h-full object-cover hidden" alt="上傳預覽">
+            </div>
+        </div>
+        <div class="mb-8">
+            <label for="question" class="block text-sm font-bold text-slate-700 mb-2">您想請示的事情是？（選填）</label>
+            <textarea id="question" rows="3" class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none transition-shadow text-lg" placeholder="例如：信女ＯＯＯ，家住... 想請問今年的事業運勢..."></textarea>
+        </div>
+        <button onclick="startDivination()" class="w-full py-4 bg-gradient-to-r from-red-600 to-red-800 text-white font-black text-xl rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all active:translate-y-0">
+            恭請神明入座
+        </button>
+    </main>
+
+    <!-- 第二階段：擲筊畫面 -->
+    <main id="divination-screen" class="w-full max-w-2xl hidden flex-col items-center transition-all duration-500 opacity-0 mt-8">
+        <!-- 神明展示區 -->
+        <div class="relative w-48 h-48 sm:w-64 sm:h-64 mb-6 rounded-full p-2 bg-gradient-to-b from-yellow-300 to-amber-600 shadow-2xl flex items-center justify-center">
+            <div id="active-deity-display" class="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden border-4 border-white shadow-inner">
+                <!-- 內容由 JS 動態注入 -->
+            </div>
+            <!-- 香爐裝飾 -->
+            <div class="absolute -bottom-6 flex flex-col items-center">
+                <div class="flex gap-2 mb-[-8px] z-10">
+                    <div class="w-1 h-8 bg-orange-500 rounded-t-full shadow-[0_0_8px_#f97316] animate-pulse"></div>
+                    <div class="w-1 h-10 bg-orange-500 rounded-t-full shadow-[0_0_8px_#f97316] animate-pulse" style="animation-delay: 0.2s"></div>
+                    <div class="w-1 h-8 bg-orange-500 rounded-t-full shadow-[0_0_8px_#f97316] animate-pulse" style="animation-delay: 0.4s"></div>
+                </div>
+                <div class="w-16 h-8 bg-gradient-to-b from-yellow-600 to-yellow-800 rounded-b-xl border-t-4 border-yellow-400"></div>
+            </div>
+        </div>
+
+        <!-- 問題展示區 -->
+        <div id="display-question" class="text-center text-lg sm:text-xl font-bold text-amber-900 bg-white/80 backdrop-blur px-8 py-4 rounded-2xl shadow-md mb-10 max-w-md w-full min-h-[4rem] break-words">
+            （弟子誠心祈問）
+        </div>
+
+        <!-- 擲筊區 -->
+        <div class="relative w-full h-64 bg-slate-900/5 rounded-3xl border-2 border-slate-900/10 mb-8 flex items-center justify-center overflow-hidden">
+            <div class="flex gap-4 sm:gap-12 relative z-10">
+                <!-- 左筊杯 -->
+                <div id="block-left" class="w-16 h-24 sm:w-20 sm:h-32 transition-transform duration-300 drop-shadow-2xl">
+                    <svg viewBox="0 0 100 200" class="w-full h-full">
+                        <!-- 預設為凸面 (陰) -->
+                        <path id="path-left" d="M30,10 C60,20 80,40 70,100 C80,160 60,180 30,190 C10,150 10,50 30,10 Z" class="jiaobei-curved" />
+                        <path d="M20,10 C30,100 30,190 20,190 C10,100 10,10 20,10 Z" fill="#991b1b" /> <!-- 側邊立體感 -->
+                    </svg>
+                </div>
+                <!-- 右筊杯 -->
+                <div id="block-right" class="w-16 h-24 sm:w-20 sm:h-32 transition-transform duration-300 drop-shadow-2xl" style="transform: scaleX(-1);">
+                    <svg viewBox="0 0 100 200" class="w-full h-full">
+                        <!-- 預設為凸面 (陰) -->
+                        <path id="path-right" d="M30,10 C60,20 80,40 70,100 C80,160 60,180 30,190 C10,150 10,50 30,10 Z" class="jiaobei-curved" />
+                        <path d="M20,10 C30,100 30,190 20,190 C10,100 10,10 20,10 Z" fill="#991b1b" />
+                    </svg>
+                </div>
+            </div>
+            <!-- 結果文字疊加層 -->
+            <div id="result-text" class="absolute inset-0 flex items-center justify-center opacity-0 scale-50 transition-all duration-500 z-20 pointer-events-none">
+                <span class="text-6xl sm:text-8xl font-black text-red-600 drop-shadow-[0_4px_4px_rgba(255,255,255,0.8)] stroke-white" style="-webkit-text-stroke: 2px white;"></span>
+            </div>
+        </div>
+        <div class="flex gap-4 w-full max-w-md">
+            <button onclick="resetSetup()" class="flex-1 py-4 bg-white text-slate-600 font-bold rounded-xl shadow hover:bg-slate-50 transition-colors">
+                重新請神
+            </button>
+            <button id="btn-cast" onclick="castBlocks()" class="flex-[2] py-4 bg-red-600 text-white font-black text-xl rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all">
+                誠心擲筊
+            </button>
+        </div>
+        <!-- 歷史紀錄 -->
+        <div class="mt-8 w-full max-w-md">
+            <h3 class="text-sm font-bold text-slate-500 mb-2 border-b border-slate-300 pb-1">本次擲筊紀錄</h3>
+            <div id="history-list" class="flex gap-2 flex-wrap text-lg">
+                <!-- 動態加入結果標籤 -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        /**
+         * 系統狀態管理
+         */
+        const state = {
+            selectedId: null, // 'mazu', 'guangong', 'tudigong', 或 'custom'
+            customImageURL: null, // 儲存上傳圖片的 Base64 URL
+            question: '',
+            isCasting: false // 動畫鎖定狀態
+        };
+
+        // 筊杯 SVG 路徑資料
+        // 平面 (陽) - 看起來像平坦的切面
+        const pathFlat = "M30,10 C50,10 60,20 60,100 C60,180 50,190 30,190 C10,150 10,50 30,10 Z";
+        // 凸面 (陰) - 看起來圓潤飽滿
+        const pathCurved = "M30,10 C60,20 80,40 70,100 C80,160 60,180 30,190 C10,150 10,50 30,10 Z";
+
+
+        /**
+         * 顯示 Toast 提示
+         * @param {string} msg
+         */
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 3000);
+        }
+
+        /**
+         * 處理點擊內建神明卡片
+         */
+        function selectDeity(id, element) {
+            // 清除所有選取狀態
+            document.querySelectorAll('.deity-card').forEach(el => el.classList.remove('selected'));
+            // 設定選取狀態
+            element.classList.add('selected');
+            state.selectedId = id;
+            // 若之前有上傳圖片，清除其視覺選取
+            document.getElementById('upload-card').classList.remove('selected');
+        }
+
+        /**
+         * 處理使用者圖片上傳
+         */
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 基礎安全與效能檢查：限制 5MB 以下圖片
+            if (!file.type.startsWith('image/')) {
+                showToast('請上傳圖片檔案格式 (jpg, png, 等)');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('圖片檔案過大，請選擇小於 5MB 的圖片');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.customImageURL = e.target.result;
+                state.selectedId = 'custom';
+
+                // 更新 UI
+                const previewImg = document.getElementById('upload-preview');
+                previewImg.src = state.customImageURL;
+                previewImg.classList.remove('hidden');
+                document.getElementById('upload-icon').classList.add('hidden');
+
+                // 觸發選取狀態
+                document.querySelectorAll('.deity-card').forEach(el => el.classList.remove('selected'));
+                document.getElementById('upload-card').classList.add('selected');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /**
+         * 準備進入擲筊畫面
+         */
+        function startDivination() {
+            if (!state.selectedId) {
+                showToast('請先選擇或上傳一位神明');
+                return;
+            }
+
+            // 取得問題並儲存
+            const q = document.getElementById('question').value.trim();
+            state.question = q || '（信徒默念心中所求）';
+            document.getElementById('display-question').innerText = state.question;
+
+            // 構建神明展示區內容
+            const displayContainer = document.getElementById('active-deity-display');
+            displayContainer.innerHTML = ''; // 清空
+            if (state.selectedId === 'custom' && state.customImageURL) {
+                displayContainer.innerHTML = `<img src="${state.customImageURL}" class="w-full h-full object-cover" alt="供奉神明">`;
+            } else {
+                // 根據 ID 賦予對應的 Emoji 與漸層背景
+                let emoji = '';
+                let bgClass = '';
+                if (state.selectedId === 'mazu') {
+                    emoji = '👸';
+                    bgClass = 'from-yellow-300 to-amber-500';
+                } else if (state.selectedId === 'guangong') {
+                    emoji = '🧔🏾‍♂️';
+                    bgClass = 'from-red-400 to-red-700';
+                } else if (state.selectedId === 'tudigong') {
+                    emoji = '👴🏼';
+                    bgClass = 'from-orange-200 to-yellow-500';
+                }
+                displayContainer.className = `w-full h-full rounded-full flex items-center justify-center overflow-hidden border-4 border-white shadow-inner bg-gradient-to-br ${bgClass}`;
+                displayContainer.innerHTML = `<span class="text-7xl sm:text-9xl">${emoji}</span>`;
+            }
+
+            // 切換畫面動畫
+            const setupScreen = document.getElementById('setup-screen');
+            const divScreen = document.getElementById('divination-screen');
+            setupScreen.style.opacity = '0';
+            setTimeout(() => {
+                setupScreen.classList.add('hidden');
+                divScreen.classList.remove('hidden');
+                // 觸發重繪以啟動過渡效果
+                void divScreen.offsetWidth;
+                divScreen.classList.remove('opacity-0');
+            }, 500);
+        }
+
+        /**
+         * 回到設定畫面
+         */
+        function resetSetup() {
+            const setupScreen = document.getElementById('setup-screen');
+            const divScreen = document.getElementById('divination-screen');
+            divScreen.classList.add('opacity-0');
+            setTimeout(() => {
+                divScreen.classList.add('hidden');
+                setupScreen.classList.remove('hidden');
+                void setupScreen.offsetWidth;
+                setupScreen.style.opacity = '1';
+            }, 500);
+
+            // 清空歷史紀錄
+            document.getElementById('history-list').innerHTML = '';
+            // 隱藏結果文字
+            const resultText = document.getElementById('result-text');
+            resultText.classList.remove('opacity-100', 'scale-100');
+            resultText.classList.add('opacity-0', 'scale-50');
+        }
+
+        /**
+         * 執行擲筊邏輯與動畫
+         */
+        function castBlocks() {
+            if (state.isCasting) return;
+            state.isCasting = true;
+
+            const btn = document.getElementById('btn-cast');
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            const blockLeft = document.getElementById('block-left');
+            const blockRight = document.getElementById('block-right');
+            const pathLeft = document.getElementById('path-left');
+            const pathRight = document.getElementById('path-right');
+            const resultText = document.getElementById('result-text');
+
+            // 隱藏上一次的文字
+            resultText.classList.remove('opacity-100', 'scale-100');
+            resultText.classList.add('opacity-0', 'scale-50');
+
+            // 加入拋擲動畫
+            blockLeft.classList.add('anim-toss-left');
+            blockRight.classList.add('anim-toss-right');
+
+            // 決定結果 (0: 平/陽, 1: 凸/陰)
+            // 由於 Math.random() < 0.5，所以平凸機率各為 50%
+            const leftResult = Math.random() < 0.5 ? 0 : 1;
+            const rightResult = Math.random() < 0.5 ? 0 : 1;
+
+            // 動畫進行到一半時切換圖形（約 600ms）
+            setTimeout(() => {
+                setBlockAppearance(pathLeft, leftResult);
+                setBlockAppearance(pathRight, rightResult);
+            }, 600);
+
+            // 動畫結束後處理結果 (動畫總長 1.2s，設定 1.3s 確保銜接)
+            setTimeout(() => {
+                blockLeft.classList.remove('anim-toss-left');
+                blockRight.classList.remove('anim-toss-right');
+                showResult(leftResult, rightResult);
+                state.isCasting = false;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }, 1300);
+        }
+
+        /**
+         * 設定單個筊杯的外觀
+         * @param {SVGElement} pathEl
+         * @param {number} type 0 = 平面(陽), 1 = 凸面(陰)
+         */
+        function setBlockAppearance(pathEl, type) {
+            if (type === 0) {
+                pathEl.setAttribute('d', pathFlat);
+                pathEl.setAttribute('class', 'jiaobei-flat');
+            } else {
+                pathEl.setAttribute('d', pathCurved);
+                pathEl.setAttribute('class', 'jiaobei-curved');
+            }
+        }
+
+        /**
+         * 判定並顯示結果
+         * 聖筊：一平一凸 (0,1 或 1,0)
+         * 笑筊：兩平 (0,0)
+         * 陰筊：兩凸 (1,1)
+         */
+        function showResult(left, right) {
+            const resultTextEl = document.getElementById('result-text').querySelector('span');
+            const resultContainer = document.getElementById('result-text');
+            const historyList = document.getElementById('history-list');
+
+            let resultName = '';
+            let colorClass = '';
+
+            if (left !== right) {
+                resultName = '聖筊';
+                colorClass = 'text-red-600';
+            } else if (left === 0 && right === 0) {
+                resultName = '笑筊';
+                colorClass = 'text-yellow-500';
+            } else {
+                resultName = '陰筊';
+                colorClass = 'text-slate-800';
+            }
+
+            // 顯示大字結果
+            resultTextEl.innerText = resultName;
+            resultTextEl.className = `text-6xl sm:text-8xl font-black drop-shadow-[0_4px_4px_rgba(255,255,255,0.9)] stroke-white ${colorClass}`;
+            resultContainer.classList.remove('opacity-0', 'scale-50');
+            resultContainer.classList.add('opacity-100', 'scale-100');
+
+            // 紀錄到歷史區塊
+            const tag = document.createElement('span');
+            tag.className = `px-3 py-1 rounded-md font-bold text-white shadow-sm ${
+                resultName === '聖筊' ? 'bg-red-500' : resultName === '笑筊' ? 'bg-yellow-500' : 'bg-slate-700'
+            }`;
+            tag.innerText = resultName;
+            historyList.appendChild(tag);
+        }
+    </script>
+</body>
+</html>
