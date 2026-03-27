@@ -4816,26 +4816,16 @@
                 firebaseEnabled = false;
             }
 
-            // 顯示 Firebase 警告
+            // 顯示 Firebase 警告（不阻擋操作，降級為本地模式）
             function showFirebaseWarning() {
                 const warningBanner = document.createElement('div');
-                warningBanner.className = 'fixed top-0 left-0 right-0 bg-red-600 text-white p-4 z-50 shadow-lg';
+                warningBanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#92400e;color:#fef3c7;padding:10px 16px;z-index:99998;display:flex;align-items:center;justify-content:space-between;font-family:sans-serif;font-size:13px;';
                 warningBanner.innerHTML = `
-                <div class="max-w-6xl mx-auto flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl">⚠️</span>
-                        <div>
-                            <p class="font-bold">Firebase 連線失敗</p>
-                            <p class="text-sm">此應用程式需要 Firebase 連線才能正常運作。請檢查網路連線或 Firebase 配置。</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+                    <span>☁️ 雲端同步不可用（Firebase 未設定）— 資料將儲存在本機瀏覽器，功能正常使用。</span>
+                    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fef3c7;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
+                `;
                 document.body.insertBefore(warningBanner, document.body.firstChild);
-
-                // 禁用主要功能
-                document.getElementById('evedayAppRoot').style.opacity = '0.5';
-                document.getElementById('evedayAppRoot').style.pointerEvents = 'none';
+                // 不禁用功能，降級為 localStorage 模式
             }
 
             // Firebase 應用程式識別碼
