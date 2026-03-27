@@ -51,6 +51,12 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8 text-slate-800">
+<style>
+#eoelior-back-btn{position:fixed;top:12px;left:12px;z-index:99999;display:inline-flex;align-items:center;gap:6px;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#94a3b8;text-decoration:none;font-family:-apple-system,"Noto Sans TC",sans-serif;font-size:13px;font-weight:500;padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);transition:all 0.2s;}
+#eoelior-back-btn:hover{color:#f1f5f9;border-color:rgba(99,102,241,0.5);background:rgba(30,41,59,0.95);}
+#eoelior-back-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+</style>
+<a id="eoelior-back-btn" href="../../index.html"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>玩具盒子</a>
     <!-- 全域提示訊息 (Toast) -->
     <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
