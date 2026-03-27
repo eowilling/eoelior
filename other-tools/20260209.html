@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 輿論風暴：林宅血案與黑道乾爹</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #f87171, #fca5a5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // --- Icons Components (Replacing external library to fix runtime errors) ---
+        const ShieldAlert = ({ className, size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        );
+
+        const AlertTriangle = ({ className, size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        );
+
+        const Film = ({ className, size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+            </svg>
+        );
+
+        const Heart = ({ className, size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+        );
+
+        const MessageSquare = ({ className, size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        );
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('overview');
+
+            return (
+                <div className="min-h-screen pb-12">
+                    {/* Header */}
+                    <header className="fixed top-0 w-full z-50 glass-panel border-b border-gray-700">
+                        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <ShieldAlert className="text-red-500 w-6 h-6" />
+                                <h1 className="text-xl font-bold tracking-wider text-white">2026 輿論風暴懶人包</h1>
+                            </div>
+                            <div className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
+                                最後更新：2026.02.09
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="pt-24 px-4 max-w-4xl mx-auto space-y-8">
+                        
+                        {/* Hero Section */}
+                        <section className="text-center space-y-4 mb-12">
+                            <h2 className="text-4xl md:text-6xl font-black text-white leading-tight">
+                                當<span className="text-gradient">轉型正義</span>撞上<br/>娛樂圈的人情世故
+                            </h2>
+                            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+                                為什麼一部電影的殺青與一位影視大亨的離世，會同時引爆台灣社會對歷史傷痛的怒火？
+                                一次看懂這兩起看似無關，實則緊密相連的炎上事件。
+                            </p>
+                        </section>
+
+                        {/* Navigation Tabs */}
+                        <div className="flex flex-wrap justify-center gap-2 mb-8">
+                            {['overview', 'movie', 'alyssa', 'timeline'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`px-6 py-2 rounded-full font-bold transition-all duration-300 ${
+                                        activeTab === tab 
+                                        ? 'bg-red-600 text-white shadow-lg shadow-red-900/50 scale-105' 
+                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                    }`}
+                                >
+                                    {tab === 'overview' && '總覽：雙重炎上'}
+                                    {tab === 'movie' && '左：世紀血案爭議'}
+                                    {tab === 'alyssa' && '右：賈靜雯與乾爹'}
+                                    {tab === 'timeline' && '歷史時間軸'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Content Rendering */}
+                        <div className="transition-opacity duration-300 min-h-[500px]">
+                            {activeTab === 'overview' && <OverviewSection />}
+                            {activeTab === 'movie' && <MovieControversy />}
+                            {activeTab === 'alyssa' && <AlyssaControversy />}
+                            {activeTab === 'timeline' && <HistoryTimeline />}
+                        </div>
+
+                    </main>
+
+                    <footer className="mt-20 py-8 border-t border-gray-800 text-center text-gray-500 text-sm">
+                        <p>本頁面整理自公開新聞與網路討論，旨在釐清歷史脈絡與爭議焦點。</p>
+                        <p className="mt-2">關鍵字：林宅血案、美麗島事件、江南案、吳敦、賈靜雯、轉型正義</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        // --- Components ---
+
+        const OverviewSection = () => (
+            <div className="grid md:grid-cols-2 gap-6">
+                <div className="glass-panel p-6 rounded-2xl border-l-4 border-red-500 hover:bg-gray-800/50 transition">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Film className="w-8 h-8 text-red-400" />
+                        <h3 className="text-2xl font-bold text-white">受害者的二度傷害</h3>
+                    </div>
+                    <p className="text-gray-300 mb-4 font-bold">電影《世紀血案》爭議</p>
+                    <ul className="space-y-3 text-sm text-gray-400">
+                        <li className="flex gap-2">
+                            <AlertTriangle size={16} className="text-yellow-500 shrink-0 mt-1" />
+                            <span><strong>身分不對：</strong>導演被起底是當年「警備總部發言人」之孫（加害者後代）。</span>
+                        </li>
+                        <li className="flex gap-2">
+                            <AlertTriangle size={16} className="text-yellow-500 shrink-0 mt-1" />
+                            <span><strong>未獲授權：</strong>林義雄長女林奐均明確拒絕拍攝，劇組仍強行改編。</span>
+                        </li>
+                        <li className="flex gap-2">
+                            <AlertTriangle size={16} className="text-yellow-500 shrink-0 mt-1" />
+                            <span><strong>劇本魔改：</strong>疑似影射血案是黨外內鬥（史明指使），而非政治謀殺。</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div className="glass-panel p-6 rounded-2xl border-l-4 border-blue-500 hover:bg-gray-800/50 transition">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Heart className="w-8 h-8 text-blue-400" />
+                        <h3 className="text-2xl font-bold text-white">加害者的溫情洗白</h3>
+                    </div>
+                    <p className="text-gray-300 mb-4 font-bold">賈靜雯悼念吳敦爭議</p>
+                    <ul className="space-y-3 text-sm text-gray-400">
+                        <li className="flex gap-2">
+                            <AlertTriangle size={16} className="text-yellow-500 shrink-0 mt-1" />
+                            <span><strong>主角身分：</strong>吳敦是「江南案」赴美刺殺劉宜良的殺手，也是竹聯幫大老。</span>
+                        </li>
+                        <li className="flex gap-2">
+                            <AlertTriangle size={16} className="text-yellow-500 shrink-0 mt-1" />
+                            <span><strong>美化用詞：</strong>賈靜雯發文稱其「俠義」、「溫暖的大樹」，完全忽略其政治殺手背景。</span>
+                        </li>
+                        <li className="flex gap-2">
+                            <AlertTriangle size={16} className="text-yellow-500 shrink-0 mt-1" />
+                            <span><strong>公私不分：</strong>被批評演藝圈「認賊作父」，將江湖情義置於歷史正義之上。</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div className="md:col-span-2 glass-panel p-6 rounded-2xl text-center mt-4">
+                    <h4 className="text-xl font-bold text-white mb-2">為什麼大家這麼生氣？</h4>
+                    <p className="text-gray-300">
+                        這是地獄般的巧合。一邊是<strong>受害者家屬（林奐均）的聲音被忽視</strong>，另一邊是<strong>加害者（吳敦）的形象被美化</strong>。
+                        兩件事同時發生，讓大眾感受到演藝圈掌握話語權，卻對台灣歷史傷痛缺乏基本的敬畏。
+                    </p>
+                </div>
+            </div>
+        );
+
+        const MovieControversy = () => (
+            <div className="space-y-6 animate-fade-in">
+                <div className="bg-red-900/20 p-6 rounded-xl border border-red-900/50">
+                    <h3 className="text-2xl font-bold text-red-200 mb-4 flex items-center gap-2">
+                        <Film size={24}/> 事件一：《世紀血案》炎上始末
+                    </h3>
+                    <div className="space-y-4 text-gray-300">
+                        <p>
+                            電影改編自 1980 年震驚國際的<strong>「林宅血案」</strong>。在美麗島事件受審期間，林義雄的母親與雙胞胎女兒在家中慘遭殺害，僅長女林奐均倖存。
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                     <DetailCard 
+                        title="爭議點 1：吃人血饅頭？" 
+                        content="受害者林家目前唯一的倖存者林奐均，據傳在籌備期就已表達「反對拍攝」。但劇組堅持「創作自由」與「歷史詮釋權」，被網友痛批是在家屬傷口上灑鹽賺票房。"
+                    />
+                    <DetailCard 
+                        title="爭議點 2：導演出身太敏感" 
+                        content="導演徐琨華被起底，其祖父是當年「警備總部發言人」。當年林宅處於警總 24 小時監控下發生血案，警總被視為最大嫌疑人。由嫌疑機構的後代來拍受害者的故事，被視為極大的諷刺。"
+                    />
+                     <DetailCard 
+                        title="爭議點 3：劇本甩鍋？" 
+                        content="流出的劇本資訊暗示，電影將兇手指向海外獨派勢力（影射史明）或黨外內鬥，而非國民黨特務。這被認為是在沒有證據的情況下，透過電影篡改歷史記憶。"
+                    />
+                     <DetailCard 
+                        title="爭議點 4：演員的兩難" 
+                        content="資深演員寇世勳飾演警總將軍，被要求展現「不得已的人性」；年輕演員夏騰宏飾演林義雄。這樣的選角與劇本安排，讓演員也捲入輿論風暴。"
+                    />
+                </div>
+            </div>
+        );
+
+        const AlyssaControversy = () => (
+            <div className="space-y-6 animate-fade-in">
+                <div className="bg-blue-900/20 p-6 rounded-xl border border-blue-900/50">
+                    <h3 className="text-2xl font-bold text-blue-200 mb-4 flex items-center gap-2">
+                        <MessageSquare size={24}/> 事件二：賈靜雯 Threads 貼文爭議
+                    </h3>
+                    <div className="space-y-4 text-gray-300">
+                        <p>
+                            2026 年 2 月 3 日，長宏影視董事長<strong>吳敦</strong>過世。賈靜雯發文悼念這位曾力捧她的「乾爹」。然而，吳敦不只是一位影視大亨。
+                        </p>
+                    </div>
+                </div>
+
+                <div className="bg-gray-800 p-6 rounded-xl">
+                    <h4 className="font-bold text-white mb-4">誰是吳敦？為什麼不能只叫他乾爹？</h4>
+                    <div className="flex flex-col md:flex-row gap-6">
+                        <div className="flex-1 space-y-2">
+                            <div className="bg-black/40 p-3 rounded">
+                                <span className="text-xs font-bold text-gray-500 block">身分 A：影視大亨</span>
+                                <p className="text-sm">捧紅賈靜雯、金城武、林志穎等人。投資拍攝《倚天屠龍記》、《烏龍院》等經典作品。</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 space-y-2">
+                             <div className="bg-red-900/30 p-3 rounded border border-red-900/50">
+                                <span className="text-xs font-bold text-red-400 block">身分 B：政治殺手 (江南案)</span>
+                                <p className="text-sm text-gray-300">
+                                    1984 年，受情報局指使，與陳啟禮赴美刺殺《蔣經國傳》作者<strong>劉宜良（江南）</strong>。這是國民黨政府派黑道去美國殺人的重大外交醜聞。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4">
+                    <h4 className="font-bold text-white">爭議焦點：Threads 貼文內容</h4>
+                    <div className="glass-panel p-4 rounded-lg italic text-gray-400 border-l-2 border-blue-400">
+                        「...即使在大家眼中他是什麼樣的人物，但在我眼中，他就是一位<strong>俠義</strong>、溫暖、護著晚輩的大樹...」
+                        <br/><span className="text-xs not-italic text-gray-600 block mt-2">- 賈靜雯貼文節錄（大意）</span>
+                    </div>
+                    
+                    <div className="bg-gray-700/50 p-4 rounded-lg">
+                        <h5 className="font-bold text-red-300 mb-2">網友怒點整理：</h5>
+                        <ul className="list-disc list-inside space-y-2 text-sm text-gray-300">
+                            <li><strong>「俠義」二字太刺眼：</strong>暗殺手無寸鐵的作家不是俠義，是謀殺。</li>
+                            <li><strong>無視歷史傷痛：</strong>對賈靜雯是溫暖長輩，對劉宜良遺孀崔蓉芝而言是殺夫仇人。</li>
+                            <li><strong>公眾人物責任：</strong>私下悼念無妨，但公開發文美化殺手，是在傳遞錯誤的價值觀。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const HistoryTimeline = () => {
+            const events = [
+                { year: '1979.12', title: '美麗島事件', desc: '高雄爆發警民衝突，黨外菁英（含林義雄）全數被捕。' },
+                { year: '1980.02', title: '林宅血案', desc: '林義雄在獄中受審時，母親與雙胞胎女兒在警總監控下的家中被殺害。' },
+                { year: '1984.10', title: '江南案', desc: '吳敦與陳啟禮赴美刺殺作家劉宜良（江南），震驚台美關係。' },
+                { year: '1990s', title: '影視大亨崛起', desc: '吳敦出獄後投入影視圈，成為「長宏影視」老闆，力捧賈靜雯等人。' },
+                { year: '2026.02', title: '雙重炎上', desc: '吳敦過世賈靜雯悼念 ＋ 電影《世紀血案》爭議爆發，歷史傷口再度被撕裂。' },
+            ];
+
+            return (
+                <div className="relative pl-8 space-y-8 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-700">
+                    {events.map((evt, idx) => (
+                        <div key={idx} className="relative group">
+                            <div className="absolute -left-[29px] w-6 h-6 rounded-full bg-gray-800 border-4 border-gray-600 group-hover:border-red-500 group-hover:scale-110 transition-all z-10"></div>
+                            <div className="glass-panel p-4 rounded-lg hover:translate-x-2 transition-transform duration-300">
+                                <span className="text-red-400 font-black text-xl block mb-1">{evt.year}</span>
+                                <h4 className="font-bold text-white text-lg">{evt.title}</h4>
+                                <p className="text-gray-400 text-sm mt-2">{evt.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const DetailCard = ({ title, content }) => (
+            <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-750 transition border border-gray-700">
+                <h4 className="font-bold text-gray-200 mb-2">{title}</h4>
+                <p className="text-sm text-gray-400 leading-relaxed">{content}</p>
+            </div>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

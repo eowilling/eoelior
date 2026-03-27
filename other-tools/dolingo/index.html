@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUOLINGO LAUNCHER</title>
+    <!-- 使用 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #58cc02;
+            --primary-dark: #46a302;
+            --secondary: #ffc800;
+            --bg-gradient: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px;
+            color: white;
+        }
+
+        /* 背景裝飾 */
+        .background-blob {
+            position: fixed;
+            z-index: -1;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: move 20s infinite alternate;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            top: -100px;
+            left: -100px;
+        }
+
+        .blob-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--secondary);
+            bottom: -50px;
+            right: -50px;
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(0, 0) scale(1);
+            }
+
+            to {
+                transform: translate(80px, 80px) scale(1.1);
+            }
+        }
+
+        /* 擬真手機邊框 */
+        .device-container {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            margin: 0 auto;
+            perspective: 1000px;
+            animation: fadeIn 1s ease-out;
+            z-index: 10;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .phone-frame {
+            position: relative;
+            width: 100%;
+            padding-bottom: 210%;
+            background: #111;
+            border: 12px solid #222;
+            border-radius: 55px;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 頂部感應器區域 (Notch) */
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 30px;
+            background: #222;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            z-index: 20;
+        }
+
+        .phone-display {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 靜態畫面圖片 (使用您提供的截圖內容作為基底) */
+        .static-screenshot {
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .duo-logo {
+            width: 50%;
+            margin-bottom: 20px;
+        }
+
+        .duo-text {
+            color: #58cc02;
+            font-size: 2.22rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .duo-subtext {
+            color: #afafaf;
+            font-size: 1rem;
+            margin-bottom: 50%;
+        }
+
+        /* 模擬截圖底部的按鈕區域 */
+        .fake-btn-primary {
+            width: 100%;
+            background: #58cc02;
+            border-bottom: 4px solid #46a302;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .fake-btn-secondary {
+            width: 100%;
+            background: white;
+            border: 2px solid #e5e5e5;
+            border-bottom: 6px solid #e5e5e5;
+            padding: 15px;
+            border-radius: 12px;
+            color: #46bc00;
+            font-weight: 700;
+        }
+
+        /* 覆蓋層 - 使其看起來像真正的 App */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .overlay:hover {
+            background: rgba(88, 204, 2, 0.1);
+        }
+
+        /* 懸浮時顯示啟動指示 */
+        .launch-indicator {
+            background: #58cc02;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .overlay:hover .launch-indicator {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* 標題與 QR Code */
+        .page-title {
+            position: absolute;
+            top: -60px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 4px;
+            font-weight: 700;
+        }
+
+        .qr-area {
+            position: absolute;
+            bottom: -110px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* 響應式 */
+        @media (max-width: 480px) {
+            .device-container {
+                max-width: 300px;
+            }
+
+            .duo-text {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-blob blob-1"></div>
+    <div class="background-blob blob-2"></div>
+
+    <div class="device-container">
+        <h1 class="page-title">DUOLINGO</h1>
+        <div class="phone-frame">
+            <div class="phone-display">
+                <!-- 模擬您的截圖畫面 (HTML/CSS 重建版，確保一定看得到) -->
+                <div class="static-screenshot">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/Duolingo_logo.svg" class="duo-logo"
+                        alt="Logo">
+                    <div class="duo-text">duolingo</div>
+                    <p class="duo-subtext">Learn for free. Forever.</p>
+
+                    <div class="fake-btn-primary">GET STARTED</div>
+                    <div class="fake-btn-secondary">I ALREADY HAVE AN ACCOUNT</div>
+                </div>
+
+                <!-- 點擊任何地方都會啟動 -->
+                <div class="overlay" onclick="launchSimulator()">
+                    <div class="launch-indicator">點擊即可互動</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="qr-area">
+            <img id="qr" src="" style="width: 80px; height: 80px; background: white; padding: 5px; border-radius: 8px;">
+            <p style="font-size: 0.7rem; margin-top: 5px;">掃描同步至手機</p>
+        </div>
+    </div>
+
+    <script>
+        // 安全機制：優先從 URL 參數或 localStorage 讀取 Token，避免硬編碼在原始碼中
+        const urlParams = new URLSearchParams(window.location.search);
+        let TOKEN = urlParams.get('token') || localStorage.getItem('appetize_token') || "__EXPECT_API_KEY__";
+
+        const APP_ID = "b_3zvfpt2tlcldieifsmnk3ifuwq";
+
+        function getAppUrl(token) {
+            return `https://appetize.io/embed/${APP_ID}?device=pixel7&osVersion=13.0&toolbar=true&autoplay=true&token=${token}`;
+        }
+
+        // 初始化佈局
+        function updateUI() {
+            const qrImg = document.getElementById('qr');
+            const hint = document.querySelector('.launch-indicator');
+
+            if (TOKEN) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(getAppUrl(TOKEN))}`;
+                qrImg.style.display = 'inline-block';
+                hint.innerText = "點擊即可互動";
+                hint.style.background = "#58cc02";
+            } else {
+                qrImg.style.display = 'none';
+                hint.innerText = "請先設定 API Key";
+                hint.style.background = "#ff4b4b";
+                hint.style.opacity = "1";
+                hint.style.transform = "scale(1)";
+            }
+        }
+
+        function launchSimulator() {
+            if (!TOKEN) {
+                const input = prompt("為了安全起見，請輸入您的 Appetize API Token：\n(這會儲存在您的瀏覽器中，不會上傳到 GitHub)");
+                if (input) {
+                    TOKEN = input;
+                    localStorage.setItem('appetize_token', TOKEN);
+                    updateUI();
+                } else {
+                    return;
+                }
+            }
+
+            const width = 450;
+            const height = 850;
+            const left = (window.screen.width / 2) - (width / 2);
+            const top = (window.screen.height / 2) - (height / 2);
+
+            const popup = window.open(
+                getAppUrl(TOKEN),
+                "Appetize",
+                `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no`
+            );
+
+            if (!popup) {
+                window.location.href = getAppUrl(TOKEN);
+            }
+        }
+
+        // 頁面載入後自動檢查
+        updateUI();
+    </script>
+</body>
+
+</html>

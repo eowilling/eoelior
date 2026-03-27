@@ -1,0 +1,19 @@
+# Enable rewrite engine
+RewriteEngine On
+
+# Increase upload size limits
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Enable CORS for image access
+<FilesMatch "\.(png|jpg|jpeg|gif)$">
+    Header set Access-Control-Allow-Origin "*"
+</FilesMatch>
+
+# Cache control for images
+<FilesMatch "\.(png|jpg|jpeg|gif)$">
+    Header set Cache-Control "max-age=259200, public"
+</FilesMatch>

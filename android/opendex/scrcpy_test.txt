@@ -1,0 +1,9 @@
+scrcpy 3.3.4 <https://github.com/Genymobile/scrcpy>
+INFO: ADB device found:
+INFO:     --> (tcpip)  192.168.20.162:5555             device  SM_S9280
+D:\EO\KeepTool\scrcpy-win64-v3.3.4\scrcpy-server: 1 file pushed, 0 skipped. 61.1 MB/s (90980 bytes in 0.001s)
+[server] INFO: Device: [samsung] samsung SM-S9280 (Android 16)
+[server] INFO: New display: 1920x1080/280 (id=22)
+INFO: Renderer: direct3d
+INFO: Texture: 1920x1080
+WARN: Device disconnected

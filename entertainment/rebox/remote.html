@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>抽獎遙控器</title>
+    <script src="firebase-config.js"></script>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        #status {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #aaa;
+            text-align: center;
+        }
+
+        #action-btn {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: none;
+            background: #222;
+            color: #555;
+            font-size: 2.5rem;
+            font-weight: bold;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+            transition: 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #action-btn.ready-start {
+            background: #00f2ff;
+            color: #000;
+            box-shadow: 0 0 60px rgba(0, 242, 255, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        #action-btn.ready-stop {
+            background: #ff0055;
+            color: #fff;
+            box-shadow: 0 0 60px rgba(255, 0, 85, 0.4);
+        }
+
+        #action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .info {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.8rem;
+            color: #444;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 242, 255, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 30px rgba(0, 242, 255, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 242, 255, 0);
+            }
+        }
+
+        input {
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            width: 80%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="setup-panel">
+        <h2 style="color:#00f2ff;">🔗 連線設定</h2>
+        <input type="text" id="activity-name" placeholder="輸入活動名稱 (需與主控台一致)">
+        <button onclick="connect()"
+            style="padding:10px 30px; background:#00f2ff; border:none; border-radius:4px; font-weight:bold;">連線</button>
+    </div>
+
+    <!-- Host Mode: Prize List -->
+    <div id="host-panel" style="display:none; width:100%; max-width:400px; text-align:center;">
+        <h3 style="color:#aaa; margin-bottom:15px;">主控模式：選擇獎項</h3>
+        <div id="prize-list"
+            style="display:flex; flex-direction:column; gap:10px; max-height:70vh; overflow-y:auto; padding-bottom:50px;">
+        </div>
+    </div>
+
+    <!-- Prize Control Mode -->
+    <div id="control-panel" style="display:none; text-align:center;">
+        <div id="prize-info" style="color: #00f2ff; font-size:1.2rem; margin-bottom:10px; font-weight:bold;"></div>
+        <div id="status">等待信號...</div>
+
+        <!-- Draw Count Selection -->
+        <div id="count-selector"
+            style="margin:20px 0; padding:15px; background:rgba(255,255,255,0.05); border-radius:8px; display:none;">
+            <div style="color:#aaa; font-size:0.9rem; margin-bottom:10px;">抽獎人數</div>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button class="count-btn" onclick="setDrawCount(1)"
+                    style="padding:8px 20px; background:#222; border:1px solid #444; color:#fff; border-radius:4px; cursor:pointer;">1人</button>
+                <button class="count-btn" onclick="setDrawCount('half')"
+                    style="padding:8px 20px; background:#222; border:1px solid #444; color:#fff; border-radius:4px; cursor:pointer;">一半</button>
+                <button class="count-btn" onclick="setDrawCount('all')"
+                    style="padding:8px 20px; background:#222; border:1px solid #444; color:#fff; border-radius:4px; cursor:pointer;">全部</button>
+                <input type="number" id="custom-count" placeholder="自訂" min="1"
+                    style="width:80px; padding:8px; background:#222; border:1px solid #444; color:#fff; text-align:center; border-radius:4px;">
+            </div>
+            <div id="selected-count" style="margin-top:10px; color:#00f2ff; font-weight:bold;">已選: 1 人</div>
+        </div>
+
+        <button id="action-btn" onclick="triggerAction()">連線中...</button>
+        <button id="back-btn" onclick="goBack()"
+            style="margin-top:20px; background:none; border:1px solid #444; color:#888; padding:5px 15px; border-radius:20px; display:none;">
+            ⬅ 返回列表
+        </button>
+    </div>
+
+    <div class="info">Rebox Remote v2.0 | <span id="conn-indicator" style="color:#ff0055;">⬤ 未連線</span></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        let db = null;
+        let auth = null;
+        let activityId = null;
+        let currentState = 'IDLE';
+        let targetPrize = null; // If set, we are in Prize Mode
+        let drawCount = 1; // Default draw count
+        let drawMode = 'one'; // 'one', 'half', 'all', 'custom'
+
+        // Initialize from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const qName = urlParams.get('name');
+        const qPrize = urlParams.get('prize');
+
+        // Count selection function
+        window.setDrawCount = (mode) => {
+            drawMode = mode;
+            if (mode === 1) {
+                drawCount = 1;
+                document.getElementById('selected-count').innerText = '已選: 1 人';
+            } else if (mode === 'half') {
+                document.getElementById('selected-count').innerText = '已選: 一半';
+            } else if (mode === 'all') {
+                document.getElementById('selected-count').innerText = '已選: 全部';
+            }
+
+            // Highlight selected button
+            document.querySelectorAll('.count-btn').forEach(btn => {
+                btn.style.background = '#222';
+                btn.style.borderColor = '#444';
+            });
+            event.target.style.background = '#00f2ff';
+            event.target.style.borderColor = '#00f2ff';
+            event.target.style.color = '#000';
+        };
+
+        // Handle custom count input
+        document.addEventListener('DOMContentLoaded', () => {
+            const customInput = document.getElementById('custom-count');
+            if (customInput) {
+                customInput.addEventListener('change', (e) => {
+                    const val = parseInt(e.target.value);
+                    if (val > 0) {
+                        drawMode = 'custom';
+                        drawCount = val;
+                        document.getElementById('selected-count').innerText = `已選: ${val} 人`;
+                        document.querySelectorAll('.count-btn').forEach(btn => {
+                            btn.style.background = '#222';
+                            btn.style.borderColor = '#444';
+                            btn.style.color = '#fff';
+                        });
+                    }
+                });
+            }
+        });
+
+        window.connect = () => {
+            const name = document.getElementById('activity-name').value.trim();
+            if (!name) return alert('請輸入活動名稱');
+
+            activityId = btoa(encodeURIComponent(name)).replace(/[^a-zA-Z0-9]/g, '');
+
+            if (window.__firebase_config) {
+                const app = initializeApp(window.__firebase_config);
+                db = getDatabase(app);
+                auth = getAuth(app);
+
+                signInAnonymously(auth).then(() => {
+                    console.log("Remote: Signed in anonymously");
+
+                    // Update connection indicator
+                    const indicator = document.getElementById('conn-indicator');
+                    if (indicator) {
+                        indicator.style.color = '#00ff00';
+                        indicator.innerText = '⬤ 已連線 (Authenticated)';
+                    }
+
+                    document.getElementById('setup-panel').style.display = 'none';
+
+                    if (qPrize) {
+                        // Prize Mode
+                        targetPrize = qPrize;
+                        enterPrizeMode(qPrize);
+                    } else {
+                        // Host Mode
+                        enterHostMode();
+                    }
+                }).catch((error) => {
+                    console.error("Auth failed", error);
+                    alert("認證失敗: " + error.message);
+                });
+
+            } else {
+                alert('未找到 Firebase 設定');
+            }
+        };
+
+        if (qName) {
+            document.getElementById('activity-name').value = qName;
+            setTimeout(window.connect, 500);
+        } else {
+            document.getElementById('activity-name').value = "rebox 抽獎箱";
+        }
+
+        // --- Host Mode Logic ---
+        function enterHostMode() {
+            document.getElementById('host-panel').style.display = 'block';
+            document.getElementById('control-panel').style.display = 'none';
+
+            const prizesRef = ref(db, 'events/' + activityId + '/prizes'); // Need to change index.html to sync prizes list if possible, or we just listen to status? 
+            // Actually index.html currently doesn't sync the full prize list to a simple path easily accessible. 
+            // BUT, initRemote in index.html is passive.
+            // We need index.html to save prize list to DB.
+            // Let's check if 'events/{id}' has prizes. Yes, UpdateStatus saves `prizes`? No, save() saves `prizes`.
+
+            // Storage.save calls Cloud.save which saves to 'events/{id}'. Use onValue to get updates.
+            const evRef = ref(db, 'events/' + activityId);
+            onValue(evRef, (snap) => {
+                const data = snap.val();
+                if (data && data.prizes) {
+                    renderPrizeList(data.prizes);
+                }
+            });
+        }
+
+        function renderPrizeList(prizes) {
+            const list = document.getElementById('prize-list');
+            list.innerHTML = '';
+            prizes.forEach(p => {
+                const isFinished = (p.count - (p.winners ? p.winners.length : 0)) <= 0;
+                const btn = document.createElement('div');
+                btn.style.cssText = `
+                    padding: 15px; 
+                    background: #222; 
+                    border: 1px solid ${isFinished ? '#444' : '#00f2ff'}; 
+                    border-radius: 8px; 
+                    text-align: left;
+                    opacity: ${isFinished ? '0.5' : '1'};
+                    cursor: pointer;
+                `;
+                btn.innerHTML = `
+                    <div style="font-weight:bold; color:${p.isSpecial ? '#ffd700' : '#fff'}; font-size:1.1rem;">${p.name}</div>
+                    <div style="font-size:0.8rem; color:#888; margin-top:5px;">
+                        剩餘: ${p.count - (p.winners ? p.winners.length : 0)} / ${p.count}
+                        ${isFinished ? '(已完成)' : ''}
+                    </div>
+                `;
+                btn.onclick = () => {
+                    if (isFinished) return alert('此獎項已抽完');
+                    selectPrize(p.name);
+                };
+                list.appendChild(btn);
+            });
+        }
+
+        function selectPrize(name) {
+            targetPrize = name;
+            // Send SELECT command with count info
+            set(ref(db, 'events/' + activityId + '/cmd'), {
+                type: 'SELECT',
+                prize: name,
+                mode: drawMode,
+                count: drawMode === 'custom' ? drawCount : null,
+                timestamp: Date.now()
+            });
+
+            // After a brief delay, send AUTO_START to trigger Prep.confirm() automatically
+            setTimeout(() => {
+                set(ref(db, 'events/' + activityId + '/cmd'), {
+                    type: 'AUTO_START',
+                    timestamp: Date.now()
+                });
+            }, 800); // Give index.html time to process SELECT and open Prep
+
+            // Switch UI
+            document.getElementById('host-panel').style.display = 'none';
+            enterPrizeMode(name, true);
+        }
+
+        // --- Prize Mode Logic ---
+        function enterPrizeMode(name, showBack = false) {
+            document.getElementById('prize-info').innerText = name;
+            document.getElementById('control-panel').style.display = 'block';
+            if (showBack) {
+                document.getElementById('back-btn').style.display = 'inline-block';
+                // Show count selector in host mode
+                document.getElementById('count-selector').style.display = 'block';
+            }
+
+            startListenStatus();
+        }
+
+        window.goBack = () => {
+            document.getElementById('control-panel').style.display = 'none';
+            enterHostMode();
+            targetPrize = null;
+        }
+
+        function startListenStatus() {
+            const statusRef = ref(db, 'events/' + activityId + '/status');
+            onValue(statusRef, (snapshot) => {
+                const val = snapshot.val();
+                if (val) {
+                    currentState = val.state;
+                    updateUI(currentState);
+                }
+            });
+        }
+
+        function updateUI(state) {
+            const btn = document.getElementById('action-btn');
+            const status = document.getElementById('status');
+            const backBtn = document.getElementById('back-btn');
+
+            btn.className = '';
+
+            if (state === 'ROLLING') {
+                status.innerText = '正在滾動抽獎...';
+                btn.innerText = '停止';
+                btn.classList.add('ready-stop');
+                // Keep back button visible so user can return to list
+                if (backBtn && !qPrize) backBtn.style.display = 'inline-block';
+            } else if (state === 'STOPPED' || state === 'IDLE') {
+                status.innerText = '準備就緒';
+                btn.innerText = '開始';
+                btn.classList.add('ready-start');
+                if (document.getElementById('host-panel').style.display === 'none' && !qPrize) {
+                    backBtn.style.display = 'inline-block';
+                }
+            } else {
+                status.innerText = '未知狀態';
+                btn.innerText = '---';
+            }
+        }
+
+        window.triggerAction = () => {
+            if (!db || !activityId) return;
+            const cmd = currentState === 'ROLLING' ? 'STOP' : 'START';
+            set(ref(db, 'events/' + activityId + '/cmd'), {
+                type: cmd,
+                timestamp: Date.now()
+            });
+            if (navigator.vibrate) navigator.vibrate(50);
+        };
+    </script>
+</body>
+
+</html>

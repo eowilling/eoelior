@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轉盤後台管理</title>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .color-picker {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-6 md:p-10 rounded-xl shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">轉盤後台管理（完整權限）</h1>
+            <div class="flex gap-4">
+                <a href="admin.html" class="text-sm text-gray-500 hover:text-gray-700 underline">表面設定</a>
+                <a href="index.html" class="text-blue-600 hover:text-blue-800 underline">返回轉盤</a>
+            </div>
+        </div>
+
+        <div class="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+            <p class="text-sm text-yellow-800">
+                <strong>說明：</strong><br>
+                • <strong>視覺面積</strong>：轉盤上顯示的扇區大小比例（用戶看到的）<br>
+                • <strong>真實機率</strong>：實際轉盤停止在各選項的機率（隱藏的實際控制）<br>
+                • 調整百分比時，請確保總和為 100%<br>
+                • 例如：視覺上 50:50，但真實機率可以設為 80:20，這樣「買」的機率會更高
+            </p>
+        </div>
+
+        <!-- 標題和說明設定 -->
+        <div class="mb-6 p-4 border-2 border-gray-200 rounded-lg bg-white">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">轉盤標題與說明</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">轉盤標題</label>
+                    <input type="text" id="wheelTitle" class="w-full px-3 py-2 border border-gray-300 rounded"
+                           placeholder="例如：命運輪盤">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">轉盤說明（選填）</label>
+                    <textarea id="wheelDescription" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded"
+                              placeholder="例如：轉動輪盤，看看你的運氣如何..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="segmentsContainer" class="space-y-4 mb-6">
+            <!-- 選項將動態生成在這裡 -->
+        </div>
+
+        <div class="flex gap-4 mb-6 flex-wrap">
+            <button id="addSegmentBtn"
+                    class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                + 新增選項
+            </button>
+            <button id="saveBtn"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                儲存設定
+            </button>
+            <button id="shareBtn"
+                    class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                📤 分享轉盤
+            </button>
+            <button id="resetBtn"
+                    class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                重置為預設值
+            </button>
+        </div>
+
+        <!-- 分享彈窗 -->
+        <div id="shareModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-6 md:p-8 max-w-md w-full mx-4 shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800">分享轉盤</h2>
+                    <button id="closeShareModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                <p class="text-gray-600 mb-4">複製以下連結分享給其他人，他們打開後會看到相同的轉盤設定：</p>
+                <div class="mb-4">
+                    <input type="text" id="shareUrl" readonly
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm mb-2">
+                    <div class="flex items-center gap-2">
+                        <button id="shortenUrlBtn"
+                                class="px-3 py-1 bg-purple-500 text-white text-sm rounded hover:bg-purple-600 transition">
+                            🔗 縮短連結
+                        </button>
+                        <span id="shorteningStatus" class="text-xs text-gray-500 hidden">正在縮短連結...</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="copyShareUrlBtn"
+                            class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        📋 複製連結
+                    </button>
+                    <button id="openShareUrlBtn"
+                            class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                        🔗 開啟連結
+                    </button>
+                </div>
+                <div id="copySuccessMsg" class="mt-3 text-green-600 text-sm hidden">
+                    ✓ 連結已複製到剪貼簿！
+                </div>
+            </div>
+        </div>
+
+        <div id="previewSection" class="mt-8 p-4 bg-gray-100 rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">預覽資訊</h2>
+                <button id="refreshPreviewBtn" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm rounded transition">
+                    更新預覽
+                </button>
+            </div>
+            <div id="previewInfo" class="text-sm text-gray-700">
+                <!-- 預覽資訊將顯示在這裡 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 預設配置
+        const defaultConfig = {
+            title: "命運輪盤",
+            description: "",
+            segments: [
+                { label: "買", color: '#10b981', visualPercent: 50, realPercent: 80 },
+                { label: "不好", color: '#ef4444', visualPercent: 50, realPercent: 20 }
+            ]
+        };
+
+        // 預設顏色選項
+        const defaultColors = [
+            '#10b981', '#ef4444', '#fcd34d', '#3b82f6',
+            '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4'
+        ];
+
+        // 載入配置
+        function loadConfig() {
+            const saved = localStorage.getItem('wheelConfig');
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('載入配置失敗', e);
+                }
+            }
+            return JSON.parse(JSON.stringify(defaultConfig)); // 深拷貝
+        }
+
+        // 儲存配置
+        // 確保配置已保存（在返回轉盤前）
+        function ensureConfigSaved() {
+            updateConfigFromDOM();
+            saveConfig(config);
+            console.log('💾 確保配置已保存');
+        }
+
+        // 返回轉盤連結：點擊時自動保存配置
+        document.querySelector('a[href="index.html"]').addEventListener('click', (e) => {
+            ensureConfigSaved();
+            // 允許正常跳轉
+        });
+
+        function saveConfig(configToSave) {
+            // 暫時標記為儲存中，避免觸發同步檢查
+            isEditing = true;
+
+            // 確保配置格式正確
+            const configToSaveStr = JSON.stringify(configToSave);
+            localStorage.setItem('wheelConfig', configToSaveStr);
+            config = configToSave; // 更新當前配置
+
+            // 觸發自定義事件以在同一頁面內同步
+            // 使用 CustomEvent 而不是 StorageEvent，因為 StorageEvent 在同頁面內可能不會觸發
+            window.dispatchEvent(new CustomEvent('wheelConfigUpdated', {
+                detail: configToSave
+            }));
+
+            // 也觸發 storage 事件（用於跨標籤頁同步）
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'wheelConfig',
+                newValue: configToSaveStr,
+                oldValue: localStorage.getItem('wheelConfig'),
+                storageArea: localStorage
+            }));
+
+            updatePreview();
+
+            // 0.5秒後恢復編輯狀態檢查
+            setTimeout(() => {
+                isEditing = false;
+            }, 500);
+
+            console.log('✅ 配置已保存到 localStorage');
+
+            alert('設定已儲存！');
+        }
+
+        let config = loadConfig();
+        const segmentsContainer = document.getElementById('segmentsContainer');
+        const previewInfo = document.getElementById('previewInfo');
+        const wheelTitleInput = document.getElementById('wheelTitle');
+        const wheelDescriptionInput = document.getElementById('wheelDescription');
+
+        // 追蹤用戶是否正在編輯
+        let isEditing = false;
+        let editingTimer = null;
+
+        // 標記正在編輯
+        function markEditing() {
+            isEditing = true;
+            if (editingTimer) clearTimeout(editingTimer);
+            editingTimer = setTimeout(() => {
+                isEditing = false;
+            }, 1500); // 1.5秒沒有輸入操作後認為編輯完成
+        }
+
+        // 載入標題和說明到輸入框
+        function loadTitleAndDescription() {
+            wheelTitleInput.value = config.title || defaultConfig.title;
+            wheelDescriptionInput.value = config.description || defaultConfig.description;
+        }
+
+        // 更新標題和說明到配置
+        function updateTitleAndDescription() {
+            config.title = wheelTitleInput.value.trim() || defaultConfig.title;
+            config.description = wheelDescriptionInput.value.trim();
+        }
+
+        // 標題和說明輸入框事件
+        wheelTitleInput.addEventListener('input', () => {
+            markEditing(); // 標記為正在編輯
+            // 不自動更新預覽
+        });
+        wheelDescriptionInput.addEventListener('input', () => {
+            markEditing(); // 標記為正在編輯
+            // 不自動更新預覽
+        });
+
+        // 創建選項表單
+        function createSegmentForm(index, segment) {
+            const div = document.createElement('div');
+            div.className = 'p-4 border-2 border-gray-200 rounded-lg bg-white';
+            div.dataset.index = index;
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-semibold text-gray-700">選項 ${index + 1}</h3>
+                    <button class="remove-segment-btn px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600 transition">
+                        刪除
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">選項名稱</label>
+                        <input type="text" class="segment-label w-full px-3 py-2 border border-gray-300 rounded"
+                               value="${segment.label}" placeholder="例如：買">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">顏色</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" class="segment-color" value="${segment.color}">
+                            <input type="text" class="segment-color-text w-24 px-2 py-2 border border-gray-300 rounded text-sm"
+                                   value="${segment.color}" placeholder="#10b981">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            視覺面積 (%)
+                            <span class="text-xs text-gray-500">（轉盤顯示的比例）</span>
+                        </label>
+                        <input type="number" class="segment-visual w-full px-3 py-2 border border-gray-300 rounded"
+                               value="${segment.visualPercent}" min="1" max="100" step="1">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            真實機率 (%)
+                            <span class="text-xs text-gray-500">（實際停止的機率）</span>
+                        </label>
+                        <input type="number" class="segment-real w-full px-3 py-2 border border-gray-300 rounded"
+                               value="${segment.realPercent}" min="0" max="100" step="1">
+                    </div>
+                </div>
+            `;
+
+            // 綁定事件
+            const removeBtn = div.querySelector('.remove-segment-btn');
+            removeBtn.addEventListener('click', () => {
+                if (config.segments.length <= 2) {
+                    alert('至少需要保留 2 個選項！');
+                    return;
+                }
+
+                // 標記為正在編輯，避免配置同步干擾
+                isEditing = true;
+
+                // 從配置中刪除該項目
+                const indexToRemove = parseInt(div.dataset.index);
+                config.segments.splice(indexToRemove, 1);
+
+                // 重新分配百分比
+                redistributePercentages();
+
+                // 立即保存配置到 localStorage，防止被同步機制還原
+                localStorage.setItem('wheelConfig', JSON.stringify(config));
+
+                // 重新渲染
+                renderSegments();
+
+                // 1秒後恢復編輯狀態檢查
+                setTimeout(() => {
+                    isEditing = false;
+                }, 1000);
+            });
+
+            // 顏色選擇器同步
+            const colorInput = div.querySelector('.segment-color');
+            const colorText = div.querySelector('.segment-color-text');
+            colorInput.addEventListener('input', (e) => {
+                markEditing(); // 標記為正在編輯
+                colorText.value = e.target.value;
+                // 不自動更新預覽
+            });
+            colorText.addEventListener('input', (e) => {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    markEditing(); // 標記為正在編輯
+                    colorInput.value = e.target.value;
+                    // 不自動更新預覽
+                }
+            });
+
+            // 選項名稱輸入
+            div.querySelector('.segment-label').addEventListener('input', () => {
+                markEditing(); // 標記為正在編輯
+                // 不自動更新配置和預覽，讓用戶自由輸入
+            });
+
+            // 視覺面積輸入 - 不自動更新，讓用戶自由輸入
+            div.querySelector('.segment-visual').addEventListener('input', (e) => {
+                markEditing(); // 標記為正在編輯
+                // 不更新配置和預覽，讓用戶自由輸入
+            });
+
+            // 真實機率輸入 - 不自動更新，讓用戶自由輸入
+            div.querySelector('.segment-real').addEventListener('input', (e) => {
+                markEditing(); // 標記為正在編輯
+                // 不更新配置和預覽，讓用戶自由輸入
+            });
+
+            return div;
+        }
+
+        // 從 DOM 更新配置
+        function updateConfigFromDOM() {
+            updateTitleAndDescription();
+            const segments = [];
+            segmentsContainer.querySelectorAll('[data-index]').forEach((div, index) => {
+                const label = div.querySelector('.segment-label').value || `選項${index + 1}`;
+                const color = div.querySelector('.segment-color').value;
+                const visualPercent = parseFloat(div.querySelector('.segment-visual').value) || 0;
+                const realPercent = parseFloat(div.querySelector('.segment-real').value) || 0;
+
+                segments.push({
+                    label: label,
+                    color: color,
+                    visualPercent: visualPercent,
+                    realPercent: realPercent
+                });
+            });
+            config.segments = segments;
+        }
+
+        // 自動調整百分比，保持總和為 100%
+        function autoAdjustPercentages(type, changedIndex, newValue) {
+            updateConfigFromDOM();
+            const segments = config.segments;
+
+            if (segments.length < 2) return;
+
+            // 限制新值在合理範圍內
+            const minValue = 0;
+            const maxValue = 100;
+            const clampedValue = Math.max(minValue, Math.min(maxValue, newValue));
+
+            // 更新改變的選項
+            segments[changedIndex][type === 'visual' ? 'visualPercent' : 'realPercent'] = clampedValue;
+
+            // 計算其他選項的總和
+            const otherTotal = segments.reduce((sum, seg, idx) => {
+                if (idx !== changedIndex) {
+                    return sum + (type === 'visual' ? seg.visualPercent : seg.realPercent);
+                }
+                return sum;
+            }, 0);
+
+            // 計算剩餘需要分配的百分比
+            const remaining = 100 - clampedValue;
+
+            if (remaining <= 0) {
+                // 如果新值 >= 100，其他選項設為 0
+                segments.forEach((seg, idx) => {
+                    if (idx !== changedIndex) {
+                        seg[type === 'visual' ? 'visualPercent' : 'realPercent'] = 0;
+                    }
+                });
+            } else if (otherTotal > 0) {
+                // 按比例分配剩餘的百分比
+                segments.forEach((seg, idx) => {
+                    if (idx !== changedIndex) {
+                        const oldValue = type === 'visual' ? seg.visualPercent : seg.realPercent;
+                        const ratio = oldValue / otherTotal;
+                        const newValue = Math.round(remaining * ratio * 100) / 100; // 保留兩位小數
+                        seg[type === 'visual' ? 'visualPercent' : 'realPercent'] = Math.max(0, newValue);
+                    }
+                });
+
+                // 處理浮點數誤差，確保總和為 100%
+                const currentTotal = segments.reduce((sum, seg) => {
+                    return sum + (type === 'visual' ? seg.visualPercent : seg.realPercent);
+                }, 0);
+                const diff = 100 - currentTotal;
+
+                // 將誤差加到最後一個非改變的選項
+                if (Math.abs(diff) > 0.01) {
+                    for (let i = segments.length - 1; i >= 0; i--) {
+                        if (i !== changedIndex) {
+                            segments[i][type === 'visual' ? 'visualPercent' : 'realPercent'] += diff;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                // 如果其他選項都是 0，平均分配
+                const avg = remaining / (segments.length - 1);
+                segments.forEach((seg, idx) => {
+                    if (idx !== changedIndex) {
+                        seg[type === 'visual' ? 'visualPercent' : 'realPercent'] = Math.round(avg * 100) / 100;
+                    }
+                });
+            }
+
+            // 更新 DOM 顯示
+            segmentsContainer.querySelectorAll('[data-index]').forEach((div, index) => {
+                const visualInput = div.querySelector('.segment-visual');
+                const realInput = div.querySelector('.segment-real');
+
+                if (type === 'visual' && index !== changedIndex) {
+                    visualInput.value = segments[index].visualPercent.toFixed(2);
+                } else if (type === 'real' && index !== changedIndex) {
+                    realInput.value = segments[index].realPercent.toFixed(2);
+                } else if (type === 'visual' && index === changedIndex) {
+                    visualInput.value = clampedValue.toFixed(2);
+                } else if (type === 'real' && index === changedIndex) {
+                    realInput.value = clampedValue.toFixed(2);
+                }
+            });
+        }
+
+        // 渲染所有選項
+        function renderSegments() {
+            segmentsContainer.innerHTML = '';
+            config.segments.forEach((segment, index) => {
+                segmentsContainer.appendChild(createSegmentForm(index, segment));
+            });
+            updatePreview();
+        }
+
+        // 更新預覽資訊（不自動刷新，只在需要時手動調用）
+        function updatePreview() {
+            // 從 DOM 讀取當前值（不更新配置）
+            const segments = [];
+            segmentsContainer.querySelectorAll('[data-index]').forEach((div, index) => {
+                const label = div.querySelector('.segment-label').value || `選項${index + 1}`;
+                const color = div.querySelector('.segment-color').value;
+                const visualPercent = parseFloat(div.querySelector('.segment-visual').value) || 0;
+                const realPercent = parseFloat(div.querySelector('.segment-real').value) || 0;
+                segments.push({ label, color, visualPercent, realPercent });
+            });
+
+            const visualTotal = segments.reduce((sum, s) => sum + s.visualPercent, 0);
+            const realTotal = segments.reduce((sum, s) => sum + s.realPercent, 0);
+
+            let html = '<div class="space-y-2">';
+            const visualStatus = Math.abs(visualTotal - 100) < 0.01 ?
+                '<span class="text-green-600">✓ 100%</span>' :
+                `<span class="text-yellow-600">${visualTotal.toFixed(2)}%（保存時將按比例調整為 100%）</span>`;
+            const realStatus = Math.abs(realTotal - 100) < 0.01 ?
+                '<span class="text-green-600">✓ 100%</span>' :
+                `<span class="text-yellow-600">${realTotal.toFixed(2)}%（保存時將按比例調整為 100%）</span>`;
+
+            html += `<p><strong>視覺面積總和：</strong>${visualStatus}</p>`;
+            html += `<p><strong>真實機率總和：</strong>${realStatus}</p>`;
+            html += '<div class="mt-4"><strong>視覺顯示：</strong>';
+            segments.forEach(s => {
+                html += `<span class="inline-block px-3 py-1 rounded text-white mr-2" style="background-color: ${s.color}">${s.label} ${s.visualPercent.toFixed(2)}%</span>`;
+            });
+            html += '</div>';
+            html += '<div class="mt-2"><strong>真實機率：</strong>';
+            segments.forEach(s => {
+                html += `<span class="inline-block px-3 py-1 rounded text-white mr-2" style="background-color: ${s.color}">${s.label} ${s.realPercent.toFixed(2)}%</span>`;
+            });
+            html += '</div></div>';
+
+            previewInfo.innerHTML = html;
+        }
+
+        // 重新分配所有選項的百分比，使總和為 100%
+        function redistributePercentages() {
+            const segmentCount = config.segments.length;
+
+            if (segmentCount === 0) return;
+
+            // 平均分配視覺面積
+            const avgVisual = 100 / segmentCount;
+
+            // 計算前 n-1 個選項的總和（用於處理浮點數誤差）
+            let visualSum = 0;
+
+            config.segments.forEach((seg, index) => {
+                if (index === segmentCount - 1) {
+                    // 最後一個選項：使用剩餘的百分比，確保總和為 100%
+                    seg.visualPercent = Math.round((100 - visualSum) * 100) / 100;
+                    // 真實機率等於視覺面積
+                    seg.realPercent = seg.visualPercent;
+                } else {
+                    // 其他選項：平均分配
+                    seg.visualPercent = Math.round(avgVisual * 100) / 100;
+                    // 真實機率等於視覺面積
+                    seg.realPercent = seg.visualPercent;
+                    visualSum += seg.visualPercent;
+                }
+            });
+        }
+
+        // 新增選項
+        document.getElementById('addSegmentBtn').addEventListener('click', () => {
+            // 標記為正在編輯，避免配置同步干擾
+            isEditing = true;
+
+            // 先從 DOM 更新當前配置（確保讀取最新的值）
+            updateConfigFromDOM();
+
+            // 新增選項
+            const newSegment = {
+                label: `選項${config.segments.length + 1}`,
+                color: defaultColors[config.segments.length % defaultColors.length],
+                visualPercent: 0, // 將在重新分配時設置
+                realPercent: 0    // 將在重新分配時設置
+            };
+            config.segments.push(newSegment);
+
+            // 重新分配所有選項的百分比（包括新選項）
+            redistributePercentages();
+
+            // 立即保存配置到 localStorage
+            localStorage.setItem('wheelConfig', JSON.stringify(config));
+
+            // 重新渲染，顯示更新後的百分比
+            renderSegments();
+
+            // 1秒後恢復編輯狀態檢查
+            setTimeout(() => {
+                isEditing = false;
+            }, 1000);
+        });
+
+        // 儲存設定
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            updateConfigFromDOM();
+
+            // 驗證
+            if (config.segments.length < 2) {
+                alert('至少需要 2 個選項！');
+                return;
+            }
+
+            // 計算總和
+            const visualTotal = config.segments.reduce((sum, s) => sum + (parseFloat(s.visualPercent) || 0), 0);
+            const realTotal = config.segments.reduce((sum, s) => sum + (parseFloat(s.realPercent) || 0), 0);
+
+            // 如果總和不為 100%，按現有數字按比例規劃
+            if (Math.abs(visualTotal - 100) > 0.01 && visualTotal > 0) {
+                // 按比例調整視覺面積，保持相對比例
+                const ratio = 100 / visualTotal;
+                config.segments.forEach(seg => {
+                    seg.visualPercent = Math.round((parseFloat(seg.visualPercent) || 0) * ratio * 100) / 100;
+                });
+            } else if (visualTotal === 0) {
+                // 如果總和為 0，平均分配
+                const avg = 100 / config.segments.length;
+                config.segments.forEach(seg => {
+                    seg.visualPercent = Math.round(avg * 100) / 100;
+                });
+            }
+
+            if (Math.abs(realTotal - 100) > 0.01 && realTotal > 0) {
+                // 按比例調整真實機率，保持相對比例
+                const ratio = 100 / realTotal;
+                config.segments.forEach(seg => {
+                    seg.realPercent = Math.round((parseFloat(seg.realPercent) || 0) * ratio * 100) / 100;
+                });
+            } else if (realTotal === 0) {
+                // 如果總和為 0，平均分配
+                const avg = 100 / config.segments.length;
+                config.segments.forEach(seg => {
+                    seg.realPercent = Math.round(avg * 100) / 100;
+                });
+            }
+
+            // 儲存配置
+            saveConfig(config);
+            // 重新渲染以顯示調整後的值
+            renderSegments();
+            // 顯示調整訊息
+            let message = '設定已儲存！';
+            if (Math.abs(visualTotal - 100) > 0.01) {
+                message += `\n視覺面積已按比例調整為 100%（原總和：${visualTotal.toFixed(2)}%）`;
+            }
+            if (Math.abs(realTotal - 100) > 0.01) {
+                message += `\n真實機率已按比例調整為 100%（原總和：${realTotal.toFixed(2)}%）`;
+            }
+            alert(message);
+        });
+
+        // 重置為預設值
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('確定要重置為預設值嗎？這將清除所有自訂設定。')) {
+                config = JSON.parse(JSON.stringify(defaultConfig));
+                renderSegments();
+            }
+        });
+
+        // 分享功能
+        function generateShareUrl() {
+            try {
+                updateConfigFromDOM();
+
+                // 確保配置有效
+                if (!config || !config.segments || config.segments.length === 0) {
+                    throw new Error('配置無效，無法生成分享連結');
+                }
+
+                // 準備要分享的配置（包含視覺設定和真實機率）
+                const shareConfig = {
+                    t: config.title || '',
+                    d: config.description || '',
+                    s: config.segments.map(seg => ({
+                        l: seg.label || '選項',
+                        c: seg.color || '#10b981',
+                        v: Math.round((seg.visualPercent || 0) * 10) / 10,
+                        r: Math.round((seg.realPercent || seg.visualPercent || 0) * 10) / 10 // 真實機率（realPercent）
+                    }))
+                };
+
+                // 將配置轉換為緊湊JSON（移除空格）
+                const configJson = JSON.stringify(shareConfig);
+
+                // 使用 Base64 編碼（支持中文等 Unicode 字符）
+                // 方法：將字符串轉換為 UTF-8 字節數組，然後進行 Base64 編碼
+                function utf8ToBase64(str) {
+                    // 方法1：使用 TextEncoder（現代瀏覽器）- 最可靠的方法
+                    if (typeof TextEncoder !== 'undefined') {
+                        try {
+                            const encoder = new TextEncoder();
+                            const bytes = encoder.encode(str);
+                            // 將字節數組轉換為字符串供 btoa 使用
+                            let binary = '';
+                            for (let i = 0; i < bytes.length; i++) {
+                                binary += String.fromCharCode(bytes[i]);
+                            }
+                            return btoa(binary);
+                        } catch (e) {
+                            console.warn('TextEncoder 方法失敗，使用降級方案:', e);
+                            // 繼續嘗試降級方案
+                        }
+                    }
+
+                    // 方法2：降級方案 - 手動處理 UTF-8 編碼
+                    try {
+                        // 將字符串轉換為 UTF-8 編碼的字節數組
+                        const utf8Str = encodeURIComponent(str);
+                        // 將 %XX 格式轉換為實際字節
+                        let binaryStr = '';
+                        for (let i = 0; i < utf8Str.length; i++) {
+                            if (utf8Str[i] === '%') {
+                                const hex = utf8Str.substring(i + 1, i + 3);
+                                binaryStr += String.fromCharCode(parseInt(hex, 16));
+                                i += 2;
+                            } else {
+                                binaryStr += utf8Str[i];
+                            }
+                        }
+                        return btoa(binaryStr);
+                    } catch (e) {
+                        console.warn('手動 UTF-8 編碼失敗，使用最後降級方案:', e);
+                        // 方法3：最後的降級方案（不推薦，但作為後備）
+                        try {
+                            return btoa(unescape(encodeURIComponent(str)));
+                        } catch (e2) {
+                            throw new Error('無法編碼字符串為 Base64: ' + e2.message);
+                        }
+                    }
+                }
+
+                let configBase64 = utf8ToBase64(configJson).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+                // 生成絕對網址的分享連結
+                let shareUrl;
+                try {
+                    // 使用 URL 對象處理路徑，確保生成絕對網址
+                    const currentUrlObj = new URL(window.location.href);
+                    // 獲取目錄路徑
+                    const pathParts = currentUrlObj.pathname.split('/').filter(p => p); // 過濾空字符串
+                    // 移除當前文件名，添加目標文件名
+                    pathParts[pathParts.length - 1] = 'index.html';
+                    // 重新構建路徑（確保以 / 開頭）
+                    currentUrlObj.pathname = '/' + pathParts.join('/');
+                    // 清除現有的查詢參數和錨點，添加新的配置參數
+                    currentUrlObj.search = `?c=${configBase64}`;
+                    currentUrlObj.hash = '';
+                    // 生成完整的絕對網址
+                    shareUrl = currentUrlObj.toString();
+                } catch (e) {
+                    // 降級方案：手動構建絕對網址（兼容舊瀏覽器）
+                    const protocol = window.location.protocol; // http: 或 https:
+                    const host = window.location.host; // domain.com:port
+                    const currentPath = window.location.pathname;
+                    const dirPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+                    // 構建完整的絕對網址
+                    shareUrl = `${protocol}//${host}${dirPath}index.html?c=${configBase64}`;
+                }
+
+                return shareUrl;
+            } catch (error) {
+                console.error('生成分享連結錯誤:', error);
+                throw error;
+            }
+        }
+
+        // 短縮URL功能
+        async function shortenUrl(longUrl) {
+            return await new Promise((resolve, reject) => {
+                const callbackName = 'shortenUrlCallback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+                window[callbackName] = function(data) {
+                    try {
+                        delete window[callbackName];
+                        if (script && script.parentNode) {
+                            script.parentNode.removeChild(script);
+                        }
+                    } catch (e) {}
+
+                    if (data && data.shorturl) {
+                        resolve(data.shorturl);
+                    } else {
+                        reject(new Error(data ? (data.errormessage || '短縮失敗') : '未知錯誤'));
+                    }
+                };
+
+                const script = document.createElement('script');
+                script.src = `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}&callback=${callbackName}`;
+
+                script.onerror = () => {
+                    try {
+                        delete window[callbackName];
+                        if (script && script.parentNode) {
+                            script.parentNode.removeChild(script);
+                        }
+                    } catch (e) {}
+                    reject(new Error('無法連接到短縮服務，請檢查網路連接'));
+                };
+
+                document.body.appendChild(script);
+
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        try {
+                            delete window[callbackName];
+                            if (script && script.parentNode) {
+                                script.parentNode.removeChild(script);
+                            }
+                        } catch (e) {}
+                        reject(new Error('請求超時，請稍後再試'));
+                    }
+                }, 8000);
+            });
+        }
+
+        // 顯示分享彈窗
+        const shareBtn = document.getElementById('shareBtn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => {
+                try {
+                    updateConfigFromDOM();
+
+                    if (!config.segments || config.segments.length < 2) {
+                        alert('至少需要 2 個選項才能分享！');
+                        return;
+                    }
+
+                    const visualTotal = config.segments.reduce((sum, s) => sum + (s.visualPercent || 0), 0);
+                    if (Math.abs(visualTotal - 100) > 0.01) {
+                        if (!confirm('視覺面積總和不是 100%，是否仍要分享？\n（建議先調整為 100%）')) {
+                            return;
+                        }
+                    }
+
+                    const shareUrl = generateShareUrl();
+                    const shareUrlInput = document.getElementById('shareUrl');
+                    const shareModal = document.getElementById('shareModal');
+                    const copySuccessMsg = document.getElementById('copySuccessMsg');
+                    const shorteningStatus = document.getElementById('shorteningStatus');
+                    const shortenUrlBtn = document.getElementById('shortenUrlBtn');
+
+                    if (shareUrlInput) shareUrlInput.value = shareUrl;
+                    if (shareModal) shareModal.classList.remove('hidden');
+                    if (copySuccessMsg) copySuccessMsg.classList.add('hidden');
+                    if (shorteningStatus) shorteningStatus.classList.add('hidden');
+                    if (shortenUrlBtn) shortenUrlBtn.disabled = false;
+
+                    // 保存分享連結到 localStorage（方便之後查看）
+                    try {
+                        const savedLinks = JSON.parse(localStorage.getItem('wheelShareLinks') || '[]');
+                        const linkInfo = {
+                            url: shareUrl,
+                            title: config.title || '未命名轉盤',
+                            date: new Date().toISOString(),
+                            segments: config.segments.map(s => s.label).join(', ')
+                        };
+                        // 檢查是否已存在相同的連結，避免重複
+                        const exists = savedLinks.some(link => link.url === shareUrl);
+                        if (!exists) {
+                            savedLinks.unshift(linkInfo); // 添加到開頭
+                            // 只保留最近 10 個分享連結
+                            if (savedLinks.length > 10) {
+                                savedLinks.pop();
+                            }
+                            localStorage.setItem('wheelShareLinks', JSON.stringify(savedLinks));
+                        }
+                    } catch (e) {
+                        console.warn('保存分享連結失敗:', e);
+                    }
+                } catch (error) {
+                    console.error('分享功能錯誤:', error);
+                    alert('分享功能發生錯誤：' + error.message);
+                }
+            });
+        }
+
+        // 關閉分享彈窗
+        document.getElementById('closeShareModal').addEventListener('click', () => {
+            document.getElementById('shareModal').classList.add('hidden');
+        });
+
+        document.getElementById('shareModal').addEventListener('click', (e) => {
+            if (e.target.id === 'shareModal') {
+                document.getElementById('shareModal').classList.add('hidden');
+            }
+        });
+
+        // 複製連結
+        document.getElementById('copyShareUrlBtn').addEventListener('click', async () => {
+            const shareUrlInput = document.getElementById('shareUrl');
+            shareUrlInput.select();
+            shareUrlInput.setSelectionRange(0, 99999);
+
+            try {
+                await navigator.clipboard.writeText(shareUrlInput.value);
+                document.getElementById('copySuccessMsg').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('copySuccessMsg').classList.add('hidden');
+                }, 3000);
+            } catch (err) {
+                document.execCommand('copy');
+                document.getElementById('copySuccessMsg').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('copySuccessMsg').classList.add('hidden');
+                }, 3000);
+            }
+        });
+
+        // 短縮連結按鈕
+        document.getElementById('shortenUrlBtn').addEventListener('click', async () => {
+            const shareUrlInput = document.getElementById('shareUrl');
+            const longUrl = shareUrlInput.value;
+            const shortenBtn = document.getElementById('shortenUrlBtn');
+            const statusSpan = document.getElementById('shorteningStatus');
+
+            if (!longUrl) {
+                alert('請先生成分享連結！');
+                return;
+            }
+
+            if (longUrl.includes('is.gd/') || longUrl.includes('v.gd/')) {
+                alert('連結已經是短縮後的了！');
+                return;
+            }
+
+            try {
+                shortenBtn.disabled = true;
+                statusSpan.classList.remove('hidden');
+                statusSpan.textContent = '正在縮短連結...';
+
+                const shortUrl = await shortenUrl(longUrl);
+                shareUrlInput.value = shortUrl;
+                statusSpan.textContent = '✓ 連結已縮短！';
+                statusSpan.classList.remove('hidden');
+                statusSpan.classList.add('text-green-600');
+
+                setTimeout(() => {
+                    statusSpan.classList.add('hidden');
+                    statusSpan.classList.remove('text-green-600');
+                }, 3000);
+            } catch (error) {
+                statusSpan.textContent = '✗ 短縮失敗，請使用原連結';
+                statusSpan.classList.remove('hidden');
+                statusSpan.classList.add('text-red-600');
+
+                setTimeout(() => {
+                    statusSpan.classList.add('hidden');
+                    statusSpan.classList.remove('text-red-600');
+                    statusSpan.textContent = '正在縮短連結...';
+                }, 3000);
+
+                alert('連結短縮失敗，您仍可以使用原始連結進行分享。\n錯誤：' + error.message);
+            } finally {
+                shortenBtn.disabled = false;
+            }
+        });
+
+        // 開啟分享連結
+        document.getElementById('openShareUrlBtn').addEventListener('click', () => {
+            const shareUrl = document.getElementById('shareUrl').value;
+            window.open(shareUrl, '_blank');
+        });
+
+        // 監聽配置變化（當其他頁面更新配置時）
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'wheelConfig' && !isEditing) {
+                config = loadConfig();
+                loadTitleAndDescription();
+                renderSegments();
+            }
+        });
+
+        // 定期檢查配置變化（同頁面內更新）- 只在非編輯狀態下檢查
+        setInterval(() => {
+            if (!isEditing) {
+                const newConfig = loadConfig();
+                if (JSON.stringify(newConfig) !== JSON.stringify(config)) {
+                    config = newConfig;
+                    loadTitleAndDescription();
+                    renderSegments();
+                }
+            }
+        }, 1000); // 改為1秒檢查一次，減少頻率
+
+        // 手動更新預覽按鈕
+        document.getElementById('refreshPreviewBtn').addEventListener('click', () => {
+            updatePreview();
+        });
+
+        // 初始化
+        loadTitleAndDescription();
+        renderSegments();
+    </script>
+</body>
+</html>
+

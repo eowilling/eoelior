@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>極致數獨 Web</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 引入 SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+
+        .sudoku-cell {
+            transition: background-color 0.2s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        /* 格線樣式 */
+        .sudoku-cell:nth-child(3n) { border-right-width: 2px; border-right-color: #374151; }
+        .sudoku-cell:nth-child(9n) { border-right-width: 1px; border-right-color: #9CA3AF; }
+        .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+        .sudoku-cell:nth-child(n+46):nth-child(-n+54) { border-bottom-width: 2px; border-bottom-color: #374151; }
+
+        .grid-cols-9 > div:nth-child(9n) { border-right-width: 0; }
+        .grid-cols-9 > div:nth-last-child(-n+9) { border-bottom-width: 0; }
+
+        /* 選中與高亮 */
+        .cell-selected { background-color: #BFDBFE !important; transform: scale(0.95); border-radius: 4px; z-index: 10; }
+        .cell-highlight { background-color: #E5E7EB !important; }
+
+        /* 文字顏色 */
+        .is-original { color: #111827; font-weight: 800; }
+        .is-user { color: #2563EB; font-weight: 600; }
+
+        /* === 新增：錯誤提示樣式 === */
+        .is-error {
+            color: #EF4444 !important; /* 紅字 */
+            background-color: #FEE2E2 !important; /* 紅底 */
+            animation: shake 0.3s ease-in-out; /* 晃動動畫 */
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        * { touch-action: manipulation; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-6 px-2 select-none">
+
+    <header class="mb-6 text-center relative">
+        <div class="absolute top-0 right-0 flex items-center gap-2">
+            <span id="dbStatusText" class="text-[10px] text-gray-400"></span>
+            <div id="dbStatus" class="w-2 h-2 rounded-full bg-gray-400" title="未連線"></div>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-wider">數獨 <span class="text-blue-600">SUDOKU</span></h1>
+        <p class="text-gray-500 text-sm mt-1">即時驗證 + 暫停功能版</p>
+    </header>
+
+    <main class="w-full max-w-5xl flex flex-col md:flex-row gap-8 items-start justify-center">
+
+        <!-- 左側：棋盤區 (增加 relative 以便放置暫停遮罩) -->
+        <div class="relative w-full max-w-md md:max-w-[500px] mx-auto bg-white p-1 shadow-xl rounded-lg border-4 border-gray-800">
+
+            <!-- 暫停遮罩層 -->
+            <div id="pause-overlay" class="hidden absolute inset-0 bg-gray-900/95 z-50 flex flex-col items-center justify-center text-white rounded-sm backdrop-blur-sm">
+                <div class="text-6xl mb-4">⏸</div>
+                <h2 class="text-3xl font-bold mb-6 tracking-widest">遊戲暫停</h2>
+                <button onclick="togglePause()" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-full font-bold text-lg shadow-lg transition transform hover:scale-105 active:scale-95">
+                    繼續遊戲
+                </button>
+            </div>
+
+            <div id="grid-container" class="grid grid-cols-9 grid-rows-9 w-full aspect-square border border-gray-400 bg-gray-50">
+                <!-- JS 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 右側：控制面板 -->
+        <div class="w-full max-w-md mx-auto md:w-80 flex flex-col gap-6">
+
+            <!-- 狀態卡片 (修改計時器區域) -->
+            <div class="bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-500 flex justify-between items-center">
+                <div>
+                    <span class="text-gray-500 text-xs uppercase font-bold">難度 Difficulty</span>
+                    <select id="difficulty-select" class="block w-full mt-1 font-bold text-gray-800 bg-transparent border-none focus:ring-0 cursor-pointer">
+                        <option value="1">簡單 Easy</option>
+                        <option value="2">中等 Medium</option>
+                        <option value="3">困難 Hard</option>
+                    </select>
+                </div>
+                <div class="text-right flex flex-col items-end">
+                    <span class="text-gray-500 text-xs uppercase font-bold mb-1">計時 Time</span>
+                    <div class="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-lg">
+                        <div id="timer" class="text-xl font-mono font-bold text-blue-600 w-16 text-center">00:00</div>
+                        <!-- 暫停按鈕 -->
+                        <button id="pause-btn" onclick="togglePause()" class="text-gray-500 hover:text-blue-600 transition focus:outline-none" title="暫停/繼續">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 虛擬鍵盤 -->
+            <div class="bg-white p-4 rounded-xl shadow-md">
+                <div class="flex justify-between items-end mb-2">
+                    <p class="text-xs text-gray-400 font-bold uppercase">輸入 Input</p>
+                    <span class="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-full">即時檢查開啟中</span>
+                </div>
+                <div class="grid grid-cols-5 gap-2">
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(1)">1</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(2)">2</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(3)">3</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(4)">4</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(5)">5</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(6)">6</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(7)">7</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(8)">8</button>
+                    <button class="numpad-btn h-12 bg-gray-100 hover:bg-blue-100 text-blue-800 font-bold rounded-lg text-xl transition active:scale-95 border border-gray-200" onclick="inputNumber(9)">9</button>
+                    <button class="h-12 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg transition active:scale-95 border border-red-100 flex items-center justify-center" onclick="inputNumber(0)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button onclick="newGame()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow transition active:scale-95 flex items-center justify-center gap-2">
+                    ✨ 開始新遊戲
+                </button>
+                <div class="flex gap-3">
+                    <button onclick="checkGame()" class="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow transition active:scale-95">
+                        ✅ 全盤檢查
+                    </button>
+                    <button onclick="resetBoard()" class="flex-1 py-3 bg-gray-500 hover:bg-gray-600 text-white font-bold rounded-lg shadow transition active:scale-95">
+                        🔄 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-8 text-gray-400 text-sm">
+        &copy; 2025 Sudoku Web App
+    </footer>
+
+    <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
+    <script src="firebase-config.js"></script>
+
+    <script type="module">
+        // Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase 配置和初始化
+        let firebaseConfig;
+        let firebaseEnabled = false;
+        let app, auth, db;
+
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = typeof __firebase_config === 'string'
+                    ? JSON.parse(__firebase_config)
+                    : __firebase_config;
+                firebaseEnabled = true;
+                
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                console.log('✅ Firebase 已初始化');
+            } else {
+                console.log('ℹ️ Firebase 配置未找到');
+            }
+        } catch (e) {
+            console.error('❌ Firebase 初始化失敗:', e);
+            firebaseEnabled = false;
+        }
+
+        // --- 1. 核心邏輯 ---
+        class SudokuCore {
+            constructor() {
+                this.board = Array(9).fill().map(() => Array(9).fill(0));
+                this.solution = Array(9).fill().map(() => Array(9).fill(0));
+                this.original = Array(9).fill().map(() => Array(9).fill(0));
+            }
+            generate(difficulty) {
+                this.board = Array(9).fill().map(() => Array(9).fill(0));
+                for(let i=0; i<9; i+=3) this.fillBox(i, i);
+                this.solve(this.board);
+                this.solution = JSON.parse(JSON.stringify(this.board));
+                let attempts = difficulty === '1' ? 30 : difficulty === '2' ? 40 : 50;
+                this.removeDigits(attempts);
+                this.original = JSON.parse(JSON.stringify(this.board));
+            }
+            fillBox(row, col) {
+                let num;
+                for(let i=0; i<3; i++) {
+                    for(let j=0; j<3; j++) {
+                        do { num = Math.floor(Math.random() * 9) + 1; } while(!this.isSafeInBox(row, col, num));
+                        this.board[row+i][col+j] = num;
+                    }
+                }
+            }
+            isSafeInBox(rowStart, colStart, num) {
+                for(let i=0; i<3; i++) for(let j=0; j<3; j++) if(this.board[rowStart+i][colStart+j] === num) return false;
+                return true;
+            }
+            isSafe(grid, row, col, num) {
+                for(let x=0; x<9; x++) if(grid[row][x] === num) return false;
+                for(let x=0; x<9; x++) if(grid[x][col] === num) return false;
+                let startRow = row - row % 3, startCol = col - col % 3;
+                for(let i=0; i<3; i++) for(let j=0; j<3; j++) if(grid[i+startRow][j+startCol] === num) return false;
+                return true;
+            }
+            solve(grid) {
+                for(let i=0; i<9; i++) {
+                    for(let j=0; j<9; j++) {
+                        if(grid[i][j] === 0) {
+                            for(let num=1; num<=9; num++) {
+                                if(this.isSafe(grid, i, j, num)) {
+                                    grid[i][j] = num;
+                                    if(this.solve(grid)) return true;
+                                    grid[i][j] = 0;
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            removeDigits(count) {
+                while(count > 0) {
+                    let cellId = Math.floor(Math.random() * 81);
+                    let i = Math.floor(cellId / 9), j = cellId % 9;
+                    if(this.board[i][j] !== 0) { this.board[i][j] = 0; count--; }
+                }
+            }
+        }
+
+        // --- 2. 介面控制邏輯 ---
+        const core = new SudokuCore();
+        let selectedCell = null;
+        let timerInterval = null;
+        let seconds = 0;
+        let isPaused = false; // 暫停狀態
+
+        function initGrid() {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+            for(let r=0; r<9; r++) {
+                for(let c=0; c<9; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'sudoku-cell border-gray-300 border border-collapse text-2xl md:text-3xl select-none';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.onclick = () => selectCell(r, c);
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function newGame() {
+            if (isPaused) togglePause(); // 確保新遊戲時不是暫停狀態
+            const diff = document.getElementById('difficulty-select').value;
+            core.generate(diff);
+            renderBoard();
+            resetTimer();
+            selectedCell = null;
+            highlightSameNumber(0);
+        }
+
+        function renderBoard() {
+            for(let r=0; r<9; r++) {
+                for(let c=0; c<9; c++) {
+                    const cell = document.querySelector(`.sudoku-cell[data-r='${r}'][data-c='${c}']`);
+                    const val = core.board[r][c];
+                    const isOrig = core.original[r][c] !== 0;
+
+                    cell.textContent = val === 0 ? '' : val;
+                    // 清除所有狀態類別，重新賦予基礎類別
+                    cell.className = `sudoku-cell border-gray-300 border text-2xl md:text-3xl select-none ${isOrig ? 'is-original bg-gray-100' : 'is-user bg-white'}`;
+
+                    if(selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                        cell.classList.add('cell-selected');
+                    }
+
+                    // --- 渲染時保留錯誤狀態 ---
+                    // 如果是使用者輸入(非題目)，且值不為0，且值不等於解答 => 標記錯誤
+                    if (!isOrig && val !== 0 && val !== core.solution[r][c]) {
+                        cell.classList.add('is-error');
+                    }
+                }
+            }
+        }
+
+        function selectCell(r, c) {
+            if(isPaused) return; // 暫停時禁止選取
+            if (core.original[r][c] !== 0) {
+                highlightSameNumber(core.board[r][c]);
+                return;
+            }
+            selectedCell = {r, c};
+            // 重新渲染以更新選取框，同時保持之前的錯誤標記
+            renderBoard();
+            highlightSameNumber(core.board[r][c]);
+        }
+
+        function highlightSameNumber(num) {
+            document.querySelectorAll('.cell-highlight').forEach(el => el.classList.remove('cell-highlight'));
+            if(num === 0) return;
+            for(let r=0; r<9; r++) {
+                for(let c=0; c<9; c++) {
+                    if(core.board[r][c] === num) {
+                        const cell = document.querySelector(`.sudoku-cell[data-r='${r}'][data-c='${c}']`);
+                        if(!cell.classList.contains('cell-selected')) cell.classList.add('cell-highlight');
+                    }
+                }
+            }
+        }
+
+        // === 核心修改：輸入與即時驗證 ===
+        function inputNumber(num) {
+            if(!selectedCell || isPaused) return;
+            const {r, c} = selectedCell;
+            const cell = document.querySelector(`.sudoku-cell[data-r='${r}'][data-c='${c}']`);
+
+            core.board[r][c] = num;
+
+            // 1. 更新文字
+            cell.textContent = num === 0 ? '' : num;
+
+            // 2. 即時驗證邏輯
+            if (num !== 0) {
+                if (num !== core.solution[r][c]) {
+                    // 輸入錯誤 -> 加紅字、紅底、晃動
+                    cell.classList.add('is-error');
+                } else {
+                    // 輸入正確 -> 移除錯誤樣式
+                    cell.classList.remove('is-error');
+                }
+            } else {
+                // 清除數字 -> 移除錯誤樣式
+                cell.classList.remove('is-error');
+            }
+
+            highlightSameNumber(num);
+
+            // 檢查是否完成
+            checkCompletion();
+        }
+
+        // 自動檢查是否全對（無須按鈕）
+        function checkCompletion() {
+            let isFull = true;
+            let isAllCorrect = true;
+            for(let r=0; r<9; r++) {
+                for(let c=0; c<9; c++) {
+                    if(core.board[r][c] === 0) isFull = false;
+                    if(core.board[r][c] !== core.solution[r][c]) isAllCorrect = false;
+                }
+            }
+            if(isFull && isAllCorrect) {
+                clearInterval(timerInterval);
+                Swal.fire({
+                    icon: 'success',
+                    title: '🎉 太神啦！',
+                    text: `恭喜完成！耗時: ${document.getElementById('timer').innerText}`,
+                    confirmButtonColor: '#10B981'
+                });
+            }
+        }
+
+        function checkGame() {
+            // 手動檢查按鈕邏輯 (主要用於檢查是否有漏填)
+            let isFull = true;
+            let hasError = false;
+            for(let r=0; r<9; r++) {
+                for(let c=0; c<9; c++) {
+                    if(core.board[r][c] === 0) isFull = false;
+                    else if(core.board[r][c] !== core.solution[r][c]) hasError = true;
+                }
+            }
+
+            if (hasError) {
+                Swal.fire({ icon: 'error', title: '有錯誤', text: '請檢查紅色的格子！', confirmButtonColor: '#EF4444' });
+            } else if (!isFull) {
+                Swal.fire({ icon: 'info', title: '未完成', text: '還有格子沒填喔！', confirmButtonColor: '#3B82F6' });
+            } else {
+                checkCompletion(); // 如果全滿且無錯，觸發勝利
+            }
+        }
+
+        function resetBoard() {
+            if(isPaused) return;
+            Swal.fire({
+                title: '重置盤面？',
+                text: "將清除所有進度",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#6B7280',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '重置'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    for(let r=0; r<9; r++) {
+                        for(let c=0; c<9; c++) {
+                            core.board[r][c] = core.original[r][c];
+                        }
+                    }
+                    renderBoard(); // 重新渲染會自動清除 .is-error
+                }
+            })
+        }
+
+        // === 核心修改：計時器與暫停 ===
+        function resetTimer() {
+            clearInterval(timerInterval);
+            seconds = 0;
+            isPaused = false;
+            updateTimerDisplay();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!isPaused) { // 只有非暫停時才計時
+                    seconds++;
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const overlay = document.getElementById('pause-overlay');
+            const pauseBtn = document.getElementById('pause-btn');
+
+            if (isPaused) {
+                // 暫停狀態：顯示遮罩、切換圖標
+                overlay.classList.remove('hidden');
+                pauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'; // Play Icon
+            } else {
+                // 繼續狀態：隱藏遮罩、切換圖標
+                overlay.classList.add('hidden');
+                pauseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'; // Pause Icon
+            }
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer').textContent = `${m}:${s}`;
+        }
+
+        // 鍵盤監聽
+        document.addEventListener('keydown', (e) => {
+            if(isPaused) return; // 暫停時鎖定鍵盤
+            if(!selectedCell) return;
+            if(e.key >= '1' && e.key <= '9') inputNumber(parseInt(e.key));
+            if(e.key === 'Backspace' || e.key === 'Delete') inputNumber(0);
+            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                moveSelection(e.key);
+            }
+        });
+
+        function moveSelection(key) {
+            let {r, c} = selectedCell;
+            if(key === 'ArrowUp') r = Math.max(0, r-1);
+            if(key === 'ArrowDown') r = Math.min(8, r+1);
+            if(key === 'ArrowLeft') c = Math.max(0, c-1);
+            if(key === 'ArrowRight') c = Math.min(8, c+1);
+
+            selectedCell = {r, c};
+            renderBoard();
+            highlightSameNumber(core.board[r][c]);
+        }
+
+        initGrid();
+        newGame();
+
+        // ========== Firebase 連線狀態 ==========
+        // 更新連線狀態顯示
+        function updateDbStatus(status, text) {
+            const statusEl = document.getElementById('dbStatus');
+            const statusTextEl = document.getElementById('dbStatusText');
+            
+            if (statusEl) {
+                // 更新點的顏色
+                statusEl.className = `w-2 h-2 rounded-full ${
+                    status === 'connected' ? 'bg-emerald-500' :
+                    status === 'connecting' ? 'bg-yellow-400' :
+                    'bg-red-500'
+                }`;
+                statusEl.title = text || status;
+            }
+            
+            if (statusTextEl) {
+                statusTextEl.innerText = text || '';
+                statusTextEl.className = `text-[10px] ${
+                    status === 'connected' ? 'text-emerald-500' :
+                    status === 'connecting' ? 'text-yellow-400' :
+                    'text-gray-400'
+                }`;
+            }
+        }
+
+        // 初始化 Firebase 認證
+        async function initFirebase() {
+            if (typeof firebaseEnabled === 'undefined' || !firebaseEnabled || typeof auth === 'undefined') {
+                updateDbStatus('disabled', '');
+                console.log('ℹ️ Firebase 未啟用');
+                return;
+            }
+
+            try {
+                updateDbStatus('connecting', '連線中');
+                console.log('🔄 開始 Firebase 匿名認證...');
+
+                // 設定認證狀態監聽器
+                const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        console.log('✅ Firebase 認證成功');
+                        updateDbStatus('connected', '');
+                        unsubscribe();
+                    } else {
+                        console.warn('⚠️ 使用者未認證');
+                    }
+                });
+
+                // 嘗試匿名登入
+                try {
+                    await signInAnonymously(auth);
+                    console.log('✅ 匿名登入成功');
+                } catch (authError) {
+                    console.error('❌ Firebase 認證失敗:', authError);
+                    updateDbStatus('error', '連線失敗');
+                    unsubscribe();
+                }
+
+            } catch (e) {
+                console.error('❌ Firebase 初始化錯誤:', e);
+                updateDbStatus('error', '初始化失敗');
+            }
+        }
+
+        // 啟動 Firebase
+        initFirebase();
+    </script>
+</body>
+</html>
