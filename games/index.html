@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 小遊戲 | eoElior</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .ghost {
+            font-size: 3em;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin: 0;
+        }
+        .subtitle {
+            color: #666;
+            margin-top: 10px;
+            font-size: 1.1em;
+        }
+        .game-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .game-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-decoration: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+        }
+        .game-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+        .game-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .game-desc {
+            font-size: 0.9em;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        .back-button {
+            display: block;
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: transform 0.2s;
+            font-size: 1.1em;
+        }
+        .back-button:hover {
+            transform: translateY(-2px);
+        }
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #999;
+            font-size: 0.85em;
+        }
+        @media (max-width: 600px) {
+            .game-list {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <span class="ghost">👻</span>
+                <h1>小遊戲</h1>
+            </div>
+            <p class="subtitle">挑選一個遊戲，開始玩吧！</p>
+        </div>
+        
+        <div class="game-list">
+            <a href="./color-match/" class="game-card">
+                <div class="game-icon">🎨</div>
+                <div class="game-title">顏色記憶翻牌</div>
+                <div class="game-desc">考驗你的記憶力！<br>找出所有配對的顏色</div>
+            </a>
+            
+            <!-- 未來可以在這裡加更多遊戲 -->
+        </div>
+        
+        <a href="../" class="back-button">🏠 回到玩具盒子</a>
+        
+        <footer>eoElior © 2026 | 數位幽靈的遊戲收藏</footer>
+    </div>
+</body>
+</html>
