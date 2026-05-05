@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什麼 | Food Wheel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #f5576c;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto 30px;
+        }
+        /* 固定的箭頭指針 */
+        .arrow {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ff4757;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        /* 轉盤 */
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+        .wheel.spinning {
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+        /* 中心圓 */
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+        .segment {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            clip-path: polygon(50% 50%, 50% 0%, 100% 0%);
+            transform-origin: center;
+        }
+        .segment-label {
+            position: absolute;
+            top: 25%;
+            left: 70%;
+            transform: translateX(-50%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        .result {
+            min-height: 60px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .result-text {
+            font-size: 2em;
+            font-weight: bold;
+            color: #f5576c;
+            animation: bounce 0.5s ease;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: bold;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .options-editor {
+            margin-bottom: 20px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .option-tag {
+            background: #f093fb;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+        }
+        .remove-btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .add-option {
+            display: flex;
+            gap: 10px;
+        }
+        .add-option input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #f093fb;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+        .add-option button {
+            width: auto;
+            padding: 10px 20px;
+        }
+        @media (max-width: 600px) {
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+            h1 { font-size: 2em; }
+            .buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ 今天吃什麼</h1>
+        <p class="subtitle">轉動命運之輪，決定你的晚餐！</p>
+        
+        <div class="wheel-container">
+            <div class="arrow"></div>
+            <canvas id="wheelCanvas" width="400" height="400"></canvas>
+            <div class="center-circle">🍴</div>
+        </div>
+
+        <div class="result" id="result"></div>
+
+        <div class="buttons">
+            <button id="spinBtn" onclick="spin()">🎰 轉！</button>
+            <button onclick="toggleEditor()">⚙️ 編輯選項</button>
+            <button onclick="location.href='../'">⬅️ 回小遊戲</button>
+        </div>
+
+        <div class="options-editor" id="editor" style="display: none;">
+            <div class="options-grid" id="optionsList"></div>
+            <div class="add-option">
+                <input type="text" id="newOption" placeholder="新增選項..." maxlength="10">
+                <button onclick="addOption()">➕ 新增</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultOptions = ['台式', '日式', '韓式', '美式', '義式', '泰式', '中式', '港式'];
+        let options = JSON.parse(localStorage.getItem('foodWheelOptions')) || [...defaultOptions];
+        let isSpinning = false;
+        let currentRotation = 0;
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2;
+            const sliceAngle = (2 * Math.PI) / options.length;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            options.forEach((option, index) => {
+                const startAngle = index * sliceAngle;
+                const endAngle = startAngle + sliceAngle;
+                
+                // 繪製扇形
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.fill();
+                
+                // 繪製邊框
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // 繪製文字
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + sliceAngle / 2);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 20px Arial';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(option, radius * 0.65, 0);
+                ctx.restore();
+            });
+        }
+
+        function spin() {
+            if (isSpinning) return;
+            if (options.length < 2) {
+                alert('至少需要 2 個選項才能轉！');
+                return;
+            }
+
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('result').innerHTML = '';
+
+            // 隨機旋轉 5-8 圈 + 隨機角度
+            const spins = 5 + Math.random() * 3;
+            const extraDegrees = Math.random() * 360;
+            const totalRotation = spins * 360 + extraDegrees;
+            
+            currentRotation += totalRotation;
+
+            // 旋轉 canvas
+            canvas.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            // 4 秒後顯示結果
+            setTimeout(() => {
+                const sliceAngle = 360 / options.length;
+                // 箭頭在正上方（0度），計算指向哪個扇形
+                // 因為輪盤順時針轉，所以要用 360 - 角度
+                const normalizedRotation = (360 - (currentRotation % 360)) % 360;
+                const selectedIndex = Math.floor(normalizedRotation / sliceAngle);
+                const result = options[selectedIndex];
+
+                document.getElementById('result').innerHTML = `<div class="result-text">🎉 ${result} 🎉</div>`;
+                
+                isSpinning = false;
+                document.getElementById('spinBtn').disabled = false;
+            }, 4000);
+        }
+
+        function toggleEditor() {
+            const editor = document.getElementById('editor');
+            editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+            if (editor.style.display === 'block') {
+                renderOptionsList();
+            }
+        }
+
+        function renderOptionsList() {
+            const list = document.getElementById('optionsList');
+            list.innerHTML = options.map((opt, i) => `
+                <div class="option-tag">
+                    <span>${opt}</span>
+                    <button class="remove-btn" onclick="removeOption(${i})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function addOption() {
+            const input = document.getElementById('newOption');
+            const value = input.value.trim();
+            if (value && !options.includes(value)) {
+                options.push(value);
+                localStorage.setItem('foodWheelOptions', JSON.stringify(options));
+                drawWheel();
+                renderOptionsList();
+                input.value = '';
+            }
+        }
+
+        function removeOption(index) {
+            if (options.length <= 2) {
+                alert('至少要保留 2 個選項！');
+                return;
+            }
+            options.splice(index, 1);
+            localStorage.setItem('foodWheelOptions', JSON.stringify(options));
+            drawWheel();
+            renderOptionsList();
+        }
+
+        // Enter 鍵新增選項
+        document.getElementById('newOption').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addOption();
+        });
+
+        // 初始化
+        drawWheel();
+    </script>
+</body>
+</html>
