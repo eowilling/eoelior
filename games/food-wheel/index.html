@@ -36,21 +36,33 @@
         }
         .wheel-container {
             position: relative;
-            width: 400px;
-            height: 400px;
+            width: 100%;
+            max-width: 400px;
             margin: 0 auto 30px;
+        }
+        .wheel-container::before {
+            content: '';
+            display: block;
+            padding-top: 100%; /* 1:1 比例 */
+        }
+        #wheelCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
         /* 固定的箭頭指針 */
         .arrow {
             position: absolute;
-            top: -30px;
+            top: -5%;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 40px solid #ff4757;
+            border-left: clamp(15px, 4vw, 20px) solid transparent;
+            border-right: clamp(15px, 4vw, 20px) solid transparent;
+            border-top: clamp(30px, 8vw, 40px) solid #ff4757;
             z-index: 10;
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
@@ -73,8 +85,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
+            width: 20%;
+            height: 20%;
             background: white;
             border-radius: 50%;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -82,7 +94,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2em;
+            font-size: clamp(1.5em, 5vw, 2em);
         }
         .segment {
             position: absolute;
@@ -192,9 +204,8 @@
             padding: 10px 20px;
         }
         @media (max-width: 600px) {
-            .wheel-container {
-                width: 300px;
-                height: 300px;
+            .container {
+                padding: 20px;
             }
             h1 { font-size: 2em; }
             .buttons { flex-direction: column; }
@@ -238,6 +249,15 @@
         const canvas = document.getElementById('wheelCanvas');
         const ctx = canvas.getContext('2d');
         const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+
+        // 設定 Canvas 大小
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const size = container.offsetWidth;
+            canvas.width = size;
+            canvas.height = size;
+            drawWheel();
+        }
 
         function drawWheel() {
             const centerX = canvas.width / 2;
@@ -371,7 +391,8 @@
         });
 
         // 初始化
-        drawWheel();
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
     </script>
 </body>
 </html>
