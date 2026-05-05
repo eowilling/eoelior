@@ -304,14 +304,17 @@
             // 4 秒後顯示結果
             setTimeout(() => {
                 const sliceAngle = 360 / options.length;
-                // 箭頭在正上方（0度）
-                // Canvas 從右側（3點鐘）開始繪製，所以要加上 90 度偏移
-                // 輪盤順時針旋轉，所以要反向計算
                 const finalAngle = currentRotation % 360;
-                // 調整到 Canvas 坐標系（0度在右側，逆時針為正）
-                // 箭頭在上方相當於 Canvas 的 270度（-90度）
-                const adjustedAngle = (90 - finalAngle + 360) % 360;
-                const selectedIndex = Math.floor(adjustedAngle / sliceAngle) % options.length;
+                
+                // 简化逻辑：直接根据箭頭位置和輪盤旋轉角度计算
+                // 箭頭在 270度（正上方）
+                // 輪盤順時針轉了 finalAngle 度
+                // 原本在 270 度的扇形现在在 (270 + finalAngle) % 360
+                // 所以箭頭现在指向原本在 (270 - finalAngle + 360) % 360 的扇形
+                
+                const targetAngle = (270 - finalAngle + 360) % 360;
+                let selectedIndex = Math.floor(targetAngle / sliceAngle);
+                
                 const result = options[selectedIndex];
 
                 document.getElementById('result').innerHTML = `<div class="result-text">🎉 ${result} 🎉</div>`;
