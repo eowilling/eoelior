@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中獎查詢 | Rebox</title>
+    <script src="firebase-config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #000 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #00f2ff;
+            text-shadow: 0 0 20px #00f2ff;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        .search-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: #222;
+            border: 1px solid #444;
+            color: #aaa;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 5px;
+        }
+
+        .tab-btn.active {
+            background: #00f2ff;
+            color: #000;
+            border-color: #00f2ff;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #444;
+            color: #fff;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00f2ff;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+        }
+
+        .result-area {
+            min-height: 200px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #00f2ff;
+            animation: slideIn 0.3s;
+        }
+
+        .result-card.special {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .prize-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #00f2ff;
+        }
+
+        .result-card.special .prize-name {
+            color: #ffd700;
+        }
+
+        .winner-name {
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        .no-result {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #00f2ff;
+        }
+
+        .all-results {
+            margin-top: 20px;
+        }
+
+        .prize-group {
+            margin-bottom: 30px;
+        }
+
+        .prize-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #00f2ff;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #00f2ff;
+        }
+
+        .prize-header.special {
+            color: #ffd700;
+            border-bottom-color: #ffd700;
+        }
+
+        .winners-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .winner-tag {
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid #00f2ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #00f2ff;
+        }
+
+        .winner-tag.special {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #aaa;
+        }
+
+        .stats span {
+            color: #00f2ff;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎉 中獎查詢</h1>
+        <div class="subtitle" id="activity-title">載入中...</div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="search-box">
+            <div class="search-tabs">
+                <button class="tab-btn active" onclick="switchTab('name')">依姓名查詢</button>
+                <button class="tab-btn" onclick="switchTab('prize')">依獎項查詢</button>
+                <button class="tab-btn" onclick="switchTab('all')">全部名單</button>
+            </div>
+
+            <div id="search-input-area">
+                <input type="text" id="search-input" placeholder="請輸入姓名..." oninput="search()">
+            </div>
+        </div>
+
+        <div class="result-area" id="result-area">
+            <div class="loading">正在載入資料...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        let db = null;
+        let activityId = null;
+        let allData = null;
+        let currentTab = 'name';
+
+        // Get activity name from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const activityName = urlParams.get('name');
+
+        if (!activityName) {
+            document.getElementById('result-area').innerHTML = '<div class="no-result">❌ 缺少活動名稱參數</div>';
+        } else {
+            activityId = btoa(encodeURIComponent(activityName)).replace(/[^a-zA-Z0-9]/g, '');
+
+            if (window.__firebase_config) {
+                const app = initializeApp(window.__firebase_config);
+                db = getDatabase(app);
+                loadData();
+            } else {
+                document.getElementById('result-area').innerHTML = '<div class="no-result">❌ Firebase 設定遺失</div>';
+            }
+        }
+
+        function loadData() {
+            const evRef = ref(db, 'events/' + activityId);
+            onValue(evRef, (snap) => {
+                const data = snap.val();
+                if (data) {
+                    allData = data;
+                    document.getElementById('activity-title').innerText = data.activityName || activityName;
+                    updateStats();
+                    showAll(); // Default show all
+                } else {
+                    document.getElementById('result-area').innerHTML = '<div class="no-result">❌ 找不到活動資料</div>';
+                }
+            });
+        }
+
+        function updateStats() {
+            if (!allData || !allData.prizes) return;
+
+            const totalPrizes = allData.prizes.length;
+            const totalWinners = allData.prizes.reduce((sum, p) => sum + (p.winners ? p.winners.length : 0), 0);
+            const totalSlots = allData.prizes.reduce((sum, p) => sum + p.count, 0);
+
+            document.getElementById('stats').innerHTML = `
+                共 ${totalPrizes} 個獎項 | 已抽出 <span>${totalWinners}</span> / ${totalSlots} 名
+            `;
+        }
+
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const inputArea = document.getElementById('search-input-area');
+            const searchInput = document.getElementById('search-input');
+
+            if (tab === 'all') {
+                inputArea.style.display = 'none';
+                showAll();
+            } else {
+                inputArea.style.display = 'block';
+                searchInput.placeholder = tab === 'name' ? '請輸入姓名...' : '請輸入獎項名稱...';
+                searchInput.value = '';
+                document.getElementById('result-area').innerHTML = '<div class="no-result">請輸入關鍵字查詢</div>';
+            }
+        };
+
+        window.search = () => {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            if (!query) {
+                document.getElementById('result-area').innerHTML = '<div class="no-result">請輸入關鍵字查詢</div>';
+                return;
+            }
+
+            if (!allData || !allData.prizes) return;
+
+            const results = [];
+
+            if (currentTab === 'name') {
+                // Search by name
+                allData.prizes.forEach(prize => {
+                    if (prize.winners) {
+                        prize.winners.forEach(winner => {
+                            if (winner.toLowerCase().includes(query)) {
+                                results.push({ prize: prize.name, winner: winner, isSpecial: prize.isSpecial });
+                            }
+                        });
+                    }
+                });
+
+                if (results.length === 0) {
+                    document.getElementById('result-area').innerHTML = '<div class="no-result">😢 查無此人中獎紀錄</div>';
+                } else {
+                    let html = '';
+                    results.forEach(r => {
+                        html += `
+                            <div class="result-card ${r.isSpecial ? 'special' : ''}">
+                                <div class="prize-name">${r.prize}</div>
+                                <div class="winner-name">🎊 ${r.winner}</div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('result-area').innerHTML = html;
+                }
+            } else if (currentTab === 'prize') {
+                // Search by prize
+                const matchedPrizes = allData.prizes.filter(p => p.name.toLowerCase().includes(query));
+
+                if (matchedPrizes.length === 0) {
+                    document.getElementById('result-area').innerHTML = '<div class="no-result">😢 查無此獎項</div>';
+                } else {
+                    let html = '';
+                    matchedPrizes.forEach(p => {
+                        html += `
+                            <div class="prize-group">
+                                <div class="prize-header ${p.isSpecial ? 'special' : ''}">${p.name} (${p.winners ? p.winners.length : 0}/${p.count})</div>
+                                <div class="winners-list">
+                                    ${p.winners && p.winners.length > 0 ?
+                                p.winners.map(w => `<span class="winner-tag ${p.isSpecial ? 'special' : ''}">${w}</span>`).join('') :
+                                '<span style="color:#666;">尚未抽獎</span>'}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('result-area').innerHTML = html;
+                }
+            }
+        };
+
+        function showAll() {
+            if (!allData || !allData.prizes) return;
+
+            let html = '<div class="all-results">';
+
+            // Sort: Special first
+            const sorted = [...allData.prizes].sort((a, b) => {
+                if (a.isSpecial && !b.isSpecial) return -1;
+                if (!a.isSpecial && b.isSpecial) return 1;
+                return 0;
+            });
+
+            sorted.forEach(p => {
+                html += `
+                    <div class="prize-group">
+                        <div class="prize-header ${p.isSpecial ? 'special' : ''}">${p.name} (${p.winners ? p.winners.length : 0}/${p.count})</div>
+                        <div class="winners-list">
+                            ${p.winners && p.winners.length > 0 ?
+                        p.winners.map(w => `<span class="winner-tag ${p.isSpecial ? 'special' : ''}">${w}</span>`).join('') :
+                        '<span style="color:#666;">尚未抽獎</span>'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            document.getElementById('result-area').innerHTML = html;
+        }
+    </script>
+</body>
+
+</html>

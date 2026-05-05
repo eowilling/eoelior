@@ -1,0 +1,7 @@
+這是備份清單，支援資料夾與單一檔案
+
+每行一個路徑，開頭為 # 的行會被忽略
+
+
+C:\xampp\htdocs\master\package.json
+C:\xampp\htdocs\master\package-lock.json

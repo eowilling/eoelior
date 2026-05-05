@@ -1,0 +1,113 @@
+/* 台股智能分析系統 - GU4 Tech Style */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Orbitron:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg-dark: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.4);
+    --card-border: rgba(255, 255, 255, 0.05);
+    --primary-color: #06b6d4; /* Cyan */
+    --secondary-color: #8b5cf6; /* Violet */
+    --accent-color: #d946ef; /* Fuchsia */
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+}
+
+body {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* Glassmorphism Base */
+.glass-panel {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.glass-input {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--card-border);
+    color: white;
+    transition: all 0.2s;
+}
+
+.glass-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+/* Brand Title */
+.brand-title {
+    font-family: 'Orbitron', sans-serif;
+    background: linear-gradient(135deg, #22d3ee, #818cf8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Markdown Content Styling Override */
+.analysis-content h1, .analysis-content h2, .analysis-content h3 {
+    color: var(--text-primary);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+.analysis-content h2 { font-size: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; }
+.analysis-content p { margin-bottom: 1rem; line-height: 1.7; color: #cbd5e1; }
+.analysis-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+.analysis-content li { margin-bottom: 0.5rem; }
+.analysis-content strong { color: var(--primary-color); }
+.analysis-content blockquote { border-left: 4px solid var(--secondary-color); padding-left: 1rem; color: #94a3b8; font-style: italic; }
+
+/* Chip styling for stocks */
+.stock-chip {
+    transition: all 0.2s;
+}
+.stock-chip:hover .remove-btn {
+    opacity: 1;
+}
+
+/* Animation classes */
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.5); }
+}
+.animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+}
+
+/* Modal transition */
+.modal-enter { opacity: 0; transform: scale(0.95); }
+.modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s; }
+.modal-exit { opacity: 1; transform: scale(1); }
+.modal-exit-active { opacity: 0; transform: scale(0.95); transition: all 0.2s; }

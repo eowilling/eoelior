@@ -1,0 +1,24 @@
+# Core
+flask
+flask-cors
+python-dotenv
+requests
+pandas
+numpy
+
+# Desktop UI
+PyQt6
+PyQt6-WebEngine
+
+# Data Providers & Analysis
+yfinance
+twstock
+ccxt
+google-generativeai
+scikit-learn
+
+# Utilities
+pystray
+Pillow
+plyer
+gunicorn

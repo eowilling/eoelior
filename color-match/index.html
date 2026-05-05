@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>顏色記憶翻牌 | eoElior</title>
+    <title>顏色記憶翻牌 | Color Match</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -15,7 +15,7 @@
             align-items: center;
             padding: 20px;
         }
-        .game-container {
+        .container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
             padding: 30px;
@@ -34,22 +34,12 @@
             justify-content: space-around;
             margin-bottom: 20px;
             padding: 15px;
-            background: #f5f5f5;
+            background: #f8f9fa;
             border-radius: 10px;
         }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-label {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        .stat-value {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #667eea;
-        }
+        .stat { text-align: center; }
+        .stat-label { font-size: 0.85em; color: #666; margin-bottom: 5px; }
+        .stat-value { font-size: 1.5em; font-weight: bold; color: #667eea; }
         .game-board {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -61,44 +51,22 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 10px;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.3s, opacity 0.3s;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 2em;
-            position: relative;
-            transform-style: preserve-3d;
+            color: white;
         }
-        .card:hover {
+        .card:hover:not(.flipped):not(.matched) {
             transform: scale(1.05);
         }
-        .card.flipped {
+        .card.flipped, .card.matched {
             transform: rotateY(180deg);
         }
         .card.matched {
             opacity: 0.5;
             cursor: default;
-        }
-        .card.matched:hover {
-            transform: none;
-        }
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 10px;
-        }
-        .card-front {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-size: 1.5em;
-        }
-        .card-back {
-            transform: rotateY(180deg);
         }
         .buttons {
             display: flex;
@@ -106,259 +74,210 @@
         }
         button {
             flex: 1;
-            padding: 15px;
+            padding: 12px;
             border: none;
             border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             font-size: 1em;
-            font-weight: bold;
             cursor: pointer;
             transition: transform 0.2s;
         }
         button:hover {
             transform: translateY(-2px);
         }
-        .btn-restart {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-home {
-            background: #f5f5f5;
-            color: #666;
-        }
-        .victory {
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            border-radius: 10px;
-            color: white;
-            margin-bottom: 20px;
+        .modal {
             display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
-        .victory.show {
-            display: block;
-            animation: slideDown 0.5s ease;
-        }
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .best-score {
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
             text-align: center;
-            margin-top: 15px;
-            color: #666;
-            font-size: 0.9em;
+            max-width: 400px;
+        }
+        .modal h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .modal p {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            h1 { font-size: 1.5em; }
+            .card { font-size: 1.5em; }
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
+    <div class="container">
         <h1>🎨 顏色記憶翻牌</h1>
         
-        <div class="victory" id="victory">
-            <h2>🎉 恭喜過關！</h2>
-            <p id="victoryStats"></p>
-        </div>
-        
         <div class="stats">
-            <div class="stat-item">
+            <div class="stat">
                 <div class="stat-label">時間</div>
                 <div class="stat-value" id="timer">0:00</div>
             </div>
-            <div class="stat-item">
+            <div class="stat">
                 <div class="stat-label">步數</div>
                 <div class="stat-value" id="moves">0</div>
             </div>
-            <div class="stat-item">
-                <div class="stat-label">配對</div>
-                <div class="stat-value" id="matched">0/8</div>
+            <div class="stat">
+                <div class="stat-label">最佳</div>
+                <div class="stat-value" id="best">-</div>
             </div>
         </div>
-        
-        <div class="game-board" id="gameBoard"></div>
-        
-        <div class="best-score" id="bestScore"></div>
-        
+
+        <div class="game-board" id="board"></div>
+
         <div class="buttons">
-            <button class="btn-restart" onclick="restartGame()">🔄 重新開始</button>
-            <button class="btn-home" onclick="location.href='../'">🏠 返回首頁</button>
+            <button onclick="startGame()">🔄 重新開始</button>
+            <button onclick="location.href='../'">🏠 回主頁</button>
+        </div>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <h2>🎉 恭喜完成！</h2>
+            <p>⏱️ 時間：<span id="finalTime"></span></p>
+            <p>👟 步數：<span id="finalMoves"></span></p>
+            <p id="newRecord" style="color: #667eea; font-weight: bold; display: none;">🏆 新紀錄！</p>
+            <button onclick="closeModal(); startGame();" style="margin-top: 20px;">再玩一次</button>
         </div>
     </div>
 
     <script>
         const colors = ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '🟤', '⚫'];
-        let cards = [];
-        let flippedCards = [];
-        let matchedPairs = 0;
+        let cards = [...colors, ...colors];
+        let flipped = [];
+        let matched = 0;
         let moves = 0;
         let timer = 0;
-        let timerInterval = null;
+        let timerInterval;
         let gameStarted = false;
 
-        function initGame() {
-            // 創建卡牌陣列（每個顏色兩張）
-            cards = [...colors, ...colors]
-                .sort(() => Math.random() - 0.5)
-                .map((color, index) => ({
-                    id: index,
-                    color: color,
-                    flipped: false,
-                    matched: false
-                }));
-            
-            // 渲染遊戲板
-            const board = document.getElementById('gameBoard');
-            board.innerHTML = '';
-            
-            cards.forEach(card => {
-                const cardElement = document.createElement('div');
-                cardElement.className = 'card';
-                cardElement.dataset.id = card.id;
-                cardElement.innerHTML = `
-                    <div class="card-front">?</div>
-                    <div class="card-back">${card.color}</div>
-                `;
-                cardElement.addEventListener('click', () => flipCard(card.id));
-                board.appendChild(cardElement);
-            });
-            
-            // 重置狀態
-            flippedCards = [];
-            matchedPairs = 0;
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startGame() {
+            cards = shuffle([...colors, ...colors]);
+            flipped = [];
+            matched = 0;
             moves = 0;
             timer = 0;
             gameStarted = false;
+            clearInterval(timerInterval);
             
-            updateStats();
-            document.getElementById('victory').classList.remove('show');
+            document.getElementById('moves').textContent = '0';
+            document.getElementById('timer').textContent = '0:00';
             
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
+            const board = document.getElementById('board');
+            board.innerHTML = '';
             
-            loadBestScore();
+            cards.forEach((color, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = index;
+                card.dataset.color = color;
+                card.textContent = '?';
+                card.onclick = () => flipCard(card);
+                board.appendChild(card);
+            });
+
+            const best = localStorage.getItem('colorMatchBest');
+            document.getElementById('best').textContent = best ? best : '-';
         }
 
-        function flipCard(cardId) {
-            const card = cards[cardId];
-            const cardElement = document.querySelector(`[data-id="${cardId}"]`);
-            
-            // 檢查是否可以翻牌
-            if (card.matched || card.flipped || flippedCards.length >= 2) return;
-            
-            // 開始計時
+        function startTimer() {
             if (!gameStarted) {
                 gameStarted = true;
                 timerInterval = setInterval(() => {
                     timer++;
-                    updateStats();
+                    const mins = Math.floor(timer / 60);
+                    const secs = timer % 60;
+                    document.getElementById('timer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
                 }, 1000);
             }
+        }
+
+        function flipCard(card) {
+            if (flipped.length >= 2 || card.classList.contains('flipped') || card.classList.contains('matched')) {
+                return;
+            }
+
+            startTimer();
             
-            // 翻牌
-            card.flipped = true;
-            cardElement.classList.add('flipped');
-            flippedCards.push(card);
-            
-            // 檢查配對
-            if (flippedCards.length === 2) {
+            card.classList.add('flipped');
+            card.textContent = card.dataset.color;
+            flipped.push(card);
+
+            if (flipped.length === 2) {
                 moves++;
-                updateStats();
-                
-                setTimeout(() => {
-                    checkMatch();
-                }, 800);
-            }
-        }
+                document.getElementById('moves').textContent = moves;
 
-        function checkMatch() {
-            const [card1, card2] = flippedCards;
-            const card1Element = document.querySelector(`[data-id="${card1.id}"]`);
-            const card2Element = document.querySelector(`[data-id="${card2.id}"]`);
-            
-            if (card1.color === card2.color) {
-                // 配對成功
-                card1.matched = true;
-                card2.matched = true;
-                card1Element.classList.add('matched');
-                card2Element.classList.add('matched');
-                matchedPairs++;
-                updateStats();
-                
-                // 檢查是否完成
-                if (matchedPairs === 8) {
-                    setTimeout(() => gameComplete(), 500);
+                const [card1, card2] = flipped;
+                if (card1.dataset.color === card2.dataset.color) {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    matched += 2;
+                    flipped = [];
+
+                    if (matched === cards.length) {
+                        clearInterval(timerInterval);
+                        setTimeout(showWinModal, 500);
+                    }
+                } else {
+                    setTimeout(() => {
+                        card1.classList.remove('flipped');
+                        card2.classList.remove('flipped');
+                        card1.textContent = '?';
+                        card2.textContent = '?';
+                        flipped = [];
+                    }, 1000);
                 }
+            }
+        }
+
+        function showWinModal() {
+            const mins = Math.floor(timer / 60);
+            const secs = timer % 60;
+            const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+            
+            document.getElementById('finalTime').textContent = timeStr;
+            document.getElementById('finalMoves').textContent = moves;
+
+            const best = localStorage.getItem('colorMatchBest');
+            if (!best || moves < parseInt(best)) {
+                localStorage.setItem('colorMatchBest', moves);
+                document.getElementById('newRecord').style.display = 'block';
             } else {
-                // 配對失敗
-                card1.flipped = false;
-                card2.flipped = false;
-                card1Element.classList.remove('flipped');
-                card2Element.classList.remove('flipped');
+                document.getElementById('newRecord').style.display = 'none';
             }
-            
-            flippedCards = [];
+
+            document.getElementById('winModal').style.display = 'flex';
         }
 
-        function updateStats() {
-            const minutes = Math.floor(timer / 60);
-            const seconds = timer % 60;
-            document.getElementById('timer').textContent = 
-                `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('moves').textContent = moves;
-            document.getElementById('matched').textContent = `${matchedPairs}/8`;
+        function closeModal() {
+            document.getElementById('winModal').style.display = 'none';
         }
 
-        function gameComplete() {
-            clearInterval(timerInterval);
-            
-            const victory = document.getElementById('victory');
-            const minutes = Math.floor(timer / 60);
-            const seconds = timer % 60;
-            document.getElementById('victoryStats').textContent = 
-                `用時 ${minutes}:${seconds.toString().padStart(2, '0')} | ${moves} 步`;
-            victory.classList.add('show');
-            
-            saveBestScore();
-        }
-
-        function saveBestScore() {
-            const bestScore = localStorage.getItem('colorMatchBest');
-            const currentScore = { time: timer, moves: moves };
-            
-            if (!bestScore || timer < JSON.parse(bestScore).time) {
-                localStorage.setItem('colorMatchBest', JSON.stringify(currentScore));
-                loadBestScore();
-            }
-        }
-
-        function loadBestScore() {
-            const bestScore = localStorage.getItem('colorMatchBest');
-            const bestScoreElement = document.getElementById('bestScore');
-            
-            if (bestScore) {
-                const { time, moves } = JSON.parse(bestScore);
-                const minutes = Math.floor(time / 60);
-                const seconds = time % 60;
-                bestScoreElement.textContent = 
-                    `🏆 最佳紀錄：${minutes}:${seconds.toString().padStart(2, '0')} | ${moves} 步`;
-            } else {
-                bestScoreElement.textContent = '🏆 最佳紀錄：尚未建立';
-            }
-        }
-
-        function restartGame() {
-            initGame();
-        }
-
-        // 初始化遊戲
-        initGame();
+        window.onload = startGame;
     </script>
 </body>
 </html>
