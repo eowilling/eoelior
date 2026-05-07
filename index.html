@@ -312,11 +312,7 @@
                                 class="text-xl text-slate-500 font-medium tracking-widest hidden md:inline-block opacity-50">|</span>
                             <span class="text-3xl md:text-4xl text-slate-200 font-light tracking-wide">玩具盒子</span>
                         </h1>
-                        <p class="motto">人生就是跌倒了 躺一會也沒關係</p>
-                        <p class="text-slate-400 text-lg leading-relaxed mt-4 pl-3">
-                            這裡是我的遊樂場<br>
-                            雖然沒有摩天輪但至少晚餐吃什麼不用猶豫太久
-                        </p>
+                        <p class="motto" id="subtitle-container">載入中...</p>
                     </div>
                 </div>
             </div>
@@ -608,6 +604,30 @@
 
         // 初始化
         renderGrid();
+        
+        // 載入副標題 JSON
+        async function loadSubtitle() {
+            try {
+                const response = await fetch('subtitle.json');
+                const data = await response.json();
+                const container = document.getElementById('subtitle-container');
+                
+                if (data.subtitle) {
+                    const lines = data.subtitle.split('\n');
+                    container.innerHTML = lines.map(line => 
+                        `<p class="text-slate-400 text-lg leading-relaxed ${lines.indexOf(line) === 0 ? '' : 'mt-4'}">${line}</p>`
+                    ).join('');
+                }
+            } catch (error) {
+                console.error('載入副標題失敗:', error);
+                document.getElementById('subtitle-container').innerHTML = `
+                    <p class="text-slate-400 text-lg leading-relaxed">人生就是跌倒了 躺一會也沒關係</p>
+                    <p class="text-slate-400 text-lg leading-relaxed mt-4">這裡是我的遊樂場<br>雖然沒有摩天輪但至少晚餐吃什麼不用猶豫太久</p>
+                `;
+            }
+        }
+        
+        loadSubtitle();
     </script>
 </body>
 
