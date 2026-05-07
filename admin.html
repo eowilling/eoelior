@@ -24,7 +24,7 @@
             padding: 2rem;
         }
         
-        .input-box {
+        .textarea-box {
             width: 100%;
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -32,10 +32,13 @@
             padding: 1rem;
             border-radius: 0.5rem;
             font-size: 1rem;
-            margin-bottom: 1rem;
+            min-height: 150px;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.8;
         }
         
-        .input-box:focus {
+        .textarea-box:focus {
             outline: none;
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
@@ -78,27 +81,13 @@
         <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
             🔧 後台編輯器
         </h1>
-        <p style="color: #94a3b8; margin-bottom: 2rem;">修改首頁副標題文字</p>
+        <p style="color: #94a3b8; margin-bottom: 2rem;">修改首頁副標題文字（按 Enter 換行）</p>
         
         <div>
             <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: 500;">
-                第一行
+                副標題文字
             </label>
-            <input type="text" id="line1" class="input-box" placeholder="輸入第一行文字">
-        </div>
-        
-        <div>
-            <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: 500;">
-                第二行
-            </label>
-            <input type="text" id="line2" class="input-box" placeholder="輸入第二行文字">
-        </div>
-        
-        <div>
-            <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: 500;">
-                第三行
-            </label>
-            <input type="text" id="line3" class="input-box" placeholder="輸入第三行文字">
+            <textarea id="subtitle" class="textarea-box" placeholder="輸入副標題文字，按 Enter 換行"></textarea>
         </div>
         
         <div class="preview-box">
@@ -106,7 +95,7 @@
             <div class="preview-text" id="preview"></div>
         </div>
         
-        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
             <button class="btn-save" onclick="saveConfig()">💾 儲存設定</button>
             <button class="btn-save" onclick="resetDefault()" style="background: linear-gradient(135deg, #64748b, #475569);">
                 🔄 恢復預設
@@ -124,20 +113,15 @@
     </div>
     
     <script>
-        const DEFAULT_TEXT = {
-            line1: '人生就是跌倒了 躺一會也沒關係',
-            line2: '這裡是我的遊樂場',
-            line3: '雖然沒有摩天輪但至少晚餐吃什麼不用猶豫太久'
-        };
+        const DEFAULT_TEXT = `人生就是跌倒了 躺一會也沒關係
+這裡是我的遊樂場
+雖然沒有摩天輪但至少晚餐吃什麼不用猶豫太久`;
         
         // 載入儲存的設定
         function loadConfig() {
             const saved = localStorage.getItem('eoelior_subtitle');
             if (saved) {
-                const config = JSON.parse(saved);
-                document.getElementById('line1').value = config.line1 || '';
-                document.getElementById('line2').value = config.line2 || '';
-                document.getElementById('line3').value = config.line3 || '';
+                document.getElementById('subtitle').value = saved;
             } else {
                 resetDefault();
             }
@@ -146,51 +130,34 @@
         
         // 更新即時預覽
         function updatePreview() {
-            const line1 = document.getElementById('line1').value;
-            const line2 = document.getElementById('line2').value;
-            const line3 = document.getElementById('line3').value;
-            
-            document.getElementById('preview').textContent = 
-                (line1 || '(空白)') + '\n' + 
-                (line2 || '(空白)') + '\n' + 
-                (line3 || '(空白)');
+            const text = document.getElementById('subtitle').value;
+            document.getElementById('preview').textContent = text || '(空白)';
         }
         
         // 儲存設定
         function saveConfig() {
-            const config = {
-                line1: document.getElementById('line1').value,
-                line2: document.getElementById('line2').value,
-                line3: document.getElementById('line3').value
-            };
-            
-            localStorage.setItem('eoelior_subtitle', JSON.stringify(config));
+            const text = document.getElementById('subtitle').value;
+            localStorage.setItem('eoelior_subtitle', text);
             alert('✅ 設定已儲存到瀏覽器！\n\n請點擊「複製程式碼」按鈕，然後貼到 index.html 中。');
         }
         
         // 恢復預設
         function resetDefault() {
-            document.getElementById('line1').value = DEFAULT_TEXT.line1;
-            document.getElementById('line2').value = DEFAULT_TEXT.line2;
-            document.getElementById('line3').value = DEFAULT_TEXT.line3;
+            document.getElementById('subtitle').value = DEFAULT_TEXT;
             updatePreview();
         }
         
         // 複製程式碼
         function copyCode() {
-            const line1 = document.getElementById('line1').value;
-            const line2 = document.getElementById('line2').value;
-            const line3 = document.getElementById('line3').value;
+            const text = document.getElementById('subtitle').value;
+            const lines = text.split('\n');
             
-            const code = `        <p class="text-slate-400 text-lg leading-relaxed mb-3">
-            ${line1}
-        </p>
-        <p class="text-slate-400 text-lg leading-relaxed mb-3">
-            ${line2}
-        </p>
-        <p class="text-slate-400 text-lg leading-relaxed">
-            ${line3}
-        </p>`;
+            let code = '';
+            lines.forEach(line => {
+                code += `        <p class="text-slate-400 text-lg leading-relaxed mb-3">\n`;
+                code += `            ${line}\n`;
+                code += `        </p>\n`;
+            });
             
             navigator.clipboard.writeText(code).then(() => {
                 alert('✅ 程式碼已複製！\n\n請貼到 index.html 的副標題區域（大約在第 310-320 行附近）');
@@ -200,9 +167,7 @@
         }
         
         // 監聽輸入變化
-        document.getElementById('line1').addEventListener('input', updatePreview);
-        document.getElementById('line2').addEventListener('input', updatePreview);
-        document.getElementById('line3').addEventListener('input', updatePreview);
+        document.getElementById('subtitle').addEventListener('input', updatePreview);
         
         // 頁面載入時讀取設定
         loadConfig();
