@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台編輯 | eoElior</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 2rem;
+        }
+        
+        .input-box {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .input-box:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+        
+        .preview-box {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .preview-text {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 1rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">
+            🔧 後台編輯器
+        </h1>
+        <p style="color: #94a3b8; margin-bottom: 2rem;">修改首頁副標題文字</p>
+        
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: 500;">
+                第一行
+            </label>
+            <input type="text" id="line1" class="input-box" placeholder="輸入第一行文字">
+        </div>
+        
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: 500;">
+                第二行
+            </label>
+            <input type="text" id="line2" class="input-box" placeholder="輸入第二行文字">
+        </div>
+        
+        <div>
+            <label style="display: block; margin-bottom: 0.5rem; color: #cbd5e1; font-weight: 500;">
+                第三行
+            </label>
+            <input type="text" id="line3" class="input-box" placeholder="輸入第三行文字">
+        </div>
+        
+        <div class="preview-box">
+            <h3 style="color: #cbd5e1; font-weight: 600; margin-bottom: 1rem;">📋 即時預覽</h3>
+            <div class="preview-text" id="preview"></div>
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button class="btn-save" onclick="saveConfig()">💾 儲存設定</button>
+            <button class="btn-save" onclick="resetDefault()" style="background: linear-gradient(135deg, #64748b, #475569);">
+                🔄 恢復預設
+            </button>
+            <button class="btn-save" onclick="copyCode()" style="background: linear-gradient(135deg, #10b981, #059669);">
+                📋 複製程式碼
+            </button>
+        </div>
+        
+        <div style="margin-top: 2rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 0.5rem;">
+            <p style="color: #93c5fd; font-size: 0.9rem;">
+                ℹ️ 儲存後會生成 HTML 程式碼，複製貼到 index.html 對應位置即可。
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        const DEFAULT_TEXT = {
+            line1: '人生就是跌倒了 躺一會也沒關係',
+            line2: '這裡是我的遊樂場',
+            line3: '雖然沒有摩天輪但至少晚餐吃什麼不用猶豫太久'
+        };
+        
+        // 載入儲存的設定
+        function loadConfig() {
+            const saved = localStorage.getItem('eoelior_subtitle');
+            if (saved) {
+                const config = JSON.parse(saved);
+                document.getElementById('line1').value = config.line1 || '';
+                document.getElementById('line2').value = config.line2 || '';
+                document.getElementById('line3').value = config.line3 || '';
+            } else {
+                resetDefault();
+            }
+            updatePreview();
+        }
+        
+        // 更新即時預覽
+        function updatePreview() {
+            const line1 = document.getElementById('line1').value;
+            const line2 = document.getElementById('line2').value;
+            const line3 = document.getElementById('line3').value;
+            
+            document.getElementById('preview').textContent = 
+                (line1 || '(空白)') + '\n' + 
+                (line2 || '(空白)') + '\n' + 
+                (line3 || '(空白)');
+        }
+        
+        // 儲存設定
+        function saveConfig() {
+            const config = {
+                line1: document.getElementById('line1').value,
+                line2: document.getElementById('line2').value,
+                line3: document.getElementById('line3').value
+            };
+            
+            localStorage.setItem('eoelior_subtitle', JSON.stringify(config));
+            alert('✅ 設定已儲存到瀏覽器！\n\n請點擊「複製程式碼」按鈕，然後貼到 index.html 中。');
+        }
+        
+        // 恢復預設
+        function resetDefault() {
+            document.getElementById('line1').value = DEFAULT_TEXT.line1;
+            document.getElementById('line2').value = DEFAULT_TEXT.line2;
+            document.getElementById('line3').value = DEFAULT_TEXT.line3;
+            updatePreview();
+        }
+        
+        // 複製程式碼
+        function copyCode() {
+            const line1 = document.getElementById('line1').value;
+            const line2 = document.getElementById('line2').value;
+            const line3 = document.getElementById('line3').value;
+            
+            const code = `        <p class="text-slate-400 text-lg leading-relaxed mb-3">
+            ${line1}
+        </p>
+        <p class="text-slate-400 text-lg leading-relaxed mb-3">
+            ${line2}
+        </p>
+        <p class="text-slate-400 text-lg leading-relaxed">
+            ${line3}
+        </p>`;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                alert('✅ 程式碼已複製！\n\n請貼到 index.html 的副標題區域（大約在第 310-320 行附近）');
+            }).catch(() => {
+                alert('❌ 複製失敗，請手動複製以下內容：\n\n' + code);
+            });
+        }
+        
+        // 監聽輸入變化
+        document.getElementById('line1').addEventListener('input', updatePreview);
+        document.getElementById('line2').addEventListener('input', updatePreview);
+        document.getElementById('line3').addEventListener('input', updatePreview);
+        
+        // 頁面載入時讀取設定
+        loadConfig();
+    </script>
+</body>
+</html>
