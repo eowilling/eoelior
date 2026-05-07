@@ -153,38 +153,7 @@
         &copy; 2025 Sudoku Web App
     </footer>
 
-    <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
-    <script src="firebase-config.js"></script>
-
-    <script type="module">
-        // Firebase SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Firebase 配置和初始化
-        let firebaseConfig;
-        let firebaseEnabled = false;
-        let app, auth, db;
-
-        try {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                firebaseConfig = typeof __firebase_config === 'string'
-                    ? JSON.parse(__firebase_config)
-                    : __firebase_config;
-                firebaseEnabled = true;
-                
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-                console.log('✅ Firebase 已初始化');
-            } else {
-                console.log('ℹ️ Firebase 配置未找到');
-            }
-        } catch (e) {
-            console.error('❌ Firebase 初始化失敗:', e);
-            firebaseEnabled = false;
-        }
+    <script>
 
         // --- 1. 核心邏輯 ---
         class SudokuCore {
@@ -491,73 +460,8 @@
         initGrid();
         newGame();
 
-        // ========== Firebase 連線狀態 ==========
-        // 更新連線狀態顯示
-        function updateDbStatus(status, text) {
-            const statusEl = document.getElementById('dbStatus');
-            const statusTextEl = document.getElementById('dbStatusText');
-            
-            if (statusEl) {
-                // 更新點的顏色
-                statusEl.className = `w-2 h-2 rounded-full ${
-                    status === 'connected' ? 'bg-emerald-500' :
-                    status === 'connecting' ? 'bg-yellow-400' :
-                    'bg-red-500'
-                }`;
-                statusEl.title = text || status;
-            }
-            
-            if (statusTextEl) {
-                statusTextEl.innerText = text || '';
-                statusTextEl.className = `text-[10px] ${
-                    status === 'connected' ? 'text-emerald-500' :
-                    status === 'connecting' ? 'text-yellow-400' :
-                    'text-gray-400'
-                }`;
-            }
-        }
-
-        // 初始化 Firebase 認證
-        async function initFirebase() {
-            if (typeof firebaseEnabled === 'undefined' || !firebaseEnabled || typeof auth === 'undefined') {
-                updateDbStatus('disabled', '');
-                console.log('ℹ️ Firebase 未啟用');
-                return;
-            }
-
-            try {
-                updateDbStatus('connecting', '連線中');
-                console.log('🔄 開始 Firebase 匿名認證...');
-
-                // 設定認證狀態監聽器
-                const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        console.log('✅ Firebase 認證成功');
-                        updateDbStatus('connected', '');
-                        unsubscribe();
-                    } else {
-                        console.warn('⚠️ 使用者未認證');
-                    }
-                });
-
-                // 嘗試匿名登入
-                try {
-                    await signInAnonymously(auth);
-                    console.log('✅ 匿名登入成功');
-                } catch (authError) {
-                    console.error('❌ Firebase 認證失敗:', authError);
-                    updateDbStatus('error', '連線失敗');
-                    unsubscribe();
-                }
-
-            } catch (e) {
-                console.error('❌ Firebase 初始化錯誤:', e);
-                updateDbStatus('error', '初始化失敗');
-            }
-        }
-
-        // 啟動 Firebase
-        initFirebase();
+        // Firebase 功能已移除，遊戲完全離線運作
+        console.log('✅ 數獨遊戲已載入（離線模式）');
     </script>
 </body>
 </html>
