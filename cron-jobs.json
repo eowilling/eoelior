@@ -1,0 +1,134 @@
+[
+  {
+    "id": "e385263d-2f59-4014-bb97-769a7b159e95",
+    "name": "每日生命特徵報告（08:30）",
+    "schedule": {
+      "kind": "cron",
+      "expr": "30 8 * * *",
+      "tz": "Asia/Taipei"
+    },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "生成每日生命特徵報告，包含：\n\n1. **背景運作程式狀況**\n   - line_bot_dispatcher.py (port 5000)\n   - openclaw-gateway (port 18789)\n   - ngrok tunnel\n   用 `ps aux | grep` 和 `lsof -i` 檢查\n\n2. **圖庫健康狀況**\n   - birthday_photos.md：剩餘可用圖片數量\n   - ateez_photos.md：剩餘可用圖片數量\n   - one_ok_rock_photos.md：剩餘可用圖片數量\n   - tzuyu_photos.md：剩餘可用圖片數量\n   讀取檔案，計算未被註解的 URL 數量\n   庫存 <10 張時標示 ⚠️，<5 張時標示 ❌\n\n3. **圖庫自動補充程式驗證**\n   - 檢查 ~/photo_库_auto_updater.py 是否存在且可執行 (ls -la)\n   - 實際執行測試：`cd ~ && source line-bridge-venv/bin/activate && python3 photo_库_auto_updater.py --help` 確認程式可正常啟動\n   - 檢查 ~/line_bot.log 最近 7 天有無「觸發背景更新」紀錄\n   狀態判定：\n     ✅ 程式可執行且最近無觸發（待命中）\n     ⚠️ 程式可執行且最近有觸發（有在運作）\n     ❌ 程式無法執行或檔案遺失\n\n4. **我的健康狀況**\n   - 上次重啟時間（session_status）\n   - 記憶體使用狀況（workspace 檔案數量）\n   - 最近是否有錯誤（檢查最新的 dispatcher log）\n\n5. **學習狀況**\n   - 從 memory/learning-log.md 讀取最近 3 天的學習記錄\n   - 列出學過的主題和技能\n\n回報格式：簡潔、條列式、包含數據和狀態指示符（✅❌⚠️）",
+      "timeoutSeconds": 300
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram",
+      "to": "973067130"
+    }
+  },
+  {
+    "id": "7e80807b-9204-4a6c-9c3d-30bf3560171a",
+    "name": "每日台灣新聞整合（09:00）",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 9 * * *",
+      "tz": "Asia/Taipei"
+    },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "請發送今日台灣重點新聞摘要（國內焦點 + 國際要聞），簡潔呈現，附資料來源",
+      "timeoutSeconds": 300
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram",
+      "to": "973067130"
+    }
+  },
+  {
+    "id": "a6ffb544-b40e-4ff9-8de9-246815567933",
+    "name": "每日學習（06:00）",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 6 * * *",
+      "tz": "Asia/Taipei"
+    },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "執行每日學習任務：\n\n1. 讀取 memory/learning-log.md 最新一筆記錄的「下次學習方向」，如果有就學那個主題；如果沒有或是今天第一次學習，就從 TOOLS.md、AGENTS.md、可用技能列表中挑一個還不熟悉的工具或技能\n2. 深入研究它的功能、用法、實用情境\n3. 在 memory/learning-log.md 中新增今日（YYYY-MM-DD）的學習記錄，格式：\n   - 主題\n   - 動機（為什麼學這個）\n   - 學習內容（條列重點）\n   - 心得（如何應用、未來可以怎麼用）\n   - 下次學習方向（明天想學什麼）\n4. 完成後，發送學習心得給 Eeyore（簡潔版，100字以內）\n\n不要重複學已經學過的主題。優先選擇實用性高、能提升工作效率的工具。",
+      "timeoutSeconds": 300
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram",
+      "to": "973067130"
+    }
+  },
+  {
+    "id": "5f2280ff-2cdf-49d8-a8e4-4730b3257d6e",
+    "name": "每日八點Gmail未讀通知",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 8 * * *",
+      "tz": "Asia/Taipei"
+    },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "請依序執行以下三個指令檢查未讀信件：\n1. himalaya envelope list -a lovewee427 -f INBOX --page-size 10 'not flag seen'\n2. himalaya envelope list -a jhehuei0427 -f INBOX --page-size 10 'not flag seen'\n3. himalaya envelope list -a eo-willing -f INBOX --page-size 10 'not flag seen'\n\n回覆規則：\n- 只列出有未讀信件的帳號，格式：帳號名 → 寄件人、主旨（一行一封）\n- 三個帳號都沒有未讀信件，只回一句「三個信箱都沒有未讀信件 ✅」\n- 不要解釋指令、不要廢話、不要道歉\n- 不要使用 Maton API 或 gogcli"
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram",
+      "to": "973067130"
+    }
+  },
+  {
+    "id": "b7c65f9b-5624-47e6-be83-634753a725af",
+    "name": "每週日油價公告（14:00）",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 14 * * 0",
+      "tz": "Asia/Taipei"
+    },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "查詢本週中油油價調整公告（週日中午 12:00 已公布）：\n\n1. 搜尋最新油價調整資訊\n2. 回報格式：\n   - 調整幅度（漲/跌多少）\n   - 92/95/98 無鉛汽油價格\n   - 超級柴油價格\n   - 生效時間（明天凌晨）\n\n簡潔呈現，一眼看懂漲跌",
+      "timeoutSeconds": 180
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram",
+      "to": "973067130"
+    }
+  },
+  {
+    "id": "6b5a8fd8-9aa8-4a0f-acdc-bc1a60bafbfd",
+    "name": "每週小遊戲上線（週一 10:00）",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 15 * * 1",
+      "tz": "Asia/Taipei"
+    },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "🚀 週一小遊戲上線時間！\n\n請執行以下任務：\n\n1. **讀取上週二的討論結果**\n   - 從 memory/weekly-games.md 讀取最新的遊戲企劃\n   - 確認遊戲類型、名稱、玩法\n\n2. **開發遊戲**\n   - 用 HTML/CSS/JS 開發完整的網頁遊戲\n   - 確保手機相容性\n   - 加上簡單的說明和計分機制（如果需要）\n\n3. **上傳到 GitHub**\n   - Clone eowilling/eoelior\n   - 建立 games/YYYY-MM-DD-遊戲名稱/ 資料夾\n   - 放入 index.html + 相關檔案\n   - Commit + Push\n\n4. **更新主頁**\n   - 在 eoelior/index.html 加上新遊戲連結\n   - Push 到 GitHub\n\n5. **通知 Eeyore**\n   - 發送上線通知 + 遊戲連結\n   - 附上簡單的遊戲截圖（如果可以）\n\n回報格式：簡潔、包含遊戲連結和簡介",
+      "timeoutSeconds": 600
+    },
+    "delivery": {
+      "channel": "telegram",
+      "mode": "announce",
+      "to": "973067130"
+    }
+  },
+  {
+    "id": "66c30b83-479c-42a8-8014-b75ac9374296",
+    "name": "每週小遊戲討論（週二 10:30）",
+    "schedule": {
+      "kind": "cron",
+      "expr": "30 10 * * 2",
+      "tz": "Asia/Taipei"
+    },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "🎮 每週小遊戲討論時間！\n\n請執行以下任務：\n\n1. **回顧上週遊戲**（如果有）\n   - 檢查 https://eowilling.github.io/eoelior/ 上週遊戲是否正常運作\n   - 讀取使用記錄（如果有）\n\n2. **提出本週遊戲企劃**\n   - 遊戲類型（猜謎/反應/益智/測驗/創意）\n   - 核心玩法\n   - 預估開發時間\n   - 技術需求（HTML/CSS/JS）\n\n3. **與 Eeyore 討論**\n   - 等待 Eeyore 確認或調整方向\n   - 記錄討論結果到 memory/weekly-games.md\n\n4. **排程開發**\n   - 確認後，設定下週一上線提醒\n\n回報格式：簡潔、包含 2-3 個遊戲提案供選擇",
+      "timeoutSeconds": 300
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram",
+      "to": "973067130"
+    }
+  }
+]
