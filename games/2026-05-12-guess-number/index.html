@@ -98,8 +98,15 @@
 
         .input-area {
             display: flex;
+            flex-direction: column;
             gap: 10px;
             margin-bottom: 20px;
+        }
+
+        @media (min-width: 640px) {
+            .input-area {
+                flex-direction: row;
+            }
         }
 
         #guessInput {
