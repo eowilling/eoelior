@@ -363,15 +363,22 @@
             console.log('答案（開發模式）:', answer.join(''));
         }
 
-        // 生成不重複的隨機數字
+        // 生成不重複的隨機數字（首位不為 0）
         function generateAnswer(length) {
-            const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
             const result = [];
             
+            // 第一位數字（1-9）
+            const firstDigits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            const firstIndex = Math.floor(Math.random() * firstDigits.length);
+            result.push(firstDigits[firstIndex]);
+            
+            // 剩餘位數（0-9 排除已使用的）
+            const remainingDigits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].filter(d => d !== result[0]);
+            
             while (result.length < length) {
-                const randomIndex = Math.floor(Math.random() * digits.length);
-                result.push(digits[randomIndex]);
-                digits.splice(randomIndex, 1);
+                const randomIndex = Math.floor(Math.random() * remainingDigits.length);
+                result.push(remainingDigits[randomIndex]);
+                remainingDigits.splice(randomIndex, 1);
             }
             
             return result;
