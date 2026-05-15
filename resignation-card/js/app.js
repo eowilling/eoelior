@@ -85,6 +85,9 @@ function initEventListeners() {
             
             // 更新設定
             config.template = btn.dataset.template;
+            
+            // 更新模板說明
+            updateTemplateDescription(config.template);
         });
     });
     
@@ -107,6 +110,37 @@ function updatePreview() {
         cell.textContent = '□';
         grid.appendChild(cell);
     }
+}
+
+// 更新模板說明
+function updateTemplateDescription(template) {
+    const descriptions = {
+        zombie: {
+            title: '🧟 死透Q版喪屍',
+            desc: '累翻了就是要擺爛，每次蓋章都像喪屍一樣無力',
+            stamps: '死了、累死、滿頭星星、喪屍臉、GG'
+        },
+        raccoon: {
+            title: '🦝 厭世浣熊',
+            desc: '翻白眼、收離職信、老子不幹了，厭世到極致',
+            stamps: '翻白眼、哼、隨便、不想上班、收'
+        },
+        sloth: {
+            title: '🦥 無所謂Q103',
+            desc: '慢慢來、慢慢逃，什麼都無所謂的佛系離職',
+            stamps: '無所謂、随緣、再說、不急、哦'
+        }
+    };
+    
+    const desc = descriptions[template];
+    const preview = document.getElementById('templatePreview');
+    
+    preview.innerHTML = `
+        <div class="template-desc">
+            <p><strong>${desc.title}：</strong>${desc.desc}</p>
+            <p><strong>💫 印章風格：</strong>${desc.stamps}</p>
+        </div>
+    `;
 }
 
 // 提交設定
