@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>離職集點卡 - 設計你的專屬集點卡</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏃 離職集點卡設計器</h1>
+            <p class="subtitle">設計你的專屬離職集點卡，記錄每一次想逃的瞬間</p>
+        </header>
+
+        <div class="card-preview" id="cardPreview">
+            <div class="preview-title">預覽</div>
+            <div class="preview-content">
+                <div class="preview-header">
+                    <span class="preview-emoji">🏃</span>
+                    <span class="preview-name">離職集點卡</span>
+                </div>
+                <div class="preview-progress" id="previewProgress">
+                    <div class="progress-text">進度：0/<span id="previewTotal">12</span></div>
+                    <div class="progress-grid" id="progressGrid"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings">
+            <div class="setting-group">
+                <label for="stampCount">集點數量</label>
+                <div class="stamp-options">
+                    <button class="stamp-btn" data-count="6">6 格<br><small>快逃版</small></button>
+                    <button class="stamp-btn" data-count="9">9 格<br><small>經典版</small></button>
+                    <button class="stamp-btn active" data-count="12">12 格<br><small>完整版</small></button>
+                    <button class="stamp-btn" data-count="15">15 格<br><small>社畜版</small></button>
+                </div>
+                <div class="custom-count">
+                    <label for="customCount">自訂格數（6-30）</label>
+                    <input type="number" id="customCount" min="6" max="30" placeholder="輸入 6-30">
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <label>模板風格</label>
+                <div class="template-options">
+                    <button class="template-btn active" data-template="classic">
+                        <span class="template-icon">📋</span>
+                        <span class="template-name">經典款</span>
+                    </button>
+                    <button class="template-btn" data-template="minimal">
+                        <span class="template-icon">⚪</span>
+                        <span class="template-name">極簡款</span>
+                    </button>
+                    <button class="template-btn" data-template="funny">
+                        <span class="template-icon">😂</span>
+                        <span class="template-name">搞笑款</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="stamp-info">
+                <h3>🖊️ 蓋章印章</h3>
+                <p>每次蓋章時隨機從以下印章中選擇：</p>
+                <div class="stamp-preview">
+                    <span class="stamp red">逃</span>
+                    <span class="stamp blue">逃</span>
+                    <span class="stamp green">逃</span>
+                    <span class="stamp red">靠</span>
+                    <span class="stamp blue">靠</span>
+                    <span class="stamp green">靠</span>
+                    <span class="stamp red">幹</span>
+                    <span class="stamp blue">幹</span>
+                    <span class="stamp green">幹</span>
+                </div>
+            </div>
+
+            <div class="features">
+                <h3>✨ 功能說明</h3>
+                <ul>
+                    <li>✅ 每次蓋章可選擇理由或使用預設理由</li>
+                    <li>✅ 每天最多蓋章 5 次</li>
+                    <li>✅ 群組內自動排行榜（僅群組顯示）</li>
+                    <li>✅ 查看完整蓋章歷史記錄</li>
+                    <li>✅ 集滿後可重新開始</li>
+                </ul>
+            </div>
+
+            <button class="submit-btn" id="submitBtn">
+                <span class="btn-text">完成設定並綁定 LINE 帳號</span>
+                <span class="btn-icon">✨</span>
+            </button>
+
+            <div class="notice">
+                <p>⚠️ 點擊「完成設定」後會自動綁定你的 LINE 帳號</p>
+                <p>設定完成後即可在 LINE 中使用「離職」、「快逃」觸發集點卡</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

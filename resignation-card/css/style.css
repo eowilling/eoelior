@@ -1,0 +1,332 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.subtitle {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.card-preview {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.preview-title {
+    font-size: 0.9em;
+    color: #999;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.preview-content {
+    border: 2px solid #f0f0f0;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.preview-emoji {
+    font-size: 2em;
+}
+
+.preview-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #FF6B6B;
+}
+
+.preview-progress {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.progress-text {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.progress-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.progress-cell {
+    aspect-ratio: 1;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    transition: all 0.3s;
+}
+
+.progress-cell.filled {
+    background: #FF6B6B;
+    border-color: #FF6B6B;
+    color: white;
+}
+
+.settings {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.setting-group {
+    margin-bottom: 30px;
+}
+
+.setting-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.stamp-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stamp-btn {
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1em;
+    line-height: 1.5;
+}
+
+.stamp-btn small {
+    color: #999;
+    font-size: 0.8em;
+}
+
+.stamp-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.stamp-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+}
+
+.custom-count {
+    margin-top: 15px;
+}
+
+.custom-count label {
+    font-size: 0.9em;
+    font-weight: normal;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.custom-count input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+}
+
+.template-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.template-btn {
+    padding: 20px 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.template-icon {
+    font-size: 2em;
+}
+
+.template-name {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.template-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.template-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+
+.template-btn.active .template-name {
+    color: white;
+}
+
+.stamp-info, .features {
+    margin-bottom: 25px;
+}
+
+.stamp-info h3, .features h3 {
+    font-size: 1.1em;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.stamp-info p {
+    color: #666;
+    margin-bottom: 12px;
+    font-size: 0.9em;
+}
+
+.stamp-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stamp {
+    padding: 8px 16px;
+    border-radius: 50%;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 0.9em;
+}
+
+.stamp.red {
+    background: #e74c3c;
+}
+
+.stamp.blue {
+    background: #3498db;
+}
+
+.stamp.green {
+    background: #2ecc71;
+}
+
+.features ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.features li {
+    padding: 8px 0;
+    color: #666;
+    font-size: 0.95em;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.notice {
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    border-radius: 8px;
+}
+
+.notice p {
+    color: #856404;
+    font-size: 0.85em;
+    margin-bottom: 5px;
+}
+
+.notice p:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+    .stamp-options {
+        grid-template-columns: 1fr;
+    }
+    
+    header h1 {
+        font-size: 1.5em;
+    }
+}
