@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initLIFF();
     initEventListeners();
     updatePreview();
+    updateTemplateDescription('zombie');  // 初始化預設模板說明
 });
 
 // 初始化 LIFF
