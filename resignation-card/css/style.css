@@ -268,12 +268,23 @@ header h1 {
 }
 
 .stamp {
-    padding: 8px 16px;
+    padding: 10px 18px;
     border-radius: 50%;
     font-weight: bold;
     color: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    font-size: 0.9em;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    font-size: 0.85em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    transform: rotate(-5deg);
+    transition: transform 0.2s;
+}
+
+.stamp:hover {
+    transform: rotate(0deg) scale(1.1);
 }
 
 .stamp.red {
