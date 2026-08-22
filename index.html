@@ -4,516 +4,615 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>eoElior | 玩具盒子</title>
-    <link rel="icon" type="image/png" href="assets/raccoon.png">
+    <title>eoElior | 🎪 數位遊樂園</title>
+    <link rel="icon" type="image/svg+xml" href="assets/amusement-park-logo.svg">
     
     <!-- Open Graph / Social Media Preview -->
-    <meta property="og:title" content="eoElior | GitHub 玩具盒子">
-    <meta property="og:description" content="Eeyore 的開發實驗場 - 收集各種有趣的小專案與工具">
-    <meta property="og:image" content="https://eowilling.github.io/eoelior/gh-toybox-logo.jpg">
+    <meta property="og:title" content="eoElior | 🎪 數位遊樂園">
+    <meta property="og:description" content="歡迎來到 eoElior 數位遊樂園！精選互動遊戲、命運輪盤與實用奇幻工具箱。">
+    <meta property="og:image" content="https://eowilling.github.io/eoelior/assets/amusement-park-logo.svg">
     <meta property="og:url" content="https://eowilling.github.io/eoelior/">
     <meta property="og:type" content="website">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="eoElior | GitHub 玩具盒子">
-    <meta name="twitter:description" content="Eeyore 的開發實驗場 - 收集各種有趣的小專案與工具">
-    <meta name="twitter:image" content="https://eowilling.github.io/eoelior/gh-toybox-logo.jpg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+    <meta name="twitter:title" content="eoElior | 🎪 數位遊樂園">
+    <meta name="twitter:description" content="歡迎來到 eoElior 數位遊樂園！精選互動遊戲、命運輪盤與實用奇幻工具箱。">
+    <meta name="twitter:image" content="https://eowilling.github.io/eoelior/assets/amusement-park-logo.svg">
 
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
         :root {
-            --bg-dark: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.4);
-            --card-border: rgba(255, 255, 255, 0.05);
-            --accent-primary: #6366f1;
-            --accent-secondary: #a855f7;
+            --bg-night: #0b0f19;
+            --card-bg: rgba(22, 27, 46, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-hover-border: rgba(244, 63, 94, 0.4);
+            --primary-pink: #f43f5e;
+            --primary-gold: #fbbf24;
+            --primary-cyan: #06b6d4;
+            --primary-purple: #a855f7;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-dark);
+            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-night);
             color: #f8fafc;
-            background-image:
-                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 35%),
-                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 35%);
-            background-attachment: fixed;
             min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 15%, rgba(244, 63, 94, 0.18) 0%, transparent 40%),
+                radial-gradient(circle at 90% 20%, rgba(251, 191, 36, 0.15) 0%, transparent 35%),
+                radial-gradient(circle at 50% 60%, rgba(168, 85, 247, 0.14) 0%, transparent 45%),
+                radial-gradient(circle at 80% 90%, rgba(6, 182, 212, 0.18) 0%, transparent 40%);
+            background-attachment: fixed;
+            overflow-x: hidden;
         }
 
-        /* Glassmorphism Card Base */
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* 快樂遊樂園星光背景點綴 */
+        .sparkle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background-image: 
+                radial-gradient(2px 2px at 40px 60px, #ffd700, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 150px 200px, #ff69b4, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 300px 120px, #00ffff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 600px 350px, #ffd700, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 850px 180px, #ff69b4, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 1100px 420px, #00ffff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 1350px 220px, #ffd700, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 1400px 600px;
+            opacity: 0.6;
+            animation: twinkle 8s ease-in-out infinite alternate;
         }
 
-        .glass-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-            background: rgba(30, 41, 59, 0.6);
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: translateY(0); }
+            100% { opacity: 0.7; transform: translateY(-10px); }
         }
 
-        /* Search Input */
-        .search-container {
+        /* 遊樂園 Logo 動畫特效 */
+        .park-logo-container {
             position: relative;
+            filter: drop-shadow(0 0 20px rgba(244, 63, 94, 0.45));
         }
 
+        .park-logo-ring {
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #f43f5e, #fbbf24, #06b6d4, #a855f7, #f43f5e);
+            animation: ringRotate 10s linear infinite;
+            filter: blur(10px);
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        @keyframes ringRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .park-logo-img {
+            position: relative;
+            z-index: 10;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .park-logo-container:hover .park-logo-img {
+            transform: scale(1.1) rotate(6deg);
+            filter: drop-shadow(0 0 25px rgba(251, 191, 36, 0.8));
+        }
+
+        /* 標題字體與特效 */
+        .brand-title {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffedd5 0%, #fde047 25%, #f43f5e 60%, #ec4899 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 35px rgba(244, 63, 94, 0.3);
+            display: inline-block;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, #f43f5e, #8b5cf6);
+            color: #ffffff;
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+        }
+
+        /* 玻璃擬態設施卡片 */
+        .park-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .park-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--card-highlight, #f43f5e), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .park-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--card-hover-border);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 25px -5px var(--glow-color, rgba(244, 63, 94, 0.25));
+            background: rgba(30, 38, 64, 0.8);
+        }
+
+        .park-card:hover::before {
+            opacity: 1;
+        }
+
+        /* 導覽按鈕 Tab */
+        .category-tab {
+            cursor: pointer;
+            padding: 0.6rem 1.4rem;
+            border-radius: 9999px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #94a3b8;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-tab:hover {
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, #f43f5e 0%, #ec4899 50%, #f59e0b 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 18px rgba(244, 63, 94, 0.45);
+            transform: translateY(-2px);
+        }
+
+        /* 搜尋框 */
         .search-input {
             width: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--card-border);
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            border-radius: 0.75rem;
-            transition: all 0.2s;
+            padding: 0.85rem 1rem 0.85rem 2.85rem;
+            border-radius: 1rem;
+            transition: all 0.25s;
+            font-size: 0.95rem;
         }
 
         .search-input:focus {
             outline: none;
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-            background: rgba(15, 23, 42, 0.8);
+            border-color: #f43f5e;
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2), 0 0 20px rgba(244, 63, 94, 0.25);
+            background: rgba(15, 23, 42, 0.9);
         }
 
-        .search-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #64748b;
-            pointer-events: none;
-        }
-
-        /* Tabs */
-        .category-tab {
-            cursor: pointer;
-            padding: 0.5rem 1.25rem;
-            border-radius: 9999px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #94a3b8;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .category-tab:hover {
-            color: #e2e8f0;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .category-tab.active {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        /* Gradient Text */
-        .gradient-text {
-            background: linear-gradient(135deg, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: inline-block;
-        }
-
-        /* eoElior 特殊字體樣式 */
-        .brand-title {
-            font-family: 'Orbitron', 'Inter', sans-serif;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
-            position: relative;
-            animation: shimmer 3s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-
-            0%,
-            100% {
-                filter: brightness(1);
-            }
-
-            50% {
-                filter: brightness(1.2);
-            }
-        }
-
-        .brand-title::before {
-            content: 'eoElior';
-            position: absolute;
-            top: 0;
-            left: 0;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 50%, rgba(217, 70, 239, 0.3) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: blur(10px);
-            z-index: -1;
-        }
-
-        /* LOGO 科技感效果 - 優化版 */
-        .tech-logo-container {
-            position: relative;
-        }
-
-        .tech-logo-container::before {
-            content: '';
-            position: absolute;
-            inset: -8px;
-            background: conic-gradient(from 0deg, #6366f1, #8b5cf6, #d946ef, #6366f1);
-            border-radius: 50%;
-            animation: logoRotate 4s linear infinite;
-            opacity: 0.2;
-            filter: blur(12px);
-            z-index: 0;
-        }
-
-        @keyframes logoRotate {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .tech-logo-container::after {
-            content: '';
-            position: absolute;
-            inset: -6px;
-            background: conic-gradient(from 180deg, transparent 0%, #6366f1 50%, transparent 100%);
-            border-radius: 50%;
-            animation: logoPulse 2s ease-in-out infinite;
-            opacity: 0.15;
-            z-index: 0;
-        }
-
-        @keyframes logoPulse {
-
-            0%,
-            100% {
-                opacity: 0.15;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.3;
-                transform: scale(1.05);
-            }
-        }
-
-        .tech-logo {
-            position: relative;
-            z-index: 10;
-            transition: all 0.3s ease;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-        }
-
-        .tech-logo-container:hover .tech-logo {
-            transform: scale(1.08);
-            filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.5));
-        }
-
-        /* 座右銘樣式 */
-        .motto {
-            font-family: 'Noto Sans TC', sans-serif;
-            font-size: 0.95rem;
-            color: #94a3b8;
-            font-weight: 400;
-            letter-spacing: 0.05em;
+        /* 快樂副標題樣式 */
+        .motto-box {
+            background: rgba(244, 63, 94, 0.08);
+            border-left: 4px solid #f43f5e;
+            border-radius: 0 12px 12px 0;
+            padding: 0.75rem 1.25rem;
             margin-top: 0.75rem;
-            padding-left: 0.5rem;
-            border-left: 3px solid;
-            border-image: linear-gradient(135deg, #6366f1, #8b5cf6) 1;
-            animation: mottoFadeIn 1s ease-out 0.5s both;
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        @keyframes mottoFadeIn {
+        /* 動畫效果 */
+        @keyframes popIn {
             from {
                 opacity: 0;
-                transform: translateX(-10px);
+                transform: translateY(16px) scale(0.97);
             }
-
             to {
                 opacity: 1;
-                transform: translateX(0);
+                transform: translateY(0) scale(1);
             }
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        .animate-pop-in {
+            animation: popIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
-        }
-
-        /* Animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
+        /* 跑馬燈/公告條 */
+        .amusement-ticker {
+            background: linear-gradient(90deg, rgba(244,63,94,0.15) 0%, rgba(251,191,36,0.15) 50%, rgba(6,182,212,0.15) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 9999px;
+            backdrop-filter: blur(10px);
         }
     </style>
 </head>
 
-<body class="p-4 md:p-8 lg:p-12">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header Section -->
+<body class="p-4 md:p-8 lg:p-12 relative select-none">
+    <!-- 星空光點背景 -->
+    <div class="sparkle-bg"></div>
+
+    <div class="max-w-7xl mx-auto relative z-10">
+        
+        <!-- 頂部歡樂廣播條 -->
+        <div class="mb-8 flex items-center justify-between amusement-ticker px-5 py-2.5 text-xs md:text-sm animate-pop-in">
+            <div class="flex items-center gap-3 overflow-hidden text-amber-200">
+                <span class="px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold text-[11px] uppercase tracking-wider flex items-center gap-1 shadow-sm shrink-0">
+                    <i class="fa-solid fa-sparkles animate-pulse"></i> 廣播
+                </span>
+                <span class="truncate font-medium">🎡 歡迎光臨 eoElior 數位遊樂園！全設施 100% 離線純前端運行，無後端依賴更順暢！</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 text-emerald-400 font-semibold text-xs shrink-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                全設施運轉中
+            </div>
+        </div>
+
+        <!-- 主 Header 區塊 -->
         <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div class="animate-fade-in" style="animation-delay: 0.05s;">
-                <div class="flex items-center gap-5 mb-5 select-none">
-                    <!-- Logo Image -->
-                    <div class="tech-logo-container relative w-16 h-16 md:w-20 md:h-20 shrink-0">
-                        <img src="assets/logo.png" alt="eoElior Logo"
-                            class="tech-logo w-full h-full object-contain drop-shadow-xl">
+            <div class="animate-pop-in" style="animation-delay: 0.05s;">
+                <div class="flex items-start md:items-center gap-5">
+                    
+                    <!-- 遊樂園摩天輪 Logo 圖標 -->
+                    <div class="park-logo-container relative w-20 h-20 md:w-24 md:h-24 shrink-0">
+                        <div class="park-logo-ring"></div>
+                        <img src="assets/amusement-park-logo.svg" alt="eoElior 數位遊樂園"
+                            class="park-logo-img w-full h-full object-contain drop-shadow-2xl">
                     </div>
 
-                    <!-- Title Text -->
+                    <!-- 標題與快樂座右銘 -->
                     <div>
-                        <h1
-                            class="text-4xl md:text-5xl font-bold tracking-tight text-white flex flex-col md:flex-row md:items-baseline gap-2 md:gap-3">
-                            <span class="brand-title">
-                                eoElior
+                        <div class="flex flex-wrap items-center gap-3">
+                            <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white flex items-baseline gap-3">
+                                <span class="brand-title">eoElior</span>
+                                <span class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-400 to-cyan-300">
+                                    🎪 數位遊樂園
+                                </span>
+                            </h1>
+                            <span class="brand-badge px-2.5 py-1 rounded-full font-bold uppercase tracking-wider shadow-md hidden sm:inline-block">
+                                AMUSEMENT PARK
                             </span>
-                            <span
-                                class="text-xl text-slate-500 font-medium tracking-widest hidden md:inline-block opacity-50">|</span>
-                            <span class="text-3xl md:text-4xl text-slate-200 font-light tracking-wide">玩具盒子</span>
-                        </h1>
-                        <p class="motto" id="subtitle-container">載入中...</p>
+                        </div>
+
+                        <!-- 動態副標題 -->
+                        <div class="motto-box" id="subtitle-container">
+                            <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+                                🎠 歡迎來到我的數位遊樂園！跌倒了躺一會也沒關係，摩天輪永遠為你轉動 ✨
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="w-full md:w-auto flex flex-col gap-4 animate-fade-in" style="animation-delay: 0.1s;">
-                <!-- Search -->
-                <div class="search-container w-full md:w-80">
-                    <i class="fa-solid fa-search search-icon"></i>
-                    <input type="text" id="searchInput" class="search-input" placeholder="搜尋工具...">
+            <!-- 搜尋與快捷功能 -->
+            <div class="w-full md:w-80 flex flex-col gap-3 animate-pop-in" style="animation-delay: 0.1s;">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none"></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜尋遊樂設施或工具...">
+                    <button id="clearSearch" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs bg-slate-800 rounded-full w-5 h-5 flex items-center justify-center">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
                 </div>
             </div>
         </header>
 
-        <!-- Category Tabs -->
-        <div class="mb-8 flex flex-wrap gap-2 animate-fade-in" style="animation-delay: 0.15s;" id="categoryContainer">
-            <button class="category-tab active" data-category="all">全部</button>
-            <button class="category-tab" data-category="entertainment">娛樂 & 遊戲</button>
-            <button class="category-tab" data-category="productivity">生產力 & 管理</button>
-            <button class="category-tab" data-category="image">圖像處理</button>
-            <button class="category-tab" data-category="system">系統工具</button>
-            <button class="category-tab" data-category="game">小遊戲</button>
+        <!-- 分類切換按鈕區 -->
+        <div class="mb-8 flex flex-wrap gap-2.5 animate-pop-in" style="animation-delay: 0.15s;" id="categoryContainer">
+            <button class="category-tab active" data-category="all">
+                <i class="fa-solid fa-ticket"></i> 全部設施
+            </button>
+            <button class="category-tab" data-category="game">
+                <i class="fa-solid fa-gamepad"></i> 🎡 遊樂小遊戲
+            </button>
+            <button class="category-tab" data-category="fortune">
+                <i class="fa-solid fa-dharmachakra"></i> 🎠 命運與抉擇
+            </button>
+            <button class="category-tab" data-category="tools">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 🛠️ 奇幻工具箱
+            </button>
         </div>
 
-        <!-- Tools Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16" id="toolsGrid">
-            <!-- Grid items will be injected here -->
+        <!-- 設施卡片網格 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16" id="toolsGrid">
+            <!-- 設施將由 JavaScript 動態渲染 -->
         </div>
 
-        <!-- Footer -->
-        <footer class="mt-24 pt-8 border-t border-slate-800/50 text-center animate-fade-in"
-            style="animation-delay: 0.3s;">
-            <p class="text-slate-500 text-sm">
-                eoElior © 2026 | Designed for efficiency and fun
+        <!-- 底部遊樂園資訊 -->
+        <footer class="mt-20 pt-8 border-t border-slate-800/80 text-center animate-pop-in" style="animation-delay: 0.3s;">
+            <div class="flex justify-center items-center gap-2 mb-3 text-amber-300 text-lg">
+                <span>🎪</span>
+                <span>🎠</span>
+                <span>🎡</span>
+                <span>🎈</span>
+                <span>✨</span>
+            </div>
+            <p class="text-slate-400 text-sm font-medium">
+                eoElior © 2026 數位遊樂園 | 跌倒了躺一會也沒關係，摩天輪永遠為你轉動
+            </p>
+            <p class="text-slate-600 text-xs mt-1">
+                Pure Frontend Architecture · Powered by GitHub Pages & LocalStorage
             </p>
         </footer>
     </div>
 
     <script>
         // ==========================================
-        // 工具清單配置
+        // 遊樂園設施清單配置
         // ==========================================
-        const TOOLS = [
-            {
-                name: 'ReBox',
-                desc: '歐皇還是非酋？一轉定生死！',
-                category: 'entertainment',
-                href: 'rebox/index.html',
-                badge: 'HOT',
-                icon: 'fa-rocket',
-                color: 'cyan'
-            },
-            {
-                name: '流程圖工具',
-                desc: '畫個流程圖，假裝很專業',
-                category: 'productivity',
-                href: 'FlowChart/FlowChat.html',
-                badge: '推薦',
-                icon: 'fa-diagram-project',
-                color: 'blue'
-            },
-            {
-                name: 'Sudo GAME',
-                desc: '腦細胞燃燒中...',
-                category: 'entertainment',
-                href: 'sudo/index.html',
-                icon: 'fa-puzzle-piece',
-                color: 'emerald'
-            },
-            {
-                name: '小遊戲',
-                desc: '收集各種超級有趣的小遊戲',
-                category: 'game',
-                href: 'games/index.html',
-                badge: 'NEW',
-                icon: 'fa-gamepad',
-                color: 'violet'
-            },
+        const ATTRACTIONS = [
+            // 🎡 小遊戲區
             {
                 name: '猜數字 1A2B',
-                desc: '經典邏輯推理遊戲，挑戰用最少回合破解！',
+                desc: '經典邏輯推理！挑戰用最少回合猜出神秘數字密碼。',
                 category: 'game',
                 href: 'games/2026-05-12-guess-number/index.html',
-                badge: 'NEW',
+                badge: '🎮 經典必玩',
+                badgeType: 'hot',
                 icon: 'fa-brain',
-                color: 'emerald'
+                color: 'emerald',
+                highlight: '#10b981',
+                glow: 'rgba(16, 185, 129, 0.35)'
+            },
+            {
+                name: '顏色記憶翻牌',
+                desc: '考驗你的瞬時記憶力！找出所有成雙成對的歡樂色彩。',
+                category: 'game',
+                href: 'games/color-match/index.html',
+                badge: '✨ 腦力激盪',
+                badgeType: 'new',
+                icon: 'fa-palette',
+                color: 'pink',
+                highlight: '#ec4899',
+                glow: 'rgba(236, 72, 153, 0.35)'
+            },
+            {
+                name: 'Sudo 極致數獨',
+                desc: '純前端沉浸式數獨！即時驗證答題、支援暫停與計時挑戰。',
+                category: 'game',
+                href: 'sudo/index.html',
+                badge: '🧠 燃燒腦力',
+                badgeType: 'recommend',
+                icon: 'fa-puzzle-piece',
+                color: 'indigo',
+                highlight: '#6366f1',
+                glow: 'rgba(99, 102, 241, 0.35)'
+            },
+            {
+                name: '小遊戲大廳',
+                desc: '探索遊樂園全部精選小遊戲與互動專區，快樂不打烊！',
+                category: 'game',
+                href: 'games/index.html',
+                badge: '🎪 歡樂聚集',
+                badgeType: 'hot',
+                icon: 'fa-gamepad',
+                color: 'violet',
+                highlight: '#8b5cf6',
+                glow: 'rgba(139, 92, 246, 0.35)'
+            },
+
+            // 🎠 命運與抉擇區
+            {
+                name: 'ReBox 歐皇抽獎',
+                desc: '歐皇還是非酋？轉盤一轉定生死！純本地運作，支援跨分頁同步。',
+                category: 'fortune',
+                href: 'rebox/index.html',
+                badge: '🎉 歐皇誕生',
+                badgeType: 'hot',
+                icon: 'fa-gift',
+                color: 'rose',
+                highlight: '#f43f5e',
+                glow: 'rgba(244, 63, 94, 0.4)'
+            },
+            {
+                name: '今天吃什麼 (美食輪盤)',
+                desc: '轉動命運美食之輪！今晚吃什麼不再猶豫，交給遊樂園拍板！',
+                category: 'fortune',
+                href: 'games/food-wheel/index.html',
+                badge: '🍽️ 治癒選擇',
+                badgeType: 'recommend',
+                icon: 'fa-utensils',
+                color: 'amber',
+                highlight: '#f59e0b',
+                glow: 'rgba(245, 158, 11, 0.35)'
             },
             {
                 name: '決定輪盤',
-                desc: '選擇障礙患者的救星',
-                category: 'entertainment',
+                desc: '買還是不買？做還是不做？讓指針替你果斷決定人生方向！',
+                category: 'fortune',
                 href: 'buytonobuy/index.html',
-                icon: 'fa-circle-notch',
-                color: 'purple'
+                badge: '✨ 告別猶豫',
+                badgeType: 'new',
+                icon: 'fa-dharmachakra',
+                color: 'purple',
+                highlight: '#a855f7',
+                glow: 'rgba(168, 85, 247, 0.35)'
+            },
+            {
+                name: '離職集點卡',
+                desc: '設計你的專屬離職集點卡，幽默記錄每一次想逃與深呼吸的瞬間！',
+                category: 'fortune',
+                href: 'resignation-card/index.html',
+                badge: '🎈 幽默療癒',
+                badgeType: 'new',
+                icon: 'fa-person-running',
+                color: 'cyan',
+                highlight: '#06b6d4',
+                glow: 'rgba(6, 182, 212, 0.35)'
+            },
+
+            // 🛠️ 奇幻工具箱
+            {
+                name: '流程圖繪製器',
+                desc: '流暢又直覺的架構與流程圖表繪製工具，靈感隨時具象化。',
+                category: 'tools',
+                href: 'FlowChart/FlowChat.html',
+                badge: '💡 極速繪圖',
+                badgeType: 'recommend',
+                icon: 'fa-diagram-project',
+                color: 'blue',
+                highlight: '#3b82f6',
+                glow: 'rgba(59, 130, 246, 0.35)'
             },
             {
                 name: 'QR Code 產生器',
-                desc: '掃我啊！不掃你會後悔',
-                category: 'image',
+                desc: '一鍵快速客製化 QR Code，支援名片、網址與純文字產生。',
+                category: 'tools',
                 href: 'QRcode/qr-generate-standalone.html',
+                badge: '⚡ 快速產生',
+                badgeType: 'recommend',
                 icon: 'fa-qrcode',
-                color: 'pink'
+                color: 'teal',
+                highlight: '#14b8a6',
+                glow: 'rgba(20, 184, 166, 0.35)'
             },
             {
-                name: 'HEIC 轉 PNG/JPG',
-                desc: '把 iPhone 照片變成人話',
-                category: 'image',
+                name: 'QR Code 智慧辨識',
+                desc: '高容錯快速掃描！破損、模糊或反光 QR Code 也能輕鬆讀取。',
+                category: 'tools',
+                href: 'qrscan/index.html',
+                badge: '🔍 智慧掃描',
+                badgeType: 'new',
+                icon: 'fa-expand',
+                color: 'fuchsia',
+                highlight: '#d946ef',
+                glow: 'rgba(217, 70, 239, 0.35)'
+            },
+            {
+                name: 'HEIC 圖片轉檔',
+                desc: '把 iPhone HEIC 格式照片直接在瀏覽器轉為 PNG / JPG，快速免上傳。',
+                category: 'tools',
                 href: 'HeicPngJpg/H2PJ.html',
+                badge: '🛠️ 格式救星',
+                badgeType: 'recommend',
                 icon: 'fa-images',
-                color: 'amber'
+                color: 'orange',
+                highlight: '#f97316',
+                glow: 'rgba(249, 115, 22, 0.35)'
             },
             {
-                name: '形式曆',
-                desc: '治癒我自己',
-                category: 'productivity',
+                name: '形式曆 (心情記事)',
+                desc: '純本機端個人行事曆與日記簿，安靜溫柔記錄生活每一刻。',
+                category: 'tools',
                 href: 'eveday/index.html',
+                badge: '🌿 溫暖記錄',
+                badgeType: 'recommend',
                 icon: 'fa-calendar-check',
-                color: 'indigo'
-            },
-            {
-                name: 'LUSH 文件索引',
-                desc: '我的文件都在這（大概）',
-                category: 'productivity',
-                href: 'LUSH/index.html',
-                icon: 'fa-folder-tree',
-                color: 'teal'
-            },
-            {
-                name: 'ISMS 資安宣導',
-                desc: '資安很重要（說得好像很懂）',
-                category: 'productivity',
-                href: 'ISMS/isms.html',
-                icon: 'fa-shield-halved',
-                color: 'rose'
+                color: 'sky',
+                highlight: '#0284c7',
+                glow: 'rgba(2, 132, 199, 0.35)'
             },
             {
                 name: '藍牙診斷工具',
-                desc: '藍牙又斷了？重開機吧',
-                category: 'system',
+                desc: '快速檢測與診斷 Web Bluetooth 連線狀態的小幫手。',
+                category: 'tools',
                 href: 'bluetooth/index.html',
-                badge: 'NEW',
+                badge: '📶 系統助手',
+                badgeType: 'new',
                 icon: 'fa-bluetooth',
-                color: 'sky'
+                color: 'blue',
+                highlight: '#2563eb',
+                glow: 'rgba(37, 99, 235, 0.35)'
             },
             {
-                name: 'QRcode SCAN',
-                desc: '破爛 QR Code 也能掃',
-                category: 'image',
-                href: 'qrscan/index.html',
-                badge: 'NEW',
-                icon: 'fa-wand-magic-sparkles',
-                color: 'fuchsia'
-            },
-            {
-                name: 'Files偵錯修復',
-                desc: '讓 Windows 檔案總管不再卡到爆',
-                category: 'system',
+                name: 'Files 偵錯修復',
+                desc: 'Windows 檔案總管卡頓與異常修復方案與排查指南。',
+                category: 'tools',
                 href: 'filestook/files-repair-plan.html',
-                badge: 'NEW',
+                badge: '🔧 效能改善',
+                badgeType: 'recommend',
                 icon: 'fa-screwdriver-wrench',
-                color: 'violet'
+                color: 'slate',
+                highlight: '#64748b',
+                glow: 'rgba(100, 116, 139, 0.35)'
             },
             {
-                name: 'Gu4tw',
-                desc: '只要不吃土',
-                category: 'productivity',
+                name: 'Gu4tw 股市儀表板',
+                desc: '個人化股市資料與技術指標觀測儀表板。',
+                category: 'tools',
                 href: 'GU4/web_portal.html',
-                badge: 'HOT',
+                badge: '📊 盤勢觀測',
+                badgeType: 'hot',
                 icon: 'fa-chart-line',
-                color: 'cyan'
+                color: 'cyan',
+                highlight: '#0891b2',
+                glow: 'rgba(8, 145, 178, 0.35)'
             },
             {
-                name: '🎮 小遊戲',
-                desc: '挑選一個遊戲，開始玩吧！',
-                category: 'productivity',
-                href: 'games/index.html',
-                badge: 'NEW',
-                icon: 'fa-gamepad',
-                color: 'purple'
+                name: 'ISMS 資安宣導',
+                desc: '資訊安全意識與實用安全規範指引守則。',
+                category: 'tools',
+                href: 'ISMS/isms.html',
+                badge: '🔒 安全第一',
+                badgeType: 'recommend',
+                icon: 'fa-shield-halved',
+                color: 'emerald',
+                highlight: '#059669',
+                glow: 'rgba(5, 150, 105, 0.35)'
             }
         ];
 
         // ==========================================
-        // 應用程式邏輯
+        // 頁面渲染與互動邏輯
         // ==========================================
         const elGrid = document.getElementById('toolsGrid');
         const elSearch = document.getElementById('searchInput');
+        const elClearSearch = document.getElementById('clearSearch');
         const elTabs = document.querySelectorAll('.category-tab');
 
         let currentCategory = 'all';
         let searchQuery = '';
 
-        // 渲染徽章 HTML
-        function badgeHtml(text) {
-            if (!text) return '';
-            const isHot = text === 'HOT' || text === 'NEW';
-            const bgClass = isHot ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30';
-            return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${bgClass}">${escHtml(text)}</span>`;
+        // 徽章樣式
+        function getBadgeHtml(badge, type) {
+            if (!badge) return '';
+            let style = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+            if (type === 'hot') {
+                style = 'bg-gradient-to-r from-rose-500/30 to-amber-500/30 text-amber-200 border-amber-500/40 shadow-sm';
+            } else if (type === 'new') {
+                style = 'bg-cyan-500/20 text-cyan-200 border-cyan-500/40 shadow-sm';
+            } else if (type === 'recommend') {
+                style = 'bg-indigo-500/20 text-indigo-200 border-indigo-500/40 shadow-sm';
+            }
+            return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wider border ${style}">${escapeHtml(badge)}</span>`;
         }
 
-        // HTML 轉義防止 XSS
-        function escHtml(str) {
+        // HTML 轉義
+        function escapeHtml(str) {
             return String(str)
                 .replaceAll('&', '&amp;')
                 .replaceAll('<', '&lt;')
@@ -522,99 +621,96 @@
                 .replaceAll("'", '&#039;');
         }
 
-        // 處理由顏色名稱轉為 Tailwind class
-        function iconClass(color) {
-            // 預設顏色 fallback
-            const c = color || 'slate';
-            return {
-                bg: `bg-${c}-500/20`,
-                text: `text-${c}-400`
-            };
-        }
-
-        // 核心渲染函式
-        function renderGrid() {
-            // 篩選邏輯
-            const filtered = TOOLS.filter(t => {
-                const matchCat = currentCategory === 'all' || t.category === currentCategory;
+        // 渲染卡片
+        function renderAttractions() {
+            const filtered = ATTRACTIONS.filter(item => {
+                const matchCat = currentCategory === 'all' || item.category === currentCategory;
                 const searchLower = searchQuery.toLowerCase();
-                const matchSearch = t.name.toLowerCase().includes(searchLower) ||
-                    t.desc.toLowerCase().includes(searchLower);
+                const matchSearch = item.name.toLowerCase().includes(searchLower) ||
+                                    item.desc.toLowerCase().includes(searchLower);
                 return matchCat && matchSearch;
             });
 
-            // 處理無結果狀態
             if (filtered.length === 0) {
                 elGrid.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-slate-500">
-                        <i class="fa-regular fa-face-frown-open text-4xl mb-3 opacity-50"></i>
-                        <p>沒有找到符合的工具</p>
+                    <div class="col-span-full text-center py-16 text-slate-400 animate-pop-in">
+                        <div class="text-5xl mb-4">🎡</div>
+                        <p class="text-lg font-semibold text-slate-300">沒有找到符合的遊樂設施</p>
+                        <p class="text-sm text-slate-500 mt-1">請嘗試更換關鍵字或切換全部設施</p>
                     </div>
                 `;
                 return;
             }
 
-            // 產生卡片 HTML
-            elGrid.innerHTML = filtered.map((t, index) => {
-                const { bg, text } = iconClass(t.color);
-                // 每個卡片稍微延遲出現，製造階梯式動畫效果
-                const delay = index * 0.05;
-
+            elGrid.innerHTML = filtered.map((item, index) => {
+                const delay = Math.min(index * 0.04, 0.4);
                 return `
-                    <div class="glass-card rounded-2xl p-6 flex flex-col group relative overflow-hidden animate-fade-in" style="animation-delay: ${delay}s">
-                        <!-- 背景裝飾光暈 -->
-                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-${t.color || 'slate'}-500/10 rounded-full blur-2xl group-hover:bg-${t.color || 'slate'}-500/20 transition-all duration-500"></div>
+                    <div class="park-card rounded-2xl p-6 flex flex-col group animate-pop-in" 
+                         style="animation-delay: ${delay}s; --card-highlight: ${item.highlight}; --glow-color: ${item.glow};">
+                        
+                        <!-- 卡片右上角發光氛圍 -->
+                        <div class="absolute -right-8 -top-8 w-28 h-28 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-all duration-500"
+                             style="background-color: ${item.highlight};"></div>
 
-                        <div class="flex justify-between items-start mb-5 relative z-10">
-                            <div class="w-12 h-12 rounded-xl ${bg} flex items-center justify-center ${text} text-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-inner">
-                                <i class="fa-solid ${escHtml(t.icon || 'fa-toolbox')}"></i>
+                        <div class="flex justify-between items-start mb-4 relative z-10">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+                                 style="background: linear-gradient(135deg, ${item.highlight}25, ${item.highlight}50); color: ${item.highlight}; border: 1px solid ${item.highlight}40;">
+                                <i class="fa-solid ${escapeHtml(item.icon)}"></i>
                             </div>
                             <div class="flex items-center gap-2">
-                                ${badgeHtml(t.badge)}
+                                ${getBadgeHtml(item.badge, item.badgeType)}
                             </div>
                         </div>
 
-                        <h3 class="text-xl font-bold mb-2 text-slate-100 group-hover:text-white transition-colors">
-                            ${escHtml(t.name)}
+                        <h3 class="text-xl font-bold mb-2 text-white group-hover:text-amber-200 transition-colors flex items-center gap-2">
+                            ${escapeHtml(item.name)}
                         </h3>
                         
-                        <p class="text-slate-400 text-sm mb-6 flex-grow leading-relaxed">
-                            ${escHtml(t.desc || '')}
+                        <p class="text-slate-300 text-sm mb-6 flex-grow leading-relaxed opacity-85 group-hover:opacity-100">
+                            ${escapeHtml(item.desc)}
                         </p>
 
-                        <a href="${escHtml(t.href)}" target="_blank" class="mt-auto px-4 py-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/80 text-slate-300 hover:text-white text-sm font-medium transition-all flex items-center justify-center gap-2 group-hover:ring-1 ring-white/10">
-                            <span>開啟工具</span>
-                            <i class="fa-solid fa-arrow-right text-xs opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all"></i>
+                        <a href="${escapeHtml(item.href)}" target="_blank" 
+                           class="mt-auto px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2 shadow-sm text-white group-hover:shadow-lg"
+                           style="background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12)); border: 1px solid rgba(255,255,255,0.15);">
+                            <span>進入設施</span>
+                            <i class="fa-solid fa-arrow-right text-xs opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all"></i>
                         </a>
                     </div>
                 `;
             }).join('');
         }
 
-        // 事件監聽事件
-        // 1. 搜尋
+        // 搜尋監聽
         elSearch.addEventListener('input', (e) => {
             searchQuery = e.target.value.trim();
-            renderGrid();
+            if (searchQuery) {
+                elClearSearch.classList.remove('hidden');
+            } else {
+                elClearSearch.classList.add('hidden');
+            }
+            renderAttractions();
         });
 
-        // 2. 分類頁籤
+        // 清除搜尋
+        elClearSearch.addEventListener('click', () => {
+            elSearch.value = '';
+            searchQuery = '';
+            elClearSearch.classList.add('hidden');
+            renderAttractions();
+        });
+
+        // 分類點擊
         elTabs.forEach(btn => {
             btn.addEventListener('click', () => {
-                // 移除所有 active
                 elTabs.forEach(b => b.classList.remove('active'));
-                // 設定當前 active
                 btn.classList.add('active');
-
                 currentCategory = btn.dataset.category;
-                renderGrid();
+                renderAttractions();
             });
         });
 
-        // 初始化
-        renderGrid();
-        
-        // 載入副標題 JSON
+        // 動態載入副標題
         async function loadSubtitle() {
             try {
                 const response = await fetch('subtitle.json');
@@ -623,19 +719,17 @@
                 
                 if (data.subtitle) {
                     const lines = data.subtitle.split('\n');
-                    container.innerHTML = lines.map(line => 
-                        `<p class="text-slate-400 text-lg leading-relaxed ${lines.indexOf(line) === 0 ? '' : 'mt-4'}">${line}</p>`
+                    container.innerHTML = lines.map((line, idx) => 
+                        `<p class="text-slate-300 text-sm md:text-base leading-relaxed ${idx > 0 ? 'mt-1.5' : ''}">${escapeHtml(line)}</p>`
                     ).join('');
                 }
             } catch (error) {
-                console.error('載入副標題失敗:', error);
-                document.getElementById('subtitle-container').innerHTML = `
-                    <p class="text-slate-400 text-lg leading-relaxed">人生就是跌倒了 躺一會也沒關係</p>
-                    <p class="text-slate-400 text-lg leading-relaxed mt-4">這裡是我的遊樂場<br>雖然沒有摩天輪但至少晚餐吃什麼不用猶豫太久</p>
-                `;
+                console.log('載入副標題 fallback');
             }
         }
-        
+
+        // 初始化
+        renderAttractions();
         loadSubtitle();
     </script>
 </body>

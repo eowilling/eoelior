@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="50%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+
+    <!-- Ferris Wheel Gradients -->
+    <linearGradient id="wheelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="50%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+
+    <linearGradient id="tentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffedd5"/>
+      <stop offset="100%" stop-color="#f43f5e"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Ring Glow -->
+  <circle cx="256" cy="256" r="236" fill="url(#bgGrad)" stroke="url(#wheelGrad)" stroke-width="8" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="226" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="6 8" opacity="0.4"/>
+
+  <!-- Carnival Bulbs around Ring -->
+  <g id="bulbs">
+    <circle cx="256" cy="24" r="6" fill="#fde047" filter="url(#glow)"/>
+    <circle cx="372" cy="55" r="6" fill="#f43f5e" filter="url(#glow)"/>
+    <circle cx="457" cy="140" r="6" fill="#38bdf8" filter="url(#glow)"/>
+    <circle cx="488" cy="256" r="6" fill="#a855f7" filter="url(#glow)"/>
+    <circle cx="457" cy="372" r="6" fill="#34d399" filter="url(#glow)"/>
+    <circle cx="372" cy="457" r="6" fill="#fbbf24" filter="url(#glow)"/>
+    <circle cx="256" cy="488" r="6" fill="#f43f5e" filter="url(#glow)"/>
+    <circle cx="140" cy="457" r="6" fill="#38bdf8" filter="url(#glow)"/>
+    <circle cx="55" cy="372" r="6" fill="#fde047" filter="url(#glow)"/>
+    <circle cx="24" cy="256" r="6" fill="#a855f7" filter="url(#glow)"/>
+    <circle cx="55" cy="140" r="6" fill="#34d399" filter="url(#glow)"/>
+    <circle cx="140" cy="55" r="6" fill="#fbbf24" filter="url(#glow)"/>
+  </g>
+
+  <!-- Ferris Wheel Base Structure -->
+  <!-- Support Legs -->
+  <path d="M190 380 L256 220 L322 380" stroke="url(#goldGrad)" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <path d="M170 380 L342 380" stroke="url(#goldGrad)" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Wheel Outer & Inner Rings -->
+  <circle cx="256" cy="200" r="130" fill="none" stroke="url(#wheelGrad)" stroke-width="8" filter="url(#glow)"/>
+  <circle cx="256" cy="200" r="90" fill="none" stroke="#ec4899" stroke-width="4" stroke-dasharray="4 6" opacity="0.8"/>
+  <circle cx="256" cy="200" r="32" fill="#1e1b4b" stroke="url(#goldGrad)" stroke-width="6"/>
+  <circle cx="256" cy="200" r="14" fill="#fbbf24" filter="url(#glow)"/>
+
+  <!-- Wheel Spokes -->
+  <g stroke="url(#cyanGrad)" stroke-width="3.5" opacity="0.85">
+    <line x1="256" y1="70" x2="256" y2="330"/>
+    <line x1="126" y1="200" x2="386" y2="200"/>
+    <line x1="164" y1="108" x2="348" y2="292"/>
+    <line x1="164" y1="292" x2="348" y2="108"/>
+    <line x1="136" y1="150" x2="376" y2="250"/>
+    <line x1="136" y1="250" x2="376" y2="150"/>
+  </g>
+
+  <!-- Ferris Wheel Cabins (Gondolas) -->
+  <!-- Top (0 deg) -->
+  <g transform="translate(256, 70)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#f43f5e" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#fde047"/>
+  </g>
+  <!-- Top Right (45 deg) -->
+  <g transform="translate(348, 108)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#fbbf24" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#1e1b4b"/>
+  </g>
+  <!-- Right (90 deg) -->
+  <g transform="translate(386, 200)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#fde047"/>
+  </g>
+  <!-- Bottom Right (135 deg) -->
+  <g transform="translate(348, 292)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#a855f7" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#34d399"/>
+  </g>
+  <!-- Bottom (180 deg) -->
+  <g transform="translate(256, 330)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#34d399" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#f43f5e"/>
+  </g>
+  <!-- Bottom Left (225 deg) -->
+  <g transform="translate(164, 292)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#fb7185" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#fde047"/>
+  </g>
+  <!-- Left (270 deg) -->
+  <g transform="translate(126, 200)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#38bdf8" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#fbbf24"/>
+  </g>
+  <!-- Top Left (315 deg) -->
+  <g transform="translate(164, 108)">
+    <rect x="-14" y="0" width="28" height="22" rx="6" fill="#c084fc" stroke="#fff" stroke-width="2"/>
+    <circle cx="0" cy="8" r="4" fill="#38bdf8"/>
+  </g>
+
+  <!-- Circus / Carnival Castle Peaks in Foreground -->
+  <g transform="translate(0, 20)">
+    <!-- Left Tent -->
+    <path d="M70 420 L120 330 L170 420 Z" fill="url(#wheelGrad)" stroke="#fde047" stroke-width="3"/>
+    <path d="M95 420 L120 330 L145 420 Z" fill="#ffffff" opacity="0.3"/>
+    <polygon points="120,320 120,330 135,325" fill="#fbbf24"/>
+
+    <!-- Right Tent -->
+    <path d="M342 420 L392 330 L442 420 Z" fill="url(#cyanGrad)" stroke="#fde047" stroke-width="3"/>
+    <path d="M367 420 L392 330 L417 420 Z" fill="#ffffff" opacity="0.3"/>
+    <polygon points="392,320 392,330 407,325" fill="#f43f5e"/>
+
+    <!-- Center Carnival Entrance Banner -->
+    <path d="M180 430 Q256 390 332 430 L332 455 Q256 425 180 455 Z" fill="#f43f5e" stroke="#fbbf24" stroke-width="3" filter="url(#glow)"/>
+    <text x="256" y="440" font-family="'Orbitron', 'Noto Sans TC', sans-serif" font-weight="900" font-size="18" fill="#ffffff" text-anchor="middle" letter-spacing="3">WONDERPARK</text>
+  </g>
+
+  <!-- Joyful Hot Air Balloons in Sky -->
+  <!-- Left Balloon -->
+  <g transform="translate(85, 110) scale(0.65)">
+    <ellipse cx="0" cy="0" rx="26" ry="32" fill="url(#wheelGrad)" stroke="#fff" stroke-width="2"/>
+    <path d="M-8 28 L-5 38 L5 38 L8 28" fill="none" stroke="#fff" stroke-width="2"/>
+    <rect x="-7" y="38" width="14" height="10" rx="2" fill="#d97706" stroke="#fff" stroke-width="1.5"/>
+  </g>
+
+  <!-- Right Balloon -->
+  <g transform="translate(425, 120) scale(0.55)">
+    <ellipse cx="0" cy="0" rx="26" ry="32" fill="url(#cyanGrad)" stroke="#fff" stroke-width="2"/>
+    <path d="M-8 28 L-5 38 L5 38 L8 28" fill="none" stroke="#fff" stroke-width="2"/>
+    <rect x="-7" y="38" width="14" height="10" rx="2" fill="#d97706" stroke="#fff" stroke-width="1.5"/>
+  </g>
+
+  <!-- Sparkling Joy Stars & Confetti -->
+  <!-- Big 4-point Stars -->
+  <g fill="#fde047" filter="url(#glow)">
+    <!-- Star 1 -->
+    <path d="M256 12 Q256 32 276 32 Q256 32 256 52 Q256 32 236 32 Q256 32 256 12 Z" transform="translate(-160, 40) scale(0.8)"/>
+    <!-- Star 2 -->
+    <path d="M256 12 Q256 32 276 32 Q256 32 256 52 Q256 32 236 32 Q256 32 256 12 Z" transform="translate(140, 20) scale(0.9)"/>
+    <!-- Star 3 -->
+    <path d="M256 12 Q256 32 276 32 Q256 32 256 52 Q256 32 236 32 Q256 32 256 12 Z" transform="translate(-180, 180) scale(0.6)"/>
+    <!-- Star 4 -->
+    <path d="M256 12 Q256 32 276 32 Q256 32 256 52 Q256 32 236 32 Q256 32 256 12 Z" transform="translate(170, 190) scale(0.7)"/>
+  </g>
+
+  <!-- Floating Colorful Joy Dots / Confetti -->
+  <circle cx="200" cy="65" r="3.5" fill="#f43f5e"/>
+  <circle cx="310" cy="55" r="4" fill="#38bdf8"/>
+  <circle cx="105" cy="240" r="3.5" fill="#34d399"/>
+  <circle cx="405" cy="260" r="4" fill="#fbbf24"/>
+  <circle cx="290" cy="350" r="3" fill="#f43f5e"/>
+  <circle cx="220" cy="360" r="3.5" fill="#38bdf8"/>
+</svg>

@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>企業終極抽獎系統 | Ultimate Rebox</title>
-    <!-- Firebase Config -->
-    <script src="firebase-config.js"></script>
     <style>
         :root {
             --primary: #00f2ff;
@@ -736,132 +734,69 @@
         </div>
     </section>
 
-    <!-- Firebase SDK (Modular) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        // Firebase Config - User will need to replace this if they want their own project
-        // For now, using a structure that allows external injection or placeholder
-        // Firebase Config is now loaded from firebase-config.js
-        // Access via window.__firebase_config
-
-
-        // Expose Firebase functions globally for our App to use
+    <!-- 本地廣播與資料同步機制 (純前端零依賴) -->
+    <script>
         window.Cloud = {
             db: null,
             auth: null,
+            channel: null,
             init: () => {
-                try {
-                    if (window.__firebase_config) {
-                        const app = initializeApp(window.__firebase_config);
-                        window.Cloud.auth = getAuth(app);
-                        window.Cloud.db = getDatabase(app);
-                        console.log("Firebase initialized");
-                        window.Cloud.lastError = null;
-
-                        // Sign in anonymously
-                        signInAnonymously(window.Cloud.auth)
-                            .then(() => {
-                                console.log("Signed in anonymously");
-                            })
-                            .catch((error) => {
-                                console.error("Auth Error", error);
-                                window.Cloud.lastError = "Auth Error: " + error.message;
-                            });
-
-                        // Connection Status Listener
-                        const connectedRef = ref(window.Cloud.db, ".info/connected");
-                        onValue(connectedRef, (snap) => {
-                            const connected = snap.val() === true;
-                            const el = document.getElementById('conn-status');
-                            if (el) {
-                                if (connected) {
-                                    el.classList.add('connected');
-                                    el.title = "已連線至雲端 (點擊查看詳情)";
-                                } else {
-                                    el.classList.remove('connected');
-                                    el.title = "已斷線 (點擊查看詳情)";
-                                }
-                                // Debug click
-                                el.onclick = () => {
-                                    const authStatus = window.Cloud.auth && window.Cloud.auth.currentUser ? "已驗證 (匿名)" : "未驗證";
-                                    alert(`Firebase 連線狀態診斷:\n\n1. 連線狀態: ${connected ? '🟢 已連線' : '🔴 未連線'}\n2. Auth狀態: ${authStatus}\n3. Project ID: ${window.__firebase_config.projectId}\n4. Database URL: ${window.__firebase_config.databaseURL}\n\n如果不通，請檢查 (非常重要!):\n- Firebase Realtime Database Rule 是否設為 allow read, write: if auth != null\n- Firebase Console 是否已啟用 Anonymous Auth\n- 網路是否正常`);
-                                };
-                            }
-                            console.log("Connection Status:", connected);
-                        });
-
-                    } else {
-                        console.warn("No Firebase Config found");
-                        window.Cloud.lastError = "No Config Found";
-                        const el = document.getElementById('conn-status');
-                        if (el) {
-                            el.title = "設定檔遺失 (點擊查看詳情)";
-                            el.onclick = () => alert("錯誤: 找不到 firebase-config.js 設定檔。\n\n請確認:\n1. 該檔案是否已上傳至 GitHub Pages?\n2. 是否被 .gitignore 排除?\n3. 網址路徑是否正確?");
-                        }
-                    }
-                } catch (e) {
-                    console.error("Firebase Init Error", e);
-                    window.Cloud.lastError = e.message;
-                    // Try to attach click to red dot if possible
-                    const el = document.getElementById('conn-status');
-                    if (el) el.onclick = () => alert("Firebase 初始化失敗:\n" + e.message);
+                const el = document.getElementById('conn-status');
+                if (el) {
+                    el.classList.add('connected');
+                    el.title = "🟢 本機模式 (完全離線可用)";
                 }
+                try {
+                    window.Cloud.channel = new BroadcastChannel('rebox_channel');
+                } catch(e) {}
             },
             save: (data) => {
-                if (!window.Cloud.db) return;
-                // Generate a consistent ID based on activity name or use a default 'latest'
-                const activityId = data.activityName ? btoa(encodeURIComponent(data.activityName)).replace(/[^a-zA-Z0-9]/g, '') : 'default_event';
-
-                // Save to 'events/{id}'
-                set(ref(window.Cloud.db, 'events/' + activityId), {
-                    ...data,
-                    _updatedAt: Date.now()
-                }).then(() => {
-                    console.log("Cloud Synced Successfully");
+                try {
+                    localStorage.setItem('rebox_latest_event', JSON.stringify({
+                        ...data,
+                        _updatedAt: Date.now()
+                    }));
+                    if (window.Cloud.channel) {
+                        window.Cloud.channel.postMessage({ type: 'SYNC', data });
+                    }
                     const t = document.getElementById('cloud-status');
-                    if (t) { t.style.color = '#00ff00'; t.title = "Cloud Synced"; }
-                }).catch((e) => {
-                    console.error("Cloud Sync Failed", e);
-                    const t = document.getElementById('cloud-status');
-                    if (t) { t.style.color = '#ff0000'; t.title = "Sync Failed"; }
-                });
+                    if (t) { t.style.color = '#00ff00'; t.title = "本地已儲存"; }
+                } catch (e) {
+                    console.error("Local Save Failed", e);
+                }
             },
             listenCmd: (processCmd) => {
-                if (!window.Cloud.db) return;
-                // We need the activity ID to know where to listen
-                // We'll rely on appData being loaded first
-                const checkInterval = setInterval(() => {
-                    if (appData && appData.activityName) {
-                        clearInterval(checkInterval);
-                        const activityId = btoa(encodeURIComponent(appData.activityName)).replace(/[^a-zA-Z0-9]/g, '') || 'default_event';
-
-                        console.log("Listening for Remote Commands on:", activityId);
-
-                        const cmdRef = ref(window.Cloud.db, 'events/' + activityId + '/cmd');
-                        onValue(cmdRef, (snapshot) => {
-                            const val = snapshot.val();
-                            if (val && val.timestamp > Date.now() - 5000) { // Ignore old cmds (older than 5s)
-                                console.log("Remote CMD:", val);
+                if (window.Cloud.channel) {
+                    window.Cloud.channel.onmessage = (e) => {
+                        if (e.data && e.data.type === 'CMD') {
+                            processCmd(e.data.val);
+                        }
+                    };
+                }
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'rebox_cmd') {
+                        try {
+                            const val = JSON.parse(e.newValue);
+                            if (val && val.timestamp > Date.now() - 5000) {
                                 processCmd(val);
                             }
-                        });
+                        } catch(err) {}
                     }
-                }, 1000);
+                });
             },
             updateStatus: (status) => {
-                if (!window.Cloud.db || !appData.activityName) return;
-                const activityId = btoa(encodeURIComponent(appData.activityName)).replace(/[^a-zA-Z0-9]/g, '') || 'default_event';
-                set(ref(window.Cloud.db, 'events/' + activityId + '/status'), {
-                    state: status,
-                    updatedAt: Date.now()
-                });
+                try {
+                    localStorage.setItem('rebox_status', JSON.stringify({
+                        state: status,
+                        updatedAt: Date.now()
+                    }));
+                    if (window.Cloud.channel) {
+                        window.Cloud.channel.postMessage({ type: 'STATUS', status });
+                    }
+                } catch(e) {}
             }
         };
 
-        // Tiny hack to init after window load
         window.addEventListener('load', window.Cloud.init);
     </script>
 

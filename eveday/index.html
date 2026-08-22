@@ -73,8 +73,6 @@
     <title>形式曆</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
-    <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
-    <script src="firebase-config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -450,9 +448,9 @@
                                     <div class="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-xs sm:text-sm"
                                         style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.2);">
                                         <span id="firebaseStatusDot" class="w-1.5 h-1.5 rounded-full"
-                                            style="background: #ef4444;" title="Firebase 未連接"></span>
+                                            style="background: #10b981;" title="本機儲存已就緒"></span>
                                         <span class="text-xs" style="color: var(--primary);"
-                                            id="currentUserDisplayName">Loading...</span>
+                                            id="currentUserDisplayName">本機端</span>
                                     </div>
                                     <button onclick="openSettingsModal()" class="p-1.5 rounded transition"
                                         style="background: rgba(0, 242, 255, 0.1); border: 1px solid rgba(0, 242, 255, 0.3); color: var(--primary);"
@@ -4780,103 +4778,10 @@
             // 初始化
             init();
         </script>
-
-        <!-- Firebase SDKs -->
-        <script type="module">
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-            import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-            import { getFirestore, doc, getDoc, setDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-            // Firebase 配置
-            let firebaseConfig;
-            let firebaseEnabled = false;
-
-            // 強制檢查 Firebase 配置
-            try {
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    firebaseConfig = typeof __firebase_config === 'string'
-                        ? JSON.parse(__firebase_config)
-                        : __firebase_config;
-                    firebaseEnabled = true;
-                    console.log('✅ Firebase 配置已載入');
-                } else {
-                    console.error('❌ 未檢測到 Firebase 配置');
-                    showFirebaseWarning();
-                    firebaseEnabled = false;
-                }
-            } catch (e) {
-                console.error('❌ Firebase 配置解析失敗:', e);
-                showFirebaseWarning();
-                firebaseEnabled = false;
-            }
-
-            // 顯示 Firebase 警告
-            function showFirebaseWarning() {
-                const warningBanner = document.createElement('div');
-                warningBanner.className = 'fixed top-0 left-0 right-0 bg-red-600 text-white p-4 z-50 shadow-lg';
-                warningBanner.innerHTML = `
-                <div class="max-w-6xl mx-auto flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl">⚠️</span>
-                        <div>
-                            <p class="font-bold">Firebase 連線失敗</p>
-                            <p class="text-sm">此應用程式需要 Firebase 連線才能正常運作。請檢查網路連線或 Firebase 配置。</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-                document.body.insertBefore(warningBanner, document.body.firstChild);
-
-                // 禁用主要功能
-                document.getElementById('evedayAppRoot').style.opacity = '0.5';
-                document.getElementById('evedayAppRoot').style.pointerEvents = 'none';
-            }
-
-            // Firebase 應用程式識別碼
-            const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'eveday-calendar';
-
-            // 初始化 Firebase
-            let app, auth, db;
-            if (firebaseEnabled) {
-                try {
-                    app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);  // 使用預設資料庫 (default)
-
-                    // 自動匿名登入
-                    signInAnonymously(auth).then(() => {
-                        console.log('✅ Firebase 匿名登入成功');
-                    }).catch((error) => {
-                        console.error('❌ Firebase 匿名登入失敗:', error);
-                        showFirebaseWarning();
-                    });
-
-                    // 監聽認證狀態
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            console.log('✅ Firebase 使用者已認證:', user.uid);
-                            updateFirebaseStatus(true);
-                        } else {
-                            console.log('⚠️ Firebase 使用者未認證');
-                            updateFirebaseStatus(false);
-                        }
-                    });
-
-                } catch (e) {
-                    console.error('❌ Firebase 初始化失敗:', e);
-                    showFirebaseWarning();
-                    firebaseEnabled = false;
-                    updateFirebaseStatus(false);
-                }
-            } else {
-                updateFirebaseStatus(false);
-            }
-
-            // 將 Firebase 實例導出供其他腳本使用
-            window.__firebaseApp = app;
-            window.__firebaseAuth = auth;
-            window.__firebaseDb = db;
-            window.__firebaseEnabled = firebaseEnabled;
+        <script>
+            // 形式曆 - 100% 本地儲存模式 (LocalStorage + IndexedDB)
+            window.__firebaseEnabled = false;
+            console.log('✅ 形式曆已就緒（純本機模式）');
         </script>
 </body>
 

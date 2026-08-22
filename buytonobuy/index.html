@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>eoElior | 秘密轉盤</title>
-    <!-- Firebase 配置（必須在 Firebase SDK 之前載入） -->
-    <script src="firebase-config.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -51,10 +49,10 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center font-sans">
 
     <nav class="absolute top-0 w-full p-6 flex justify-between items-center">
-        <a href="../index.html" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left"></i> 回玩具盒子</a>
+        <a href="../index.html" class="text-slate-400 hover:text-white"><i class="fa-solid fa-arrow-left"></i> 回遊樂園</a>
         <div class="flex items-center gap-4">
             <a href="admin.html" class="text-slate-400 hover:text-white text-sm">後台管理</a>
-            <div id="dbStatus" class="text-[10px] text-slate-500">未連線</div>
+            <div id="dbStatus" class="text-[11px] text-emerald-400 font-medium">🟢 離線可用</div>
         </div>
     </nav>
 
@@ -93,7 +91,7 @@
             </div>
         </div>
 
-        <!-- 右側：記錄明細和雲端分享 -->
+        <!-- 右側：記錄明細和分享 -->
         <div class="space-y-6">
             <!-- 轉盤記錄 -->
             <div class="glass-card p-6 rounded-3xl">
@@ -106,10 +104,10 @@
                 </div>
             </div>
 
-            <!-- 雲端同步分享 -->
+            <!-- 分享配置 -->
             <div class="glass-card p-6 rounded-3xl space-y-4">
-                <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest">雲端同步分享</h3>
-                <button id="cloudShareBtn" class="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">生成分享連結</button>
+                <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest">快速分享轉盤</h3>
+                <button id="cloudShareBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-xs font-bold transition-all shadow-lg">生成分享連結</button>
                 <div id="shareArea" class="hidden space-y-2">
                     <input type="text" id="shareUrlInput" readonly class="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-indigo-300 focus:outline-none">
                     <button id="copyBtn" class="w-full bg-indigo-600/20 text-indigo-300 py-2 rounded-lg text-[10px] hover:bg-indigo-600/40">複製連結</button>
@@ -118,64 +116,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <script>
         // ==========================================
-        // 🔐 Firebase 配置 - 安全外部注入方式
-        // ==========================================
-        // 方式 1: 在 HTML 中通過 <script> 標籤定義 __firebase_config
-        // 方式 2: 通過外部配置文件載入（推薦）
-        // 方式 3: 如果都沒有，使用預設配置（僅用於開發測試）
-
-        let firebaseConfig;
-        let firebaseEnabled = false;
-
-        try {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                // 外部注入的配置（最安全）
-                firebaseConfig = typeof __firebase_config === 'string'
-                    ? JSON.parse(__firebase_config)
-                    : __firebase_config;
-                firebaseEnabled = true;
-            } else {
-                // 預設配置（僅用於開發，生產環境應移除）
-                console.warn('⚠️ 未檢測到外部 Firebase 配置，使用預設配置（僅用於開發）');
-                firebaseConfig = {
-                    projectId: "studio-2298218799-c99fe",
-                    appId: "1:848457307119:web:d0c416db3468efb9ef5c1a",
-                    apiKey: "AIzaSyDDgQUZH5N1IaNR2-CeOIHCQjccsJEYD5s",
-                    authDomain: "studio-2298218799-c99fe.firebaseapp.com",
-                    messagingSenderId: "848457307119"
-                };
-                firebaseEnabled = true; // 開發模式啟用
-            }
-        } catch (e) {
-            console.error('❌ Firebase 配置解析失敗:', e);
-            firebaseEnabled = false;
-        }
-
-        // Firebase 應用程式識別碼
-        const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'eoelior-wheel-data';
-
-        // 初始化 Firebase（如果配置可用）
-        let app, auth, db;
-        if (firebaseEnabled) {
-            try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-            } catch (e) {
-                console.error('❌ Firebase 初始化失敗:', e);
-                firebaseEnabled = false;
-            }
-        }
-
-        // ==========================================
-        // 🎡 轉盤核心邏輯
+        // 🎡 轉盤核心邏輯 (純前端零依賴)
         // ==========================================
 
         // 預設配置
@@ -473,138 +416,13 @@
             }
         }
 
-        // 初始化 Firebase 認證
-        async function initFirebase() {
-            if (!firebaseEnabled || !auth) {
-                updateDbStatus('disabled', '未啟用');
-                console.warn('⚠️ Firebase 未啟用或未初始化');
-                return;
-            }
-
-            try {
-                updateDbStatus('connecting', '連線中...');
-                console.log('🔄 開始 Firebase 匿名認證...');
-
-                // 設定認證狀態監聽器（在嘗試登入之前）
-                const unsubscribe = onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        console.log('✅ Firebase 認證成功，UID:', user.uid.substring(0, 8) + '...');
-                        updateDbStatus('connected', '雲端已連線');
-
-                        // 檢查 URL 參數是否有分享 ID
-                        const params = new URLSearchParams(window.location.search);
-                        const shareId = params.get('share');
-
-                        if (shareId) {
-                            try {
-                                console.log('📥 載入分享配置，ID:', shareId);
-                                const snap = await getDoc(
-                                    doc(db, 'artifacts', APP_ID, 'public', 'data', 'shared_wheels', shareId)
-                                );
-                                if (snap.exists()) {
-                                    const firebaseConfig = snap.data();
-                                    config = firebaseConfig;
-                                    // 保存到 localStorage，以便之後也能使用
-                                    saveConfig(config);
-                                    updateTitleAndDescription();
-                                    updateOptionsDisplay();
-                                    drawWheel();
-                                    console.log('✅ Firebase 分享配置載入成功');
-                                } else {
-                                    console.warn('⚠️ Firebase 分享配置不存在');
-                                }
-                            } catch (e) {
-                                console.error('❌ 載入分享配置失敗:', e);
-                                if (e.code === 'permission-denied') {
-                                    console.error('   原因：Firestore 安全規則拒絕存取');
-                                    console.error('   解決：請檢查 Firestore 規則是否允許讀取');
-                                }
-                            }
-                        }
-
-                        // 認證成功後取消訂閱（避免重複執行）
-                        unsubscribe();
-                    } else {
-                        console.warn('⚠️ 使用者未認證');
-                    }
-                });
-
-                // 嘗試匿名登入
-                try {
-                    const userCredential = await signInAnonymously(auth);
-                    console.log('✅ 匿名登入請求成功');
-                } catch (authError) {
-                    // 認證錯誤處理
-                    console.error('❌ Firebase 匿名認證失敗:', authError);
-
-                    let errorMessage = '認證失敗';
-                    let errorDetails = '';
-
-                    // 根據錯誤代碼提供具體訊息
-                    switch (authError.code) {
-                        case 'auth/operation-not-allowed':
-                            errorMessage = '匿名認證未啟用';
-                            errorDetails = '請在 Firebase Console 中啟用「匿名」登入方式';
-                            console.error('   解決方案：');
-                            console.error('   1. 前往 Firebase Console → Authentication → 登入方式');
-                            console.error('   2. 啟用「匿名」登入方式');
-                            break;
-                        case 'auth/api-key-not-valid':
-                            errorMessage = 'API Key 無效';
-                            errorDetails = '請檢查 firebase-config.js 中的 apiKey 是否正確';
-                            break;
-                        case 'auth/network-request-failed':
-                            errorMessage = '網路連線失敗';
-                            errorDetails = '請檢查網路連線或 API Key 限制設定';
-                            break;
-                        case 'auth/unauthorized-domain':
-                            errorMessage = '未授權的網域';
-                            errorDetails = '請在 Firebase Console 中添加授權網域';
-                            console.error('   解決方案：');
-                            console.error('   1. 前往 Firebase Console → Authentication → 設定');
-                            console.error('   2. 在「授權網域」中添加當前網域（例如：localhost）');
-                            break;
-                        default:
-                            errorDetails = authError.message || '未知錯誤';
-                    }
-
-                    updateDbStatus('error', errorMessage);
-                    console.error('   錯誤代碼:', authError.code);
-                    console.error('   錯誤訊息:', errorDetails);
-
-                    // 取消訂閱以避免記憶體洩漏
-                    unsubscribe();
-
-                    // 顯示用戶友好的錯誤訊息
-                    setTimeout(() => {
-                        const statusEl = document.getElementById('dbStatus');
-                        if (statusEl && statusEl.title !== errorDetails) {
-                            statusEl.title = errorDetails;
-                            statusEl.style.cursor = 'help';
-                        }
-                    }, 100);
-                }
-
-            } catch (e) {
-                console.error('❌ Firebase 初始化錯誤:', e);
-                updateDbStatus('error', '初始化失敗');
-                console.error('   錯誤詳情:', e.message);
-            }
-        }
-
         // 初始化轉盤
         function init() {
             updateTitleAndDescription();
             updateOptionsDisplay();
             drawWheel();
             renderHistory();
-
-            // 如果 Firebase 可用，初始化連線
-            if (firebaseEnabled) {
-                initFirebase();
-            } else {
-                updateDbStatus('disabled', '未啟用');
-            }
+            updateDbStatus('connected', '🟢 離線可用');
 
             // 綁定重置按鈕
             document.getElementById('resetHistoryBtn').onclick = resetHistory;
@@ -828,24 +646,37 @@
             }, FIXED_DURATION);
         };
 
-        // 雲端分享功能
-        document.getElementById('cloudShareBtn').onclick = async () => {
-            if (!firebaseEnabled || !db) {
-                alert('雲端功能未啟用，請檢查 Firebase 配置');
-                return;
-            }
-
+        // 快速分享功能（URL 參數編碼，純前端零後端）
+        document.getElementById('cloudShareBtn').onclick = () => {
             const btn = document.getElementById('cloudShareBtn');
             btn.disabled = true;
-            btn.innerText = "儲存中...";
+            btn.innerText = "生成中...";
 
             try {
-                const docRef = await addDoc(
-                    collection(db, 'artifacts', APP_ID, 'public', 'data', 'shared_wheels'),
-                    config
-                );
+                // UTF-8 轉 Base64 安全函數
+                function utf8ToBase64(str) {
+                    const bytes = new TextEncoder().encode(str);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+                }
 
-                const shareUrl = window.location.origin + window.location.pathname + "?share=" + docRef.id;
+                // 緊湊格式縮小 URL 長度
+                const compactConfig = {
+                    t: config.title,
+                    d: config.description,
+                    s: config.segments.map(seg => ({
+                        l: seg.label,
+                        c: seg.color,
+                        v: seg.visualPercent,
+                        r: seg.realPercent
+                    }))
+                };
+
+                const encoded = utf8ToBase64(JSON.stringify(compactConfig));
+                const shareUrl = window.location.origin + window.location.pathname + "?c=" + encoded;
                 document.getElementById('shareUrlInput').value = shareUrl;
                 document.getElementById('shareArea').classList.remove('hidden');
             } catch (e) {

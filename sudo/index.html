@@ -58,13 +58,15 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center py-6 px-2 select-none">
 
-    <header class="mb-6 text-center relative">
-        <div class="absolute top-0 right-0 flex items-center gap-2">
-            <span id="dbStatusText" class="text-[10px] text-gray-400"></span>
-            <div id="dbStatus" class="w-2 h-2 rounded-full bg-gray-400" title="未連線"></div>
+    <header class="mb-6 text-center relative w-full max-w-5xl flex items-center justify-between">
+        <a href="../index.html" class="text-sm text-gray-500 hover:text-blue-600 font-medium">← 回遊樂園</a>
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-wider">數獨 <span class="text-blue-600">SUDOKU</span></h1>
+            <p class="text-gray-500 text-sm mt-1">即時驗證 + 暫停功能版</p>
         </div>
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 tracking-wider">數獨 <span class="text-blue-600">SUDOKU</span></h1>
-        <p class="text-gray-500 text-sm mt-1">即時驗證 + 暫停功能版</p>
+        <div class="text-xs text-emerald-600 font-medium bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+            🟢 離線版
+        </div>
     </header>
 
     <main class="w-full max-w-5xl flex flex-col md:flex-row gap-8 items-start justify-center">
