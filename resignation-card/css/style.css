@@ -1,3 +1,4 @@
+/* 🏃 離職集點卡 - 嘉年華星夜現代化樣式 */
 * {
     margin: 0;
     padding: 0;
@@ -5,362 +6,617 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Microsoft JhengHei", sans-serif;
+    background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 100%);
+    color: #f8fafc;
     min-height: 100vh;
-    padding: 20px;
-}
-
-.container {
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-header {
-    text-align: center;
-    color: white;
-    margin-bottom: 30px;
-}
-
-header h1 {
-    font-size: 2em;
-    margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-}
-
-.subtitle {
-    font-size: 0.9em;
-    opacity: 0.9;
-}
-
-.card-preview {
-    background: white;
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.preview-title {
-    font-size: 0.9em;
-    color: #999;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.preview-content {
-    border: 2px solid #f0f0f0;
-    border-radius: 15px;
-    padding: 20px;
-}
-
-.preview-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.preview-emoji {
-    font-size: 2em;
-}
-
-.preview-name {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #FF6B6B;
-}
-
-.preview-progress {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 10px;
-}
-
-.progress-text {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #333;
-}
-
-.progress-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.progress-cell {
-    aspect-ratio: 1;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8em;
-    transition: all 0.3s;
-}
-
-.progress-cell.filled {
-    background: #FF6B6B;
-    border-color: #FF6B6B;
-    color: white;
-}
-
-.settings {
-    background: white;
-    border-radius: 20px;
-    padding: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.setting-group {
-    margin-bottom: 30px;
-}
-
-.setting-group label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 15px;
-    color: #333;
-    font-size: 1.1em;
-}
-
-.stamp-options {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.stamp-btn {
-    padding: 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    background: white;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-size: 1em;
+    padding: 16px;
     line-height: 1.5;
 }
 
-.stamp-btn small {
-    color: #999;
-    font-size: 0.8em;
+.container {
+    max-width: 620px;
+    margin: 0 auto;
+    padding-bottom: 40px;
 }
 
-.stamp-btn:hover {
-    border-color: #667eea;
-    transform: translateY(-2px);
-}
-
-.stamp-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-color: #667eea;
-}
-
-.custom-count {
-    margin-top: 15px;
-}
-
-.custom-count label {
-    font-size: 0.9em;
-    font-weight: normal;
-    color: #666;
-    margin-bottom: 8px;
-}
-
-.custom-count input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 1em;
-}
-
-.template-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-
-.template-btn {
-    padding: 20px 10px;
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    background: white;
-    cursor: pointer;
-    transition: all 0.3s;
+/* 頂部導覽列 */
+.top-nav {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fce7f3;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
+}
+
+.back-link:hover {
+    background: rgba(244, 63, 94, 0.3);
+    border-color: #f43f5e;
+    transform: translateY(-2px);
+    color: #ffffff;
+}
+
+.brand-tag {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.header-icon {
+    font-size: 2.8rem;
+    margin-bottom: 6px;
+    display: inline-block;
+    animation: floatIcon 3s ease-in-out infinite alternate;
+}
+
+@keyframes floatIcon {
+    from { transform: translateY(0); }
+    to { transform: translateY(-8px); }
+}
+
+header h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fb7185, #f43f5e, #fda4af);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    opacity: 0.9;
+}
+
+/* 卡片主體 */
+.card-wrapper {
+    background: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 0 0 24px rgba(244, 63, 94, 0.15);
+    margin-bottom: 24px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.template-badge {
+    display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.template-icon {
-    font-size: 2em;
+.badge-icon {
+    font-size: 1.8rem;
 }
 
-.template-name {
-    font-size: 0.9em;
-    color: #666;
+.badge-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #ffffff;
+}
+
+.card-progress-badge {
+    background: #e11d48;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.4);
+}
+
+/* 印章網格 */
+.stamps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+@media (min-width: 480px) {
+    .stamps-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.grid-cell {
+    aspect-ratio: 1;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.grid-cell.empty:hover {
+    border-color: #f43f5e;
+    background: rgba(244, 63, 94, 0.15);
+    transform: scale(1.04);
+}
+
+.cell-number {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.cell-hint {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+.grid-cell.stamped {
+    border-style: solid;
+    border-width: 2px;
+    background: rgba(15, 23, 42, 0.9);
+    animation: stampPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes stampPop {
+    0% { transform: scale(0.5) rotate(-20deg); opacity: 0; }
+    80% { transform: scale(1.1) rotate(5deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.stamp-badge {
+    width: 85%;
+    height: 85%;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: rotate(-6deg);
+    transition: transform 0.2s ease;
+}
+
+.grid-cell.stamped:hover .stamp-badge {
+    transform: rotate(0deg) scale(1.08);
+}
+
+.stamp-text {
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.1;
+    padding: 0 4px;
+}
+
+.stamp-idx {
+    font-size: 0.6rem;
+    opacity: 0.85;
+    margin-top: 2px;
+}
+
+/* 最近理由 / 語錄 */
+.quote-box {
+    background: rgba(15, 23, 42, 0.7);
+    border-left: 3px solid #f43f5e;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 0.85rem;
+}
+
+.quote-label {
+    font-weight: bold;
+    color: #fb7185;
+    margin-bottom: 2px;
+}
+
+.quote-text {
+    color: #e2e8f0;
+    word-break: break-all;
+}
+
+/* 快捷理由選擇 */
+.reason-selector {
+    margin-bottom: 16px;
+}
+
+.reason-selector label {
+    display: block;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.quick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.chip-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+    padding: 6px 10px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chip-btn:hover {
+    background: rgba(244, 63, 94, 0.3);
+    border-color: #f43f5e;
+    transform: translateY(-1px);
+}
+
+.custom-reason-row input {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 0.9rem;
+}
+
+.custom-reason-row input:focus {
+    outline: none;
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25);
+}
+
+/* 主操作按鈕群 */
+.main-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn-primary {
+    flex: 1 1 100%;
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(225, 29, 72, 0.4);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.6);
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+}
+
+.btn-secondary {
+    flex: 1 1 calc(50% - 5px);
+    background: rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+/* 客製化設定區 */
+.settings-box, .history-box {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.settings-box h2, .history-box h2 {
+    font-size: 1.15rem;
+    color: #f8fafc;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+}
+
+.setting-item {
+    margin-bottom: 20px;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.setting-item label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+}
+
+/* 格數選項 */
+.stamp-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.stamp-btn {
+    padding: 10px 4px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.stamp-btn small {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+.stamp-btn:hover {
+    border-color: #f43f5e;
+}
+
+.stamp-btn.active {
+    background: #e11d48;
+    color: white;
+    border-color: #e11d48;
+    box-shadow: 0 2px 10px rgba(225, 29, 72, 0.4);
+}
+
+.stamp-btn.active small {
+    color: #fecdd3;
+}
+
+.custom-count-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+
+.custom-count-wrapper input {
+    width: 100px;
+    padding: 6px 10px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #ffffff;
+}
+
+/* 主題選項 */
+.template-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 420px) {
+    .template-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.template-btn {
+    padding: 12px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.template-btn .t-icon {
+    font-size: 1.6rem;
+}
+
+.template-btn .t-name {
+    font-size: 0.8rem;
+    font-weight: 600;
 }
 
 .template-btn:hover {
-    border-color: #667eea;
+    border-color: #f43f5e;
     transform: translateY(-2px);
 }
 
 .template-btn.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-color: #667eea;
+    background: rgba(225, 29, 72, 0.25);
+    border-color: #f43f5e;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(244, 63, 94, 0.3);
 }
 
-.template-btn.active .template-name {
-    color: white;
+.template-desc-box {
+    background: rgba(15, 23, 42, 0.6);
+    border-left: 3px solid #f43f5e;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: #cbd5e1;
 }
 
-.template-preview {
-    margin-top: 15px;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 10px;
-    border-left: 4px solid #667eea;
+.template-desc-box p {
+    margin-bottom: 4px;
 }
 
-.template-desc p {
-    margin-bottom: 8px;
-    font-size: 0.9em;
-    color: #555;
-    line-height: 1.6;
-}
-
-.template-desc p:last-child {
+.template-desc-box p:last-child {
     margin-bottom: 0;
 }
 
-.template-desc strong {
-    color: #667eea;
+.template-desc-box strong {
+    color: #fb7185;
 }
 
-.stamp-info, .features {
-    margin-bottom: 25px;
-}
-
-.stamp-info h3, .features h3 {
-    font-size: 1.1em;
-    margin-bottom: 12px;
-    color: #333;
-}
-
-.stamp-info p {
-    color: #666;
-    margin-bottom: 12px;
-    font-size: 0.9em;
-}
-
-.stamp-preview {
+/* 印章池預覽 */
+.stamps-preview-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
 }
 
-.stamp {
-    padding: 10px 18px;
-    border-radius: 50%;
+.stamp-chip {
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.75rem;
     font-weight: bold;
     color: white;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-    font-size: 0.85em;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-    transform: rotate(-5deg);
-    transition: transform 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.stamp:hover {
-    transform: rotate(0deg) scale(1.1);
+/* 歷史紀錄 */
+.history-list {
+    max-height: 240px;
+    overflow-y: auto;
 }
 
-.stamp.red {
-    background: #e74c3c;
+.empty-history {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 14px 0;
 }
 
-.stamp.blue {
-    background: #3498db;
-}
-
-.stamp.green {
-    background: #2ecc71;
-}
-
-.features ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-.features li {
-    padding: 8px 0;
-    color: #666;
-    font-size: 0.95em;
-}
-
-.submit-btn {
-    width: 100%;
-    padding: 18px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.1em;
-    font-weight: bold;
-    cursor: pointer;
+.history-item {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    transition: all 0.3s;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.5);
+    margin-bottom: 6px;
+    font-size: 0.82rem;
 }
 
-.submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+.h-stamp {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+    color: white;
+    font-size: 0.75rem;
+    white-space: nowrap;
 }
 
-.submit-btn:active {
-    transform: translateY(0);
+.h-info {
+    flex: 1;
+    overflow: hidden;
 }
 
-.notice {
-    margin-top: 20px;
-    padding: 15px;
-    background: #fff3cd;
-    border-left: 4px solid #ffc107;
-    border-radius: 8px;
+.h-reason {
+    color: #f1f5f9;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.notice p {
-    color: #856404;
-    font-size: 0.85em;
-    margin-bottom: 5px;
+.h-time {
+    color: #94a3b8;
+    font-size: 0.7rem;
 }
 
-.notice p:last-child {
-    margin-bottom: 0;
+.h-del-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
 }
 
-@media (max-width: 480px) {
-    .stamp-options {
-        grid-template-columns: 1fr;
-    }
-    
-    header h1 {
-        font-size: 1.5em;
-    }
+.h-del-btn:hover {
+    opacity: 1;
+}
+
+/* Footer */
+.footer-info {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-top: 24px;
+}
+
+.footer-info code {
+    background: rgba(244, 63, 94, 0.2);
+    color: #fb7185;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.copyright {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: #64748b;
 }

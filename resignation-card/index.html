@@ -3,111 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>離職集點卡 - 設計你的專屬集點卡</title>
+    <title>🏃 離職集點卡 | eoElior 數位遊樂園</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/amusement-park-logo.svg">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
     <div class="container">
+        <!-- 頂部導覽列 -->
+        <nav class="top-nav">
+            <a href="../index.html" class="back-link">
+                <span>🎪</span> 返回數位遊樂園
+            </a>
+            <div class="brand-tag">eoElior 紓壓分館</div>
+        </nav>
+
         <header>
-            <h1>🏃 離職集點卡設計器</h1>
-            <p class="subtitle">設計你的專屬離職集點卡，記錄每一次想逃的瞬間</p>
+            <div class="header-icon">🏃💨</div>
+            <h1>離職集點卡</h1>
+            <p class="subtitle">記錄每一次想逃跑的瞬間・集滿點數原地解脫</p>
         </header>
 
-        <div class="card-preview" id="cardPreview">
-            <div class="preview-title">預覽</div>
-            <div class="preview-content">
-                <div class="preview-header">
-                    <span class="preview-emoji">🏃</span>
-                    <span class="preview-name">離職集點卡</span>
+        <!-- 集點卡主體 -->
+        <div class="card-wrapper" id="cardWrapper">
+            <div class="card-header">
+                <div class="template-badge" id="cardThemeBadge">
+                    <span class="badge-icon" id="themeIcon">🧟</span>
+                    <span class="badge-title" id="themeTitle">死透Q版喪屍</span>
                 </div>
-                <div class="preview-progress" id="previewProgress">
-                    <div class="progress-text">進度：0/<span id="previewTotal">12</span></div>
-                    <div class="progress-grid" id="progressGrid"></div>
+                <div class="card-progress-badge">
+                    進度：<span id="stampedCount">0</span> / <span id="totalCount">12</span>
+                </div>
+            </div>
+
+            <!-- 印章網格 -->
+            <div class="stamps-grid" id="stampsGrid">
+                <!-- 動態產生 -->
+            </div>
+
+            <!-- 當前蓋章理由與語錄 -->
+            <div class="quote-box" id="quoteBox">
+                <div class="quote-label">💬 最近理由：</div>
+                <div class="quote-text" id="recentReasonText">尚未蓋章，今天還在堅強打工中...</div>
+            </div>
+
+            <!-- 快捷蓋章面板 -->
+            <div class="action-panel">
+                <div class="reason-selector">
+                    <label for="quickReason">選擇今日厭世理由：</label>
+                    <div class="quick-chips" id="quickChips">
+                        <button class="chip-btn" data-reason="主管又在開廢話會議">🗣️ 廢話會議</button>
+                        <button class="chip-btn" data-reason="需求改了又改，把我當通靈師">🔮 靈界需求</button>
+                        <button class="chip-btn" data-reason="星期一症候群重度發作">😫 週一厭世</button>
+                        <button class="chip-btn" data-reason="老闆畫的餅我真的吞不下">🥞 畫餅大師</button>
+                        <button class="chip-btn" data-reason="薪水小偷今日被抓包">🦝 摸魚被抓</button>
+                        <button class="chip-btn" data-reason="純粹就是不想上班">🛌 單純想躺</button>
+                    </div>
+                    <div class="custom-reason-row">
+                        <input type="text" id="customReasonInput" placeholder="或自行輸入厭世理由..." maxlength="40">
+                    </div>
+                </div>
+
+                <div class="main-buttons">
+                    <button class="btn-primary" id="stampOneBtn">
+                        <span class="btn-icon">🖊️</span>
+                        <span class="btn-text">蓋一個印章！</span>
+                    </button>
+                    <button class="btn-secondary" id="resetCardBtn">
+                        <span class="btn-icon">🔄</span> 重置卡片
+                    </button>
+                    <button class="btn-secondary" id="shareCardBtn">
+                        <span class="btn-icon">📋</span> 複製戰績
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="settings">
-            <div class="setting-group">
-                <label for="stampCount">集點數量</label>
+        <!-- 卡片客製化設定 -->
+        <div class="settings-box">
+            <h2>⚙️ 集點卡客製化設定</h2>
+
+            <!-- 格數選擇 -->
+            <div class="setting-item">
+                <label>1. 選擇集點總格數</label>
                 <div class="stamp-options">
                     <button class="stamp-btn" data-count="6">6 格<br><small>快逃版</small></button>
                     <button class="stamp-btn" data-count="9">9 格<br><small>經典版</small></button>
                     <button class="stamp-btn active" data-count="12">12 格<br><small>完整版</small></button>
                     <button class="stamp-btn" data-count="15">15 格<br><small>社畜版</small></button>
                 </div>
-                <div class="custom-count">
-                    <label for="customCount">自訂格數（6-30）</label>
-                    <input type="number" id="customCount" min="6" max="30" placeholder="輸入 6-30">
+                <div class="custom-count-wrapper">
+                    <label for="customGridInput">或自訂格數 (6 ~ 30)：</label>
+                    <input type="number" id="customGridInput" min="6" max="30" placeholder="輸入 6-30">
                 </div>
             </div>
 
-            <div class="setting-group">
-                <label>模板風格</label>
+            <!-- 主題風格選擇 -->
+            <div class="setting-item">
+                <label>2. 選擇厭世主題風格</label>
                 <div class="template-options">
                     <button class="template-btn active" data-template="zombie">
-                        <span class="template-icon">🧟</span>
-                        <span class="template-name">死透Q版喪屍</span>
+                        <span class="t-icon">🧟</span>
+                        <span class="t-name">死透喪屍</span>
                     </button>
                     <button class="template-btn" data-template="raccoon">
-                        <span class="template-icon">🦝</span>
-                        <span class="template-name">厭世浣熊</span>
+                        <span class="t-icon">🦝</span>
+                        <span class="t-name">厭世浣熊</span>
                     </button>
                     <button class="template-btn" data-template="quokka">
-                        <span class="template-icon">🦘</span>
-                        <span class="template-name">無所謂矮袋鼠</span>
+                        <span class="t-icon">🦘</span>
+                        <span class="t-name">矮袋鼠</span>
                     </button>
                     <button class="template-btn" data-template="fox">
-                        <span class="template-icon">🦊</span>
-                        <span class="template-name">就這樣吧狐朦</span>
+                        <span class="t-icon">🦊</span>
+                        <span class="t-name">狐朦躺平</span>
                     </button>
                     <button class="template-btn" data-template="guanyin">
-                        <span class="template-icon">🙇</span>
-                        <span class="template-name">拯救萱生觀世音</span>
+                        <span class="t-icon">🙇</span>
+                        <span class="t-name">觀世音渡劫</span>
                     </button>
                     <button class="template-btn" data-template="tudigong">
-                        <span class="template-icon">🧙</span>
-                        <span class="template-name">我愛世人土地公</span>
+                        <span class="t-icon">🧙</span>
+                        <span class="t-name">土地公祝福</span>
                     </button>
                 </div>
-                <div class="template-preview" id="templatePreview">
-                    <div class="template-desc">
-                        <p><strong>🧟 死透Q版喪屍：</strong>累翻了就是要擺爛，每次蓋章都像喪屍一樣無力</p>
-                        <p><strong>💫 印章風格：</strong>死了、累死、滿頭星星、喪屍臉、GG</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="stamp-info">
-                <h3>🖊️ 蓋章印章</h3>
-                <p>每次蓋章時隨機從以下印章中選擇：</p>
-                <div class="stamp-preview" id="stampPreview">
+                <div class="template-desc-box" id="templateDescBox">
                     <!-- 動態更新 -->
                 </div>
             </div>
 
-            <div class="features">
-                <h3>✨ 功能說明</h3>
-                <ul>
-                    <li>✅ 每次蓋章可選擇理由或使用預設理由</li>
-                    <li>✅ 每天最多蓋章 5 次</li>
-                    <li>✅ 群組內自動排行榜（僅群組顯示）</li>
-                    <li>✅ 查看完整蓋章歷史記錄</li>
-                    <li>✅ 集滿後可重新開始</li>
-                </ul>
-            </div>
-
-            <button class="submit-btn" id="submitBtn">
-                <span class="btn-text">🎮 預覽完成！前往 LINE 使用「離職」觸發</span>
-                <span class="btn-icon">✨</span>
-            </button>
-
-            <div class="notice">
-                <p>💡 使用方式：</p>
-                <p>1️⃣ 在 LINE 發送「離職」、「快逃」或「不幹了」<br>2️⃣ 收到集點卡圖片 + 互動按鈕<br>3️⃣ 點擊「🖊️ 蓋章」開始使用！</p>
+            <!-- 蓋章印章池預覽 -->
+            <div class="setting-item">
+                <label>3. 本主題隨機印章池</label>
+                <div class="stamps-preview-list" id="stampsPreviewList">
+                    <!-- 動態更新 -->
+                </div>
             </div>
         </div>
+
+        <!-- 蓋章歷史紀錄 -->
+        <div class="history-box" id="historyBox">
+            <h2>📜 蓋章歷史紀錄</h2>
+            <div class="history-list" id="historyList">
+                <div class="empty-history">暫無蓋章記錄，點擊上方按鈕開始蓋章！</div>
+            </div>
+        </div>
+
+        <!-- 底部說明 -->
+        <footer class="footer-info">
+            <p>💡 在 LINE Bot 輸入 <code>#離職</code> 或 <code>#快逃</code>，隨時召喚這張集點卡！</p>
+            <p class="copyright">🎪 eoElior 數位遊樂園 © 2026</p>
+        </footer>
     </div>
 
     <script src="js/app.js"></script>
