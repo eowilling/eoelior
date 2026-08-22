@@ -1,5 +1,7 @@
-// 離職集點卡 - 純前端互動引擎
+// 🏃 離職集點卡 - 樹莓派雲端同步與互動引擎
 const STORAGE_KEY = 'eoelior_resignation_card_v2';
+const UID_KEY = 'eoelior_quit_uid';
+const API_BASE = 'https://hello.5b2c1990eo.shop/api/resignation-card';
 
 const TEMPLATES = {
     zombie: {
@@ -65,15 +67,67 @@ let state = {
     stamps: [], // { text, reason, time, color }
 };
 
+let currentUid = '';
+let syncTimeout = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadState();
+    initUid();
+    loadLocalState();
     initUI();
     render();
+    fetchRemoteState();
 });
 
-function loadState() {
+// 初始化用戶 UID（支援 URL 參數 ?uid= 或 localStorage）
+function initUid() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const qUid = urlParams.get('uid') || urlParams.get('id');
+
+    if (qUid && qUid.trim()) {
+        currentUid = qUid.trim();
+        localStorage.setItem(UID_KEY, currentUid);
+    } else {
+        const savedUid = localStorage.getItem(UID_KEY);
+        if (savedUid && savedUid.trim()) {
+            currentUid = savedUid.trim();
+        } else {
+            currentUid = 'guest_' + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem(UID_KEY, currentUid);
+        }
+    }
+    updateUidDisplay();
+}
+
+function updateUidDisplay() {
+    const el = document.getElementById('userIdDisplay');
+    if (!el) return;
+    const shortUid = currentUid.length > 14
+        ? currentUid.substring(0, 6) + '...' + currentUid.substring(currentUid.length - 4)
+        : currentUid;
+    el.textContent = shortUid;
+    el.title = `當前 UID: ${currentUid} (點擊可切換/複製)`;
+}
+
+function setSyncStatus(type, text) {
+    const dot = document.getElementById('statusDot');
+    const label = document.getElementById('statusText');
+    if (!dot || !label) return;
+
+    dot.className = `status-dot ${type}`;
+    label.textContent = text;
+
+    if (type === 'online' && text.includes('已同步')) {
+        if (syncTimeout) clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
+            label.textContent = '🌲 樹莓派雲端同步 (已連線)';
+        }, 3000);
+    }
+}
+
+function loadLocalState() {
     try {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const key = `${STORAGE_KEY}_${currentUid}`;
+        const saved = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEY);
         if (saved) {
             const parsed = JSON.parse(saved);
             if (parsed && typeof parsed === 'object') {
@@ -87,11 +141,82 @@ function loadState() {
     }
 }
 
-function saveState() {
+function saveLocalState() {
     try {
+        const key = `${STORAGE_KEY}_${currentUid}`;
+        localStorage.setItem(key, JSON.stringify(state));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
         console.error('Failed to save state to localStorage', e);
+    }
+}
+
+// 向樹莓派後端取得用戶即時集點卡資料
+async function fetchRemoteState() {
+    setSyncStatus('syncing', '🔄 讀取樹莓派中...');
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        const res = await fetch(`${API_BASE}?uid=${encodeURIComponent(currentUid)}`, {
+            method: 'GET',
+            mode: 'cors',
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+
+        if (result && result.success && result.data) {
+            const remote = result.data;
+            if (remote.template) state.template = remote.template;
+            if (remote.total_stamps) state.total_stamps = remote.total_stamps;
+            if (Array.isArray(remote.stamps)) state.stamps = remote.stamps;
+
+            saveLocalState();
+            render();
+            setSyncStatus('online', '🌲 樹莓派雲端同步 (已連線)');
+        } else {
+            setSyncStatus('online', '🌲 樹莓派連線正常');
+        }
+    } catch (err) {
+        console.warn('[Sync] 樹莓派連線未達或處於離線狀態:', err.message);
+        setSyncStatus('offline', '🟡 本機離線模式 (離線可用)');
+    }
+}
+
+// 異步將最新狀態同步存入樹莓派 SQLite 資料庫
+async function pushRemoteState() {
+    setSyncStatus('syncing', '🔄 存檔至樹莓派...');
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        const res = await fetch(API_BASE, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                uid: currentUid,
+                template: state.template,
+                total_stamps: state.total_stamps,
+                stamps: state.stamps,
+            }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+        if (result && result.success) {
+            setSyncStatus('online', '🌲 樹莓派已同步 💾');
+        } else {
+            setSyncStatus('online', '🌲 樹莓派連線正常');
+        }
+    } catch (err) {
+        console.warn('[Sync] 寫入樹莓派失敗:', err.message);
+        setSyncStatus('offline', '🟡 本機離線模式 (已存於本機)');
     }
 }
 
@@ -116,10 +241,11 @@ function initUI() {
             alert('目前卡片已經是空的囉！');
             return;
         }
-        if (confirm('確定要清空目前的集點卡嗎？（歷史紀錄將會清除）')) {
+        if (confirm('確定要清空目前的集點卡嗎？（歷史紀錄將會清除並同步至樹莓派）')) {
             state.stamps = [];
-            saveState();
+            saveLocalState();
             render();
+            pushRemoteState();
         }
     });
 
@@ -152,10 +278,62 @@ function initUI() {
             document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             state.template = btn.dataset.template;
-            saveState();
+            saveLocalState();
             render();
+            pushRemoteState();
         });
     });
+
+    // 切換 / 綁定 UID 彈窗事件
+    const modal = document.getElementById('uidModal');
+    const switchBtn = document.getElementById('switchIdBtn');
+    const closeBtn = document.getElementById('closeUidModal');
+    const saveUidBtn = document.getElementById('saveUidBtn');
+    const randomUidBtn = document.getElementById('randomUidBtn');
+    const uidInput = document.getElementById('uidInput');
+
+    if (switchBtn && modal) {
+        switchBtn.addEventListener('click', () => {
+            uidInput.value = currentUid;
+            modal.style.display = 'flex';
+        });
+    }
+
+    if (closeBtn && modal) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+    }
+
+    if (saveUidBtn && uidInput) {
+        saveUidBtn.addEventListener('click', () => {
+            const val = uidInput.value.trim();
+            if (!val) {
+                alert('請輸入有效的用戶 ID！');
+                return;
+            }
+            currentUid = val;
+            localStorage.setItem(UID_KEY, currentUid);
+            updateUidDisplay();
+            modal.style.display = 'none';
+            loadLocalState();
+            render();
+            fetchRemoteState();
+        });
+    }
+
+    if (randomUidBtn && uidInput) {
+        randomUidBtn.addEventListener('click', () => {
+            const newGuest = 'guest_' + Math.random().toString(36).substring(2, 9);
+            uidInput.value = newGuest;
+        });
+    }
 }
 
 function setGridCount(count) {
@@ -163,12 +341,12 @@ function setGridCount(count) {
         b.classList.toggle('active', parseInt(b.dataset.count) === count);
     });
     state.total_stamps = count;
-    // 若當前印章超過新格數，裁剪多餘
     if (state.stamps.length > count) {
         state.stamps = state.stamps.slice(0, count);
     }
-    saveState();
+    saveLocalState();
     render();
+    pushRemoteState();
 }
 
 function stampNext(customReasonText = null) {
@@ -195,8 +373,9 @@ function stampNext(customReasonText = null) {
     });
 
     input.value = '';
-    saveState();
+    saveLocalState();
     render();
+    pushRemoteState();
 
     // 集滿提醒
     if (state.stamps.length === state.total_stamps) {
@@ -210,8 +389,9 @@ function unstamp(index) {
     if (index >= 0 && index < state.stamps.length) {
         if (confirm(`確定要取消第 ${index + 1} 個印章嗎？`)) {
             state.stamps.splice(index, 1);
-            saveState();
+            saveLocalState();
             render();
+            pushRemoteState();
         }
     }
 }
@@ -335,7 +515,7 @@ function copyShareText() {
 📊 當前進度：${count} / ${total} 格 (${pct}%)
 💬 最新厭世理由：${lastReason}
 ${count >= total ? '🚀 恭喜滿點！老子不幹了！' : '💪 距離原地解脫還剩 ' + (total - count) + ' 點'}
-🔗 快來設計你的集點卡：https://eowilling.github.io/eoelior/resignation-card/`;
+🔗 查看我的集點卡：https://eowilling.github.io/eoelior/resignation-card/?uid=${encodeURIComponent(currentUid)}`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {

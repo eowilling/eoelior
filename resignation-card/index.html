@@ -17,6 +17,19 @@
             <div class="brand-tag">eoElior 紓壓分館</div>
         </nav>
 
+        <!-- 樹莓派連線狀態列 -->
+        <div class="sync-status-bar" id="syncStatusBar">
+            <div class="sync-indicator" id="syncIndicator">
+                <span class="status-dot syncing" id="statusDot"></span>
+                <span class="status-text" id="statusText">🌲 樹莓派連線中...</span>
+            </div>
+            <div class="user-identity" id="userIdentity">
+                <span class="user-id-label">👤 用戶:</span>
+                <span class="user-id-val" id="userIdDisplay" title="點擊切換或複製">載入中...</span>
+                <button class="switch-id-btn" id="switchIdBtn" title="切換或綁定 LINE UID">切換/綁定</button>
+            </div>
+        </div>
+
         <header>
             <div class="header-icon">🏃💨</div>
             <h1>離職集點卡</h1>
@@ -151,8 +164,32 @@
         <!-- 底部說明 -->
         <footer class="footer-info">
             <p>💡 在 LINE Bot 輸入 <code>#離職</code> 或 <code>#快逃</code>，隨時召喚這張集點卡！</p>
+            <p>🌲 本系統已與樹莓派 SQLite 資料庫同步，蓋章與設定將自動保存。</p>
             <p class="copyright">🎪 eoElior 數位遊樂園 © 2026</p>
         </footer>
+    </div>
+
+    <!-- 切換/綁定 LINE UID 彈窗 -->
+    <div class="modal-overlay" id="uidModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>🌲 樹莓派用戶帳號綁定</h3>
+                <button class="modal-close" id="closeUidModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">
+                    輸入您的 LINE User ID（可在 LINE 聊天室輸入 <code>#userid</code> 查詢）或自訂專屬名稱，即可跨裝置同步您的離職集點卡！
+                </p>
+                <div class="input-group">
+                    <label for="uidInput">用戶識別碼 (UID)：</label>
+                    <input type="text" id="uidInput" placeholder="例: Ue97dfc62f144950ac4753eaf734437d1">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-primary" id="saveUidBtn">💾 確定綁定並讀取</button>
+                    <button class="btn-secondary" id="randomUidBtn">🎲 產生新訪客 ID</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="js/app.js"></script>
